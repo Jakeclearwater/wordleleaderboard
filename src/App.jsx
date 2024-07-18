@@ -31,6 +31,9 @@ const useStyles = createUseStyles({
     backgroundColor: 'white',
     marginTop: 'auto !important',
     marginBottom: 'auto !important',
+    '& p': {
+      color: 'black !important'
+    }
   },
   h1: {
     color: '#333',

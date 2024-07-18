@@ -10,7 +10,9 @@ const useStyles = createUseStyles({
     display: 'flex',
     flexDirection: 'column',
     padding: '1rem',
-    
+'& label': {
+      color: 'black !important',
+    }
   },
   input: {
     padding: '8px',
