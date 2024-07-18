@@ -109,10 +109,11 @@ const Leaderboard = () => {
 
     fetchLeaderboards();
   }, []);
+  
 
   return (
     <div className={classes.leaderboardContainer}>
-      <h1 className={classes.title}>Daily Leaderboard</h1>
+      <h1 className={classes.title}>Daily Results</h1>
       <ul className={classes.list}>
         {dailyLeaderboard.map((entry, index) => (
           <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
@@ -120,7 +121,7 @@ const Leaderboard = () => {
           </li>
         ))}
       </ul>
-      <h1 className={classes.title}>Weekly Leaderboard</h1>
+      <h1 className={classes.title}>Weekly Results</h1>
       <ul className={classes.list}>
         {weeklyLeaderboard.map((entry, index) => (
           <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
