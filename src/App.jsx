@@ -6,7 +6,7 @@ import { createUseStyles } from 'react-jss';
 const App = () => {
   const classes = useStyles();
   // Split "Wordle" into individual characters and wrap each in a span
-  const wordleSpans = "ITWordle".split('').map((char, index) => (
+  const wordleSpans = "ITWORDLE".split('').map((char, index) => (
     <span key={index} className={classes.char}>{char}</span>
   ));
 
