@@ -25,7 +25,7 @@ const useStyles = createUseStyles({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    height: '100vh',
+    height: '100%',
     justifyContent: 'center !important',
     width: '100vw',
     backgroundColor: 'white',
