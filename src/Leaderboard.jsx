@@ -1,9 +1,38 @@
-// src/components/Leaderboard.js
 import React, { useEffect, useState } from 'react';
+import { createUseStyles } from 'react-jss';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase'; // Adjust the import path as necessary
 
+const useStyles = createUseStyles({
+  leaderboardContainer: {
+    padding: '20px',
+    backgroundColor: '#fff',
+    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+    borderRadius: '8px',
+    margin: '20px 0',
+  },
+  title: {
+    fontSize: '24px',
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: '20px',
+  },
+  list: {
+    listStyleType: 'none',
+    padding: '0',
+  },
+  listItem: {
+    padding: '10px',
+    borderBottom: '1px solid #ccc',
+    color: '#555',
+  },
+  listItemLast: {
+    borderBottom: 'none',
+  },
+});
+
 const Leaderboard = () => {
+  const classes = useStyles();
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
 
@@ -82,19 +111,19 @@ const Leaderboard = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Daily Leaderboard</h1>
-      <ul>
+    <div className={classes.leaderboardContainer}>
+      <h1 className={classes.title}>Daily Leaderboard</h1>
+      <ul className={classes.list}>
         {dailyLeaderboard.map((entry, index) => (
-          <li key={index}>
+          <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
             {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
           </li>
         ))}
       </ul>
-      <h1>Weekly Leaderboard</h1>
-      <ul>
+      <h1 className={classes.title}>Weekly Leaderboard</h1>
+      <ul className={classes.list}>
         {weeklyLeaderboard.map((entry, index) => (
-          <li key={index}>
+          <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
             {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
           </li>
         ))}

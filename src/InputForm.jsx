@@ -1,13 +1,47 @@
-// src/components/InputForm.js
+// Import `createUseStyles` from `react-jss`
+import { createUseStyles } from 'react-jss';
 import React, { useState } from 'react';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { firestore } from './firebase'; // Adjust the import path as necessary
 
+// Define your styles
+const useStyles = createUseStyles({
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '1rem',
+    
+  },
+  input: {
+    padding: '8px',
+    margin: '0.5rem',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+  },
+  select: {
+    padding: '8px',
+    margin: '0.5rem',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+  },
+  button: {
+    padding: '10px',
+    border: 'none',
+    borderRadius: '4px',
+    backgroundColor: '#007bff',
+    color: 'white',
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: '#0056b3',
+    },
+  },
+});
+
 const InputForm = () => {
+  const classes = useStyles(); // Use the styles
   const [name, setName] = useState('');
   const [guesses, setGuesses] = useState(0);
 
-  // List of names for the dropdown
   const names = ['Shay', 'Damien', 'Jake', 'Michael', 'Nick T', 'Nick M', 'Andy', 'Brett', 'Jordan', 'Jeff'];
 
   const handleSubmit = async (e) => {
@@ -17,7 +51,7 @@ const InputForm = () => {
         await addDoc(collection(firestore, 'scores'), {
           name,
           guesses,
-          date: Timestamp.fromDate(new Date()).toDate().toISOString().split('T')[0], // Format date as YYYY-MM-DD
+          date: Timestamp.fromDate(new Date()).toDate().toISOString().split('T')[0],
         });
         setName('');
         setGuesses(0);
@@ -28,14 +62,16 @@ const InputForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className={classes.form}>
       <div>
+        <h2>Enter Results</h2>
         <label htmlFor="name">Name:</label>
         <select
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          className={classes.select}
         >
           <option value="" disabled>Select a name</option>
           {names.map((name, index) => (
@@ -53,9 +89,10 @@ const InputForm = () => {
           value={guesses}
           onChange={(e) => setGuesses(Number(e.target.value))}
           required
+          className={classes.input}
         />
       </div>
-      <button type="submit">Submit</button>
+      <button type="submit" className={classes.button}>Submit</button>
     </form>
   );
 };
