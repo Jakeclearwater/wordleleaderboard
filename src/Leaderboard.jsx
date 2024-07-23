@@ -77,7 +77,7 @@ const Leaderboard = () => {
         const dailyLeaderboardArray = Object.keys(groupedDailyScores).map(name => ({
           name,
           averageGuesses: groupedDailyScores[name].totalGuesses / groupedDailyScores[name].count,
-        }));
+        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score
 
         // Process weekly scores
         const weeklyScores = weeklySnapshot.docs.map(doc => doc.data());
@@ -95,7 +95,7 @@ const Leaderboard = () => {
         const weeklyLeaderboardArray = Object.keys(groupedWeeklyScores).map(name => ({
           name,
           averageGuesses: groupedWeeklyScores[name].totalGuesses / groupedWeeklyScores[name].count,
-        }));
+        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
 
         console.log('Daily Leaderboard:', dailyLeaderboardArray); // Debug log
         console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
