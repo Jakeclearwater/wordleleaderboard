@@ -49,7 +49,7 @@ const InputForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Check if guesses is between 1 and 6 or is exactly 7
-    if (name && ((guesses > 0 && guesses <= 6) || guesses === 7)) {
+    if (name && Number.isInteger(guesses) && guesses >= 1 && guesses <= 7) {
       try {
         await addDoc(collection(firestore, 'scores'), {
           name,
