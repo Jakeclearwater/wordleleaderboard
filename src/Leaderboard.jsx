@@ -187,7 +187,7 @@ const Leaderboard = () => {
       <ul className={classes.list}>
         {allTimeLeaderboard.map((entry, index) => (
           <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
-            {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
+            #{entry.index + 1} {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
           </li>
 
         )
