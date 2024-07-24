@@ -42,7 +42,7 @@ const useStyles = createUseStyles({
     },
     '& span': {
       color: 'red !important',
-      mouse: 'pointer !important',
+      mouse: 'pointer',
     }
   },
   h1: {
@@ -60,7 +60,7 @@ const useStyles = createUseStyles({
     borderRadius: '4px',
     // Use green or yellow background color
     backgroundColor: index => (index % 2 === 0 ? 'green' : 'green'), // Alternate colors for demonstration
-    color: 'white',
+    color: 'white !important',
     fontWeight: 'bold',
   },
 })
