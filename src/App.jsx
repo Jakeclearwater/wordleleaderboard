@@ -40,8 +40,8 @@ const useStyles = createUseStyles({
     '& p': {
       color: 'black !important'
     },
-    '& a': {
-      textDecoration: 'none !important',
+    '& span': {
+      color: 'red !important'
     }
   },
   h1: {
