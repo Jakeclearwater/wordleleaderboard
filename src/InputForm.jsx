@@ -49,7 +49,9 @@ const InputForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Check if guesses is between 1 and 6 or is exactly 7
-    if (name && Number.isInteger(guesses) && guesses >= 1 && guesses <= 7) {
+    if (name == 'Brett') {
+      alert('Brett doesnt play, stop it Shay!.');
+    } else if (name && Number.isInteger(guesses) && guesses >= 1 && guesses <= 7) {
       try {
         await addDoc(collection(firestore, 'scores'), {
           name,
@@ -61,8 +63,6 @@ const InputForm = () => {
       } catch (error) {
         console.error('Error adding document: ', error);
       }
-    } else if (name == 'Brett'){
-      alert('Brett doesnt play, stop it Shay!.');
     } else {
       // Handle invalid input
       alert('Guesses must be between 1 and 6 or exactly 7 for a fail.');
