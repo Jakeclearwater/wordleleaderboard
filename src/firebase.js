@@ -2,15 +2,16 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
+// Import environment variables
 const firebaseConfig = {
-    apiKey: "AIzaSyDFUcn5puuR-DqSOL8OPChQiGyYNfVYttU",
-    authDomain: "itwordleboard.firebaseapp.com",
-    projectId: "itwordleboard",
-    storageBucket: "itwordleboard.appspot.com",
-    messagingSenderId: "96048580751",
-    appId: "1:96048580751:web:5f0b3e3761a2b9f48888fa",
-    measurementId: "G-LJ7W4GGRSX"
-  };
+    apiKey: import.meta.env.VITE_API_KEY,
+    authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_APP_ID,
+    measurementId: import.meta.env.VITE_MEASUREMENT_ID
+};
 
 const app = initializeApp(firebaseConfig);
 const firestore = getFirestore(app);
