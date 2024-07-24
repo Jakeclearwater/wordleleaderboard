@@ -85,6 +85,9 @@ const Leaderboard = () => {
         const allTimeScoresQuery = query(
           collection(firestore, 'scores')
         );
+
+        const allTimeSnapshot = await getDocs(allTimeScoresQuery);
+
         // Process daily scores
         const dailyScores = dailySnapshot.docs.map(doc => doc.data());
         console.log('Fetched daily scores:', dailyScores); // Debug log
@@ -144,6 +147,7 @@ const Leaderboard = () => {
 
         console.log('Daily Leaderboard:', dailyLeaderboardArray); // Debug log
         console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
+        console.log('All time Leaderboard:', allTimeLeaderboardArray); // Debug
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
@@ -187,7 +191,7 @@ const Leaderboard = () => {
       <ul className={classes.list}>
         {allTimeLeaderboard.map((entry, index) => (
           <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
-            #{entry.index + 1} {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
+            #{index + 1} {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
           </li>
 
         )
