@@ -41,7 +41,8 @@ const useStyles = createUseStyles({
       color: 'black !important'
     },
     '& span': {
-      color: 'red !important'
+      color: 'red !important',
+      mouse: 'pointer !important',
     }
   },
   h1: {
