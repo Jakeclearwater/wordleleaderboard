@@ -61,6 +61,8 @@ const InputForm = () => {
       } catch (error) {
         console.error('Error adding document: ', error);
       }
+    } else if (name == 'Brett'){
+      alert('Brett doesnt play, stop it Shay!.');
     } else {
       // Handle invalid input
       alert('Guesses must be between 1 and 6 or exactly 7 for a fail.');
