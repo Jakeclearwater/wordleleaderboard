@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { firestore } from './firebase'; // Adjust the import path as necessary
 
 const useStyles = createUseStyles({
@@ -57,6 +57,13 @@ const Leaderboard = () => {
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
 
   useEffect(() => {
+
+    const unsubscribe = onSnapshot(collection(firestore, 'scores'), (snapshot) => {
+      console.log('Scores collection updated');
+      fetchLeaderboards();
+    }
+    );
+
     const fetchLeaderboards = async () => {
       try {
         const today1 = new Date();
@@ -161,6 +168,10 @@ const Leaderboard = () => {
 
     // 
     fetchLeaderboards();
+    return () => {
+      unsubscribe
+    }
+    
   }, []);
   
 
