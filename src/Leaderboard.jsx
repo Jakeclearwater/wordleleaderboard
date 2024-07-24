@@ -59,7 +59,9 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchLeaderboards = async () => {
       try {
-        const today = new Date().toISOString().split('T')[0];
+        const today1 = new Date();
+        today1.setHours(0, 0, 0, 0); // Set time to 00:00:00.000
+        const today = today1.toISOString().split('T')[0];
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
         const weekAgoDate = weekAgo.toISOString().split('T')[0];
