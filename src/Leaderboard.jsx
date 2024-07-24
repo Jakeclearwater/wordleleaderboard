@@ -6,9 +6,7 @@ import { firestore } from './firebase'; // Adjust the import path as necessary
 const useStyles = createUseStyles({
   leaderboardContainer: {
     padding: '20px',
-    backgroundColor: '#fff',
-    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-    borderRadius: '8px',
+    textAlign: 'center',
     margin: '20px 0',
   },
   title: {
@@ -28,6 +26,27 @@ const useStyles = createUseStyles({
   },
   listItemLast: {
     borderBottom: 'none',
+  },
+  col: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '33%',
+    padding: "1rem",
+    backgroundColor: '#fff',
+    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+    borderRadius: '8px',
+    margin: '1rem',
+  },
+  columns: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '100%',
+    '@media (max-width: 1000px)': {
+      flexDirection: 'column',
+      alignItems: 'center',
+    }
   },
 });
 
@@ -113,7 +132,10 @@ const Leaderboard = () => {
 
   return (
     <div className={classes.leaderboardContainer}>
-      <h1 className={classes.title}>Daily Results</h1>
+      <h1>Average results</h1>
+      <div className={classes.columns}>
+      <section className={classes.col}>
+      <h1 className={classes.title}>Daily</h1>
       <ul className={classes.list}>
         {dailyLeaderboard.map((entry, index) => (
           <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
@@ -121,7 +143,9 @@ const Leaderboard = () => {
           </li>
         ))}
       </ul>
-      <h1 className={classes.title}>Weekly Results</h1>
+      </section>
+      <section className={classes.col}>
+      <h1 className={classes.title}>Weekly</h1>
       <ul className={classes.list}>
         {weeklyLeaderboard.map((entry, index) => (
           <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
@@ -129,6 +153,18 @@ const Leaderboard = () => {
           </li>
         ))}
       </ul>
+      </section>
+      <section className={classes.col}>
+      <h1 className={classes.title}>All time Leaderboard</h1>
+      <ul className={classes.list}>
+        {weeklyLeaderboard.map((entry, index) => (
+          <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
+            {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
+          </li>
+        ))}
+      </ul>
+      </section>
+    </div>
     </div>
   );
 };
