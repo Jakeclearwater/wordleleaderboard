@@ -21,7 +21,7 @@ const App = () => {
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
-      <p>Pls dont <a href="https://www.crowdstrike.com/en-us/">break</a> it, it was a 15min <span onClick={hack}>hack</span></p>
+      <p>Pls dont <span onClick={hack}>break</span> it, it was a 15min hack</p>
     </div>
   );
 };
