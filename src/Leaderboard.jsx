@@ -54,6 +54,7 @@ const Leaderboard = () => {
   const classes = useStyles();
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
+  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
 
   useEffect(() => {
     const fetchLeaderboards = async () => {
@@ -80,6 +81,10 @@ const Leaderboard = () => {
         );
         const weeklySnapshot = await getDocs(weeklyScoresQuery);
 
+        // fetch all time scores
+        const allTimeScoresQuery = query(
+          collection(firestore, 'scores')
+        );
         // Process daily scores
         const dailyScores = dailySnapshot.docs.map(doc => doc.data());
         console.log('Fetched daily scores:', dailyScores); // Debug log
@@ -116,16 +121,39 @@ const Leaderboard = () => {
           averageGuesses: groupedWeeklyScores[name].totalGuesses / groupedWeeklyScores[name].count,
         })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
 
+        // Process all time scores
+        const allTimeScores = allTimeSnapshot.docs.map(doc => doc.data());
+        console.log('Fetched all time scores:', allTimeScores); // Debug log
+
+        const groupedAllTimeScores = allTimeScores.reduce((acc, score) => {
+          if (!acc[score.name]) {
+            acc[score.name] = { totalGuesses: 0, count: 0 };
+          }
+          acc[score.name].totalGuesses += score.guesses;
+          acc[score.name].count += 1;
+          return acc;
+        }
+        , {});
+
+        const allTimeLeaderboardArray = Object.keys(groupedAllTimeScores).map(name => ({
+          name,
+          averageGuesses: groupedAllTimeScores[name].totalGuesses / groupedAllTimeScores[name].count,
+        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
+        
+
+
         console.log('Daily Leaderboard:', dailyLeaderboardArray); // Debug log
         console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
+        setAllTimeLeaderboard(allTimeLeaderboardArray);
       } catch (error) {
         console.error('Error fetching leaderboards: ', error);
       }
     };
 
+    // 
     fetchLeaderboards();
   }, []);
   
@@ -157,11 +185,14 @@ const Leaderboard = () => {
       <section className={classes.col}>
       <h1 className={classes.title}>All time Leaderboard</h1>
       <ul className={classes.list}>
-        {weeklyLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
+        {allTimeLeaderboard.map((entry, index) => (
+          <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
             {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
           </li>
-        ))}
+
+        )
+      )
+        }
       </ul>
       </section>
     </div>
