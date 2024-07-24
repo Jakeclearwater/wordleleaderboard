@@ -15,7 +15,7 @@ const App = () => {
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
-      <p>Pls dont break it, it was a 15min hack</p>
+      <p>Pls dont <a href="https://www.crowdstrike.com/en-us/">break</a> it, it was a 15min hack</p>
     </div>
   );
 };
