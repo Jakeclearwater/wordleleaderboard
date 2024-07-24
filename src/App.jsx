@@ -33,6 +33,9 @@ const useStyles = createUseStyles({
     marginBottom: 'auto !important',
     '& p': {
       color: 'black !important'
+    },
+    '& a': {
+      textDecoration: 'none !important',
     }
   },
   h1: {
