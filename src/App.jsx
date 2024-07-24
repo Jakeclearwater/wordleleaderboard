@@ -2,6 +2,7 @@ import React from 'react';
 import InputForm from './InputForm';
 import Leaderboard from './Leaderboard';
 import { createUseStyles } from 'react-jss';
+import bsod from './assets/bsod.png';
 
 const App = () => {
   const classes = useStyles();
@@ -10,12 +11,17 @@ const App = () => {
     <span key={index} className={classes.char}>{char}</span>
   ));
 
+  const hack = () => {
+    console.log("oops");
+    document.body.style.backgroundImage = `url('${bsod}')`;
+  }
+
   return (
     <div className={classes.App}>
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
-      <p>Pls dont <a href="https://www.crowdstrike.com/en-us/">break</a> it, it was a 15min hack</p>
+      <p>Pls dont <a href="https://www.crowdstrike.com/en-us/">break</a> it, it was a 15min <span onClick={hack}>hack</span></p>
     </div>
   );
 };
@@ -28,7 +34,7 @@ const useStyles = createUseStyles({
     height: '100%',
     justifyContent: 'center !important',
     width: '100vw',
-    backgroundColor: 'white',
+    //backgroundColor: 'white',
     marginTop: 'auto !important',
     marginBottom: 'auto !important',
     '& p': {
