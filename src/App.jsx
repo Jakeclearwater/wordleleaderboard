@@ -21,7 +21,7 @@ const App = () => {
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
-      <p>Pls dont <span onClick={hack}>break</span> it, it was a 15min hack</p>
+      <p>Pls dont <span className={classes.spanicon} onClick={hack}>break</span> it, it was a 15min hack</p>
     </div>
   );
 };
@@ -40,9 +40,10 @@ const useStyles = createUseStyles({
     '& p': {
       color: 'black !important'
     },
-    '& span': {
-      color: 'red !important'
-    }
+  },
+  spanicon: {
+    color: 'red !important',
+    mouse: 'pointer',
   },
   h1: {
     color: '#333',
@@ -59,7 +60,7 @@ const useStyles = createUseStyles({
     borderRadius: '4px',
     // Use green or yellow background color
     backgroundColor: index => (index % 2 === 0 ? 'green' : 'green'), // Alternate colors for demonstration
-    color: 'white',
+    color: 'white !important',
     fontWeight: 'bold',
   },
 })
