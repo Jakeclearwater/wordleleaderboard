@@ -44,7 +44,8 @@ const InputForm = () => {
   const [name, setName] = useState('');
   const [guesses, setGuesses] = useState('');
 
-  const names = ['Shay', 'Damien', 'Jake', 'Michael', 'Nick T', 'Nick M', 'Andy', 'Brett', 'Jordan', 'Jeff', 'Katie', 'Ryan D', 'James', 'Ryan', 'Ronan', 'Sean', 'Don'];
+  const names = ['Shay', 'Damien', 'Jake', 'Michael', 'Nick T', 'Nick M', 'Andy', 'Brett', 'Jordan', 'Jeff', 'James', 'Ryan M', 'Ronan', 'Sean', 'Don', 'Katie', 'Ryan D'];
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
