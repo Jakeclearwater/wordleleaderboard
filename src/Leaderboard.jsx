@@ -156,7 +156,7 @@ const Leaderboard = () => {
         const allAttemptsLeaderboardArray = Object.keys(groupedAllTimeScores).map(name => ({
           name,
           averageGuesses: groupedAllTimeScores[name].count,
-        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
+        })).sort((a, b) => b.averageGuesses - a.averageGuesses); // Sort by score;
         
 
 
@@ -190,9 +190,15 @@ const Leaderboard = () => {
       <section className={classes.col}>
       <h1 className={classes.title}>Daily</h1>
       <ul className={classes.list}>
-        {dailyLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
-            {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
+        {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
+          <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+          style={{
+            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
+          }}
+          >
+            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */} 
+            {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) == 1 ? ( 'guess' ) : ('guesses') }
           </li>
         ))}
       </ul>
@@ -200,9 +206,15 @@ const Leaderboard = () => {
       <section className={classes.col}>
       <h1 className={classes.title}>Weekly</h1>
       <ul className={classes.list}>
-        {weeklyLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
-            {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
+        {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
+          <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+          style={{
+            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
+          }}
+          >
+            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+            {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
           </li>
         ))}
       </ul>
@@ -210,9 +222,15 @@ const Leaderboard = () => {
       <section className={classes.col}>
       <h1 className={classes.title}>All time Leaderboard</h1>
       <ul className={classes.list}>
-        {allTimeLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
-            #{index + 1} {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
+        {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
+          <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+          style={{
+            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
+          }}
+          >
+            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+            #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
           </li>
 
         ))}
@@ -221,9 +239,15 @@ const Leaderboard = () => {
       <section className={classes.col}>
       <h1 className={classes.title}>Attempts Leaderboard</h1>
       <ul className={classes.list}>
-        {allAttemptsLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
-            #{index + 1} {entry.name}: {entry.averageGuesses.toFixed(2)} attempts
+        {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
+          <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+          style={{
+            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
+          }}
+          >
+            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+            #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) == 1 ? ( 'attempt' ) : ('attempts') }
           </li>
 
         ))}
@@ -235,3 +259,4 @@ const Leaderboard = () => {
 };
 
 export default Leaderboard;
+// 👑

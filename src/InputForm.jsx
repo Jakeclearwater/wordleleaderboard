@@ -46,6 +46,7 @@ const InputForm = () => {
 
   const names = ['Shay', 'Damien', 'Jake', 'Michael', 'Nick T', 'Nick M', 'Andy', 'Brett', 'Jordan', 'Jeff', 'James', 'Ryan M', 'Ronan', 'Sean', 'Don', 'Katie', 'Ryan D'];
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Check if guesses is between 1 and 6 or is exactly 7
