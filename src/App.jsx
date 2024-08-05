@@ -6,10 +6,15 @@ import bsod from './assets/bsod.png';
 
 const App = () => {
   const classes = useStyles();
+  const wordle = "ITWORDLE";
+  const classNames = ["green", "yellow", "gray"];
   // Split "Wordle" into individual characters and wrap each in a span
-  const wordleSpans = "ITWORDLE".split('').map((char, index) => (
-    <span key={index} className={classes.char}>{char}</span>
+  const wordleSpans = wordle.split('').map((char, index) => (
+    <span key={index}
+    className={classes.char + ' ' + classes['color_' + classNames[Math.floor(Math.random() * classNames.length)]]}
+    >{char}</span>
   ));
+
 
   const hack = () => {
     console.log("oops");
@@ -50,7 +55,6 @@ const useStyles = createUseStyles({
     fontSize: '2rem',
     margin: '0.5rem',
   },
-  // Style for each character span
   char: {
     display: 'inline-block',
     padding: '0.5rem',
@@ -58,11 +62,20 @@ const useStyles = createUseStyles({
     width: '3.5rem',
     textAlign: 'center',
     borderRadius: '4px',
-    // Use green or yellow background color
-    backgroundColor: index => (index % 2 === 0 ? 'green' : 'green'), // Alternate colors for demonstration
+    backgroundColor: 'none',
+    background: 'none',
     color: 'white !important',
     fontWeight: 'bold',
   },
+  color_green: {
+    backgroundColor: '#538d4e',
+  },
+  color_yellow: {
+    backgroundColor: '#b59f3b',
+  },
+  color_gray: {
+    backgroundColor: '#3a3a3c',
+  }
 })
 
 export default App;
