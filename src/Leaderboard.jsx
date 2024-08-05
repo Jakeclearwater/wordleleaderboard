@@ -55,6 +55,7 @@ const Leaderboard = () => {
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
+  const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
 
   useEffect(() => {
 
@@ -152,15 +153,22 @@ const Leaderboard = () => {
           averageGuesses: groupedAllTimeScores[name].totalGuesses / groupedAllTimeScores[name].count,
         })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
         
+        const allAttemptsLeaderboardArray = Object.keys(groupedAllTimeScores).map(name => ({
+          name,
+          averageGuesses: groupedAllTimeScores[name].count,
+        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
+        
 
 
         console.log('Daily Leaderboard:', dailyLeaderboardArray); // Debug log
         console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
         console.log('All time Leaderboard:', allTimeLeaderboardArray); // Debug
+        console.log('All time Leaderboard:', allAttemptsLeaderboardArray); // Debug
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
         setAllTimeLeaderboard(allTimeLeaderboardArray);
+        setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
       } catch (error) {
         console.error('Error fetching leaderboards: ', error);
       }
@@ -207,9 +215,18 @@ const Leaderboard = () => {
             #{index + 1} {entry.name}: {entry.averageGuesses.toFixed(2)} guesses
           </li>
 
-        )
-      )
-        }
+        ))}
+      </ul>
+      </section>
+      <section className={classes.col}>
+      <h1 className={classes.title}>Attempts Leaderboard</h1>
+      <ul className={classes.list}>
+        {allAttemptsLeaderboard.map((entry, index) => (
+          <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}>
+            #{index + 1} {entry.name}: {entry.averageGuesses.toFixed(2)} attempts
+          </li>
+
+        ))}
       </ul>
       </section>
     </div>

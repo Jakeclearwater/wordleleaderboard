@@ -42,7 +42,7 @@ const useStyles = createUseStyles({
 const InputForm = () => {
   const classes = useStyles(); // Use the styles
   const [name, setName] = useState('');
-  const [guesses, setGuesses] = useState(0);
+  const [guesses, setGuesses] = useState('');
 
   const names = ['Shay', 'Damien', 'Jake', 'Michael', 'Nick T', 'Nick M', 'Andy', 'Brett', 'Jordan', 'Jeff', 'James', 'Ryan', 'Ronan', 'Sean', 'Don'];
 
@@ -59,7 +59,7 @@ const InputForm = () => {
           date: Timestamp.fromDate(new Date()).toDate().toISOString().split('T')[0],
         });
         setName('');
-        setGuesses(0);
+        setGuesses('');
       } catch (error) {
         console.error('Error adding document: ', error);
       }
@@ -81,7 +81,7 @@ const InputForm = () => {
           required
           className={classes.select}
         >
-          <option value="" disabled>Select a name</option>
+          <option value="" disabled>Select your name</option>
           {names.map((name, index) => (
             <option key={index} value={name}>
               {name}
@@ -96,6 +96,8 @@ const InputForm = () => {
           id="guesses"
           value={guesses}
           onChange={(e) => setGuesses(Number(e.target.value))}
+          min={1}
+          max={6}
           required
           className={classes.input}
         />
