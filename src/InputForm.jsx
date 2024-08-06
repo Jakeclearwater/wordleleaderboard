@@ -90,7 +90,7 @@ const InputForm = () => {
     e.preventDefault();
     const numGuesses = didNotFinish ? 0 : Number(guesses);
     if (numGuesses === 0) {
-      alert("Better luck next time!");
+      alert("Better luck next time " + name + "!");
     }
     // Check if guesses is valid
     if (
