@@ -30,14 +30,15 @@ const useStyles = createUseStyles({
   col: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '33%',
-    padding: "1rem",
+    justifyContent: 'flex-start', // Align content to the top
+    alignItems: 'flex-start', // Align items to the start of the column (left side)
+    width: '40%',
+    padding: '1rem',
     backgroundColor: '#fff',
-    boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-    borderRadius: '8px',
+    boxShadow: '0 0 5px rgba(0, 0, 0, 0.1)',
+    borderRadius: '5px',
     margin: '1rem',
+    textAlign: 'left', // Align text to the left inside the column
   },
   columns: {
     display: 'flex',
@@ -46,7 +47,7 @@ const useStyles = createUseStyles({
     '@media (max-width: 1000px)': {
       flexDirection: 'column',
       alignItems: 'center',
-    }
+    },
   },
 });
 
@@ -56,14 +57,13 @@ const Leaderboard = () => {
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
   const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
+  const [woodspoonLeaderboard, setWoodspoonLeaderboard] = useState([]);
 
   useEffect(() => {
-
     const unsubscribe = onSnapshot(collection(firestore, 'scores'), (snapshot) => {
       console.log('Scores collection updated');
       fetchLeaderboards();
-    }
-    );
+    });
 
     const fetchLeaderboards = async () => {
       try {
@@ -91,18 +91,25 @@ const Leaderboard = () => {
         );
         const weeklySnapshot = await getDocs(weeklyScoresQuery);
 
-        // fetch all time scores
+        // Fetch all time scores
         const allTimeScoresQuery = query(
           collection(firestore, 'scores')
         );
-
         const allTimeSnapshot = await getDocs(allTimeScoresQuery);
+
+        // Fetch woodspoon leaderboard
+        const woodspoonScoresQuery = query(
+          collection(firestore, 'scores'),
+          where('guesses', '==', 0)
+        );
+        const woodspoonSnapshot = await getDocs(woodspoonScoresQuery);
 
         // Process daily scores
         const dailyScores = dailySnapshot.docs.map(doc => doc.data());
         console.log('Fetched daily scores:', dailyScores); // Debug log
 
         const groupedDailyScores = dailyScores.reduce((acc, score) => {
+          if (score.guesses === 0) return acc; // Exclude zero guesses
           if (!acc[score.name]) {
             acc[score.name] = { totalGuesses: 0, count: 0 };
           }
@@ -121,6 +128,7 @@ const Leaderboard = () => {
         console.log('Fetched weekly scores:', weeklyScores); // Debug log
 
         const groupedWeeklyScores = weeklyScores.reduce((acc, score) => {
+          if (score.guesses === 0) return acc; // Exclude zero guesses
           if (!acc[score.name]) {
             acc[score.name] = { totalGuesses: 0, count: 0 };
           }
@@ -132,131 +140,158 @@ const Leaderboard = () => {
         const weeklyLeaderboardArray = Object.keys(groupedWeeklyScores).map(name => ({
           name,
           averageGuesses: groupedWeeklyScores[name].totalGuesses / groupedWeeklyScores[name].count,
-        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
+        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score
 
-        // Process all time scores
+        // Process all-time scores
         const allTimeScores = allTimeSnapshot.docs.map(doc => doc.data());
-        console.log('Fetched all time scores:', allTimeScores); // Debug log
+        console.log('Fetched all-time scores:', allTimeScores); // Debug log
 
         const groupedAllTimeScores = allTimeScores.reduce((acc, score) => {
+          if (score.guesses === 0) return acc; // Exclude zero guesses
           if (!acc[score.name]) {
             acc[score.name] = { totalGuesses: 0, count: 0 };
           }
           acc[score.name].totalGuesses += score.guesses;
           acc[score.name].count += 1;
           return acc;
-        }
-        , {});
+        }, {});
 
         const allTimeLeaderboardArray = Object.keys(groupedAllTimeScores).map(name => ({
           name,
           averageGuesses: groupedAllTimeScores[name].totalGuesses / groupedAllTimeScores[name].count,
-        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score;
-        
+        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score
+
         const allAttemptsLeaderboardArray = Object.keys(groupedAllTimeScores).map(name => ({
           name,
           averageGuesses: groupedAllTimeScores[name].count,
-        })).sort((a, b) => b.averageGuesses - a.averageGuesses); // Sort by score;
-        
+        })).sort((a, b) => b.averageGuesses - a.averageGuesses); // Sort by count
 
+        // Process woodspoon scores
+        const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
+        console.log('Fetched woodspoon scores:', woodspoonScores); // Debug log
+
+        const groupedWoodspoonScores = woodspoonScores.reduce((acc, score) => {
+          if (!acc[score.name]) {
+            acc[score.name] = { count: 0 };
+          }
+          acc[score.name].count += 1;
+          return acc;
+        }, {});
+
+        const woodspoonLeaderboardArray = Object.keys(groupedWoodspoonScores).map(name => ({
+          name,
+          count: groupedWoodspoonScores[name].count,
+        })).sort((a, b) => b.count - a.count); // Sort by count of zeros
 
         console.log('Daily Leaderboard:', dailyLeaderboardArray); // Debug log
         console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
-        console.log('All time Leaderboard:', allTimeLeaderboardArray); // Debug
-        console.log('All time Leaderboard:', allAttemptsLeaderboardArray); // Debug
+        console.log('All-time Leaderboard:', allTimeLeaderboardArray); // Debug log
+        console.log('All Attempts Leaderboard:', allAttemptsLeaderboardArray); // Debug log
+        console.log('Woodspoon Leaderboard:', woodspoonLeaderboardArray); // Debug log
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
         setAllTimeLeaderboard(allTimeLeaderboardArray);
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
+        setWoodspoonLeaderboard(woodspoonLeaderboardArray);
       } catch (error) {
         console.error('Error fetching leaderboards: ', error);
       }
     };
 
-    // 
     fetchLeaderboards();
     return () => {
-      unsubscribe
-    }
-    
+      unsubscribe();
+    };
   }, []);
-  
 
   return (
     <div className={classes.leaderboardContainer}>
-      <h1>Average results</h1>
+      <h1>Average Results</h1>
       <div className={classes.columns}>
-      <section className={classes.col}>
-      <h1 className={classes.title}>Daily</h1>
-      <ul className={classes.list}>
-        {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-          style={{
-            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
-          }}
-          >
-            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */} 
-            {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) == 1 ? ( 'guess' ) : ('guesses') }
-          </li>
-        ))}
-      </ul>
-      </section>
-      <section className={classes.col}>
-      <h1 className={classes.title}>Weekly</h1>
-      <ul className={classes.list}>
-        {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-          style={{
-            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
-          }}
-          >
-            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
-            {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
-          </li>
-        ))}
-      </ul>
-      </section>
-      <section className={classes.col}>
-      <h1 className={classes.title}>All time Leaderboard</h1>
-      <ul className={classes.list}>
-        {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-          style={{
-            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
-          }}
-          >
-            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
-            #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
-          </li>
-
-        ))}
-      </ul>
-      </section>
-      <section className={classes.col}>
-      <h1 className={classes.title}>Total Days Played Leaderboard</h1>
-      <ul className={classes.list}>
-        {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
-          <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-          style={{
-            fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-            color: index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : index > 2 ? 'black' : 'inherit', // Apply gold, silver, bronze colors
-          }}
-          >
-            {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
-            #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) == 1 ? ( 'attempt' ) : ('attempts') }
-          </li>
-
-        ))}
-      </ul>
-      </section>
-    </div>
+        <section className={classes.col}>
+          <h1 className={classes.title}>Daily</h1>
+          <ul className={classes.list}>
+            {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
+              <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                style={{
+                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                }}
+              >
+                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'guess' : 'guesses'}
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className={classes.col}>
+          <h1 className={classes.title}>Weekly</h1>
+          <ul className={classes.list}>
+            {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
+              <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                style={{
+                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                }}
+              >
+                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className={classes.col}>
+          <h1 className={classes.title}>All Time Leaderboard</h1>
+          <ul className={classes.list}>
+            {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
+              <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                style={{
+                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                }}
+              >
+                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className={classes.col}>
+          <h1 className={classes.title}>Total Days Played Leaderboard</h1>
+          <ul className={classes.list}>
+            {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
+              <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                style={{
+                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                }}
+              >
+                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'attempt' : 'attempts'}
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className={classes.col}>
+          <h1 className={classes.title}>Woodspoon Leaderboard</h1>
+          <ul className={classes.list}>
+            {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
+              <li key={index} className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                style={{
+                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                }}
+              >
+                {index === 0 ? '🥄 ' : ''} {/* Add crown emoji to first place */}
+                #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </div>
   );
 };
 
 export default Leaderboard;
-// 👑

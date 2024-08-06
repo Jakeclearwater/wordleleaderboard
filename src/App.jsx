@@ -7,6 +7,7 @@ import bsod from './assets/bsod.png';
 const App = () => {
   const classes = useStyles();
   const wordle = "ITWORDLE";
+  const appVersion = '1.0.0'
   const classNames = ["green", "yellow", "gray"];
   // Split "Wordle" into individual characters and wrap each in a span
   const wordleSpans = wordle.split('').map((char, index) => (
@@ -16,6 +17,7 @@ const App = () => {
   ));
 
 
+
   const hack = () => {
     console.log("oops");
     document.body.style.backgroundImage = `url('${bsod}')`;
@@ -23,10 +25,11 @@ const App = () => {
 
   return (
     <div className={classes.App}>
+      <p><span className={classes.versionInfo}>Application Version {appVersion}</span></p>
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
-      <p>Pls dont <span className={classes.spanicon} onClick={hack}>break</span> it, it was a 15min hack</p>
+      <p>Pls dont <span className={classes.spanicon} onClick={hack}>break</span> it, it was a 2hour hack</p>
     </div>
   );
 };
@@ -39,16 +42,30 @@ const useStyles = createUseStyles({
     height: '100%',
     justifyContent: 'center !important',
     width: '100vw',
-    //backgroundColor: 'white',
     marginTop: 'auto !important',
     marginBottom: 'auto !important',
     '& p': {
       color: 'black !important'
     },
   },
+  versionInfo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    color: 'grey',
+    fontSize: '0.8rem',
+    textAlign: 'left',
+    display: 'block',
+    marginLeft: '10px',
+  },
   spanicon: {
     color: 'red !important',
-    mouse: 'pointer',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    '&:hover': {
+      color: 'darkred', // Optional: Change color on hover
+      textDecoration: 'underline', // Ensure underline stays on hover
+    },
   },
   h1: {
     color: '#333',
