@@ -237,7 +237,7 @@ const Leaderboard = () => {
       </ul>
       </section>
       <section className={classes.col}>
-      <h1 className={classes.title}>Attempts Leaderboard</h1>
+      <h1 className={classes.title}>Total Days Played Leaderboard</h1>
       <ul className={classes.list}>
         {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
           <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
