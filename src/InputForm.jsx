@@ -84,6 +84,7 @@ const InputForm = () => {
     "Ronan",
     "Sean",
     "Don",
+    "Simon"
   ];
 
   const handleSubmit = async (e) => {
