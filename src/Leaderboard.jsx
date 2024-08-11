@@ -168,7 +168,7 @@ const Leaderboard = () => {
 
         // Process woodspoon scores
         const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
-        console.log('Fetched woodspoon scores:', woodspoonScores); // Debug log
+        console.log('Fetched wooden spoon scores:', woodspoonScores); // Debug log
 
         const groupedWoodspoonScores = woodspoonScores.reduce((acc, score) => {
           if (!acc[score.name]) {
@@ -187,7 +187,7 @@ const Leaderboard = () => {
         console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
         console.log('All-time Leaderboard:', allTimeLeaderboardArray); // Debug log
         console.log('All Attempts Leaderboard:', allAttemptsLeaderboardArray); // Debug log
-        console.log('Woodspoon Leaderboard:', woodspoonLeaderboardArray); // Debug log
+        console.log('Wooden spoon Leaderboard:', woodspoonLeaderboardArray); // Debug log
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
@@ -274,7 +274,7 @@ const Leaderboard = () => {
           </ul>
         </section>
         <section className={classes.col}>
-          <h1 className={classes.title}>Woodspoon Leaderboard</h1>
+          <h1 className={classes.title}>Wooden spoon Leaderboard</h1>
           <ul className={classes.list}>
             {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
