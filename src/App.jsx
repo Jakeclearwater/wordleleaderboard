@@ -7,7 +7,7 @@ import bsod from './assets/bsod.png';
 const App = () => {
   const classes = useStyles();
   const wordle = "ITWORDLE";
-  const appVersion = '1.0.0'
+  const appVersion = '1.0.1'
   const classNames = ["green", "yellow", "gray"];
   // Split "Wordle" into individual characters and wrap each in a span
   const wordleSpans = wordle.split('').map((char, index) => (
@@ -29,7 +29,7 @@ const App = () => {
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
-      <p>Pls dont <span className={classes.spanicon} onClick={hack}>break</span> it, it was a 2hour hack</p>
+      <p>Pls dont <span className={classes.spanicon} onClick={hack}>break</span> it. It is an ongoing, currently 2.1 hour hack.</p>
     </div>
   );
 };

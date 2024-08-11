@@ -94,6 +94,10 @@ const InputForm = () => {
       alert("Better luck next time " + name + "!");
     }
     // Check if guesses is valid
+    const utcDate = new Date(); // This will use the current date/time in UTC
+    const nzDate = new Date(utcDate.toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }));
+    // Step 3: Format the NZ Date
+    const formattedNZDate = nzDate.toISOString().split("T")[0];
     if (
       name &&
       (didNotFinish ||
@@ -104,10 +108,11 @@ const InputForm = () => {
         await addDoc(collection(firestore, "scores"), {
           name,
           guesses: numGuesses,
-          date: Timestamp.fromDate(new Date())
-            .toDate()
-            .toISOString()
-            .split("T")[0],
+          date : formattedNZDate,
+          // date: Timestamp.fromDate(new Date())
+          //   .toDate()
+          //   .toISOString()
+          //   .split("T")[0],
         });
         setName(name);
         setGuesses("");
