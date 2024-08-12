@@ -116,25 +116,24 @@ const InputForm = () => {
   ];
 
   const parseWordleResult = (result) => {
-    const lines = result.toString().trim().split('\n')
+    const lines = result.toString().trim().split("\n");
     const metadataLine = lines[0].trim(); // The first line contains the metadata
   
     console.log("Metadata Line:", metadataLine); // Debugging line
   
     // Regular expressions to match different formats
-    const metadataMatch = metadataLine.charAt(metadataLine.length - 3)
+    const metadataMatch = metadataLine.charAt(metadataLine.length - 3);
     let numberOfGuesses = 0;
     let isDNF = false;
-    if ( ! (parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
+    if (!(parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
       console.log("not found integer must be x ", metadataMatch); // Debugging line
       isDNF = true;
     } else {
-      numberOfGuesses = metadataMatch
+      numberOfGuesses = parseInt(metadataMatch, 10);
     }
-
-    // Extract the result blocks (lines) from the remaining part
   
-    const resultBlocks = lines.slice(2,lines.length);
+    // Extract the result blocks (lines) from the remaining part
+    const resultBlocks = lines.slice(2, lines.length);
   
     console.log("Number of Guesses: ", numberOfGuesses); // Debugging line
     console.log("Meta-dataMatch: ", metadataMatch);
@@ -144,12 +143,17 @@ const InputForm = () => {
   };
   
 
-  const sendResultToTeams = async (numGuesses, name, didNotFinish, resultBlocks) => {
+  const sendResultToTeams = async (
+    numGuesses,
+    name,
+    didNotFinish,
+    resultBlocks
+  ) => {
     const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
     let payload;
     const messageText = didNotFinish
-    ? `${name} did not finish - spoon!`
-    : `${name} scored ${numGuesses} guesses.`;
+      ? `${name} did not finish - spoon!`
+      : `${name} scored ${numGuesses} guesses.`;
 
     if (wordleResult) {
       const guessLines = numGuesses;
@@ -166,15 +170,15 @@ const InputForm = () => {
           {
             contentType: "application/vnd.microsoft.card.adaptive",
             content: {
-              "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-              "type": "AdaptiveCard",
-              "version": "1.2",
-              "body": [
+              $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+              type: "AdaptiveCard",
+              version: "1.2",
+              body: [
                 {
-                  "type": "TextBlock",
-                  "text": messageText,
-                  "weight": "bolder",
-                  "size": "medium",
+                  type: "TextBlock",
+                  text: messageText,
+                  weight: "bolder",
+                  size: "medium",
                 },
                 ...textBlocks,
               ],
@@ -189,15 +193,15 @@ const InputForm = () => {
           {
             contentType: "application/vnd.microsoft.card.adaptive",
             content: {
-              "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-              "type": "AdaptiveCard",
-              "version": "1.2",
-              "body": [
+              $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+              type: "AdaptiveCard",
+              version: "1.2",
+              body: [
                 {
-                  "type": "TextBlock",
-                  "text": messageText,
-                  "weight": "bolder",
-                  "size": "medium",
+                  type: "TextBlock",
+                  text: messageText,
+                  weight: "bolder",
+                  size: "medium",
                 },
               ],
             },
@@ -220,8 +224,18 @@ const InputForm = () => {
     setLoading(true);
     setShowOverlay(true);
   
-    const [wordleGuesses, resultBlocks, isDNF] = parseWordleResult(wordleResult);
-    const numGuesses = didNotFinish ? 0 : Number(guesses);
+    // Ensure wordleGuesses is an integer or default to 0
+    const wordleGuesses = parseInt(wordleResult, 10) || 0;
+    const numGuesses = didNotFinish ? 0 : parseInt(guesses, 10) || 0;
+  
+    const [parsedWordleGuesses, resultBlocks, isDNF] =
+      parseWordleResult(wordleResult);
+  
+    // Automatically set DNF if pasted result indicates it
+    if (pasteWordle && isDNF) {
+      setDidNotFinish(true);
+    }
+  
     const isWordleResultPasted = wordleResult.trim().length > 0;
     const isNumGuessesProvided = numGuesses > 0;
   
@@ -241,18 +255,22 @@ const InputForm = () => {
       }
       if (isDNF) {
         if (!didNotFinish) {
-          alert("The pasted result indicates DNF, but 'Did Not Finish' is not selected.");
+          alert(
+            "The pasted result indicates DNF, but 'Did Not Finish' is not selected."
+          );
           setLoading(false);
           setShowOverlay(false);
           return;
         }
-      } else if (isNumGuessesProvided && numGuesses !== parseInt(wordleGuesses)) {
-        alert(`Mismatch detected: Number of guesses (${numGuesses}) does not match the pasted result (${wordleGuesses}).`);
+      } else if (isNumGuessesProvided && numGuesses !== parsedWordleGuesses) {
+        alert(
+          `Mismatch detected: Number of guesses (${numGuesses}) does not match the pasted result (${parsedWordleGuesses}).`
+        );
         setLoading(false);
         setShowOverlay(false);
         return;
       }
-    } else if (!isNumGuessesProvided && !didNotFinish) {
+    } else if (!pasteWordle && !isNumGuessesProvided && !didNotFinish) {
       alert("Please provide the number of guesses or select 'Did Not Finish'.");
       setLoading(false);
       setShowOverlay(false);
@@ -260,11 +278,18 @@ const InputForm = () => {
     }
   
     const utcDate = new Date();
-    const nzDate = new Date(utcDate.toLocaleString("en-US", { timeZone: "Pacific/Auckland" }));
+    const nzDate = new Date(
+      utcDate.toLocaleString("en-US", { timeZone: "Pacific/Auckland" })
+    );
     const formattedNZDate = nzDate.toISOString().split("T")[0];
   
     try {
-      const finalGuesses = isWordleResultPasted ? (isDNF ? 0 : wordleGuesses) : numGuesses;
+      const finalGuesses =
+        pasteWordle && isWordleResultPasted
+          ? isDNF
+            ? 0
+            : parsedWordleGuesses // Use parsed guesses if Wordle output is pasted
+          : numGuesses; // Otherwise use the provided number of guesses
   
       await addDoc(collection(firestore, "scores"), {
         name,
@@ -273,7 +298,7 @@ const InputForm = () => {
       });
   
       if (pasteWordle && isWordleResultPasted) {
-        await sendResultToTeams(wordleGuesses, name, isDNF, resultBlocks);
+        await sendResultToTeams(parsedWordleGuesses, name, isDNF, resultBlocks);
       } else if (!pasteWordle && isNumGuessesProvided) {
         await sendResultToTeams(numGuesses, name, didNotFinish, []);
       }
@@ -290,6 +315,7 @@ const InputForm = () => {
       }, 2000);
     }
   };
+  
 
   return (
     <>
@@ -331,9 +357,11 @@ const InputForm = () => {
             onChange={(e) => setGuesses(e.target.value)}
             min={0}
             max={7}
-            required={!didNotFinish}
-            className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`}
-            disabled={didNotFinish}
+            required={!didNotFinish && !pasteWordle} // Only required if DNF is not checked and Wordle output is not pasted
+            className={`${classes.input} ${
+              didNotFinish || pasteWordle ? classes.disabled : ""
+            }`} // Disable if DNF or Paste Wordle Output is checked
+            disabled={didNotFinish || pasteWordle} // Disable if DNF or Paste Wordle Output is checked
           />
         </div>
         <div>
@@ -369,7 +397,11 @@ const InputForm = () => {
             />
           </div>
         )}
-        <button type="submit" className={`${classes.button} ${loading ? classes.disabled : ""}`} disabled={loading}>
+        <button
+          type="submit"
+          className={`${classes.button} ${loading ? classes.disabled : ""}`}
+          disabled={loading}
+        >
           Submit
         </button>
       </form>
