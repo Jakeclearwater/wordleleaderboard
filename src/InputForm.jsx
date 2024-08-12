@@ -51,16 +51,36 @@ const useStyles = createUseStyles({
     border: "1px solid #ccc",
     minHeight: "100px",
   },
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    color: "white",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    opacity: 1,
+    transition: "opacity 0.5s ease",
+  },
+  hidden: {
+    opacity: 0,
+  },
 });
 
 const InputForm = () => {
-  const classes = useStyles(); // Use the styles
+  const classes = useStyles();
   const [name, setName] = useState("");
   const [guesses, setGuesses] = useState("");
-  const [didNotFinish, setDidNotFinish] = useState(false); // State for toggle button
-  const [wordleResult, setWordleResult] = useState(""); // State for Wordle result
+  const [didNotFinish, setDidNotFinish] = useState(false);
+  const [wordleResult, setWordleResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [pasteWordle, setPasteWordle] = useState(false);
 
-  // Load the last chosen name from localStorage (if exists)
   useEffect(() => {
     const lastChosenName = localStorage.getItem("lastChosenName");
     if (lastChosenName) {
@@ -92,64 +112,99 @@ const InputForm = () => {
     "Ronan",
     "Sean",
     "Don",
-    "Simon"
+    "Simon",
   ];
 
   const parseWordleResult = (result) => {
-    // Split the result into lines and separate the header from the body
-    const lines = result.trim().split('\n');
-    const header = lines[0]; // The first line as the header
-    const resultLines = lines.slice(1); // The rest as result lines
-
-    return { header, resultLines };
-  };
-
-  const sendResultToTeams = async (result, name, didNotFinish, wordleResult) => {
-    const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
-    const { header, resultLines } = parseWordleResult(wordleResult);
-
-    // Ensure resultLines is an array
-    if (!Array.isArray(resultLines)) {
-      console.error("resultLines is not an array:", resultLines);
-      return;
+    const lines = result.toString().trim().split('\n')
+    const metadataLine = lines[0].trim(); // The first line contains the metadata
+  
+    console.log("Metadata Line:", metadataLine); // Debugging line
+  
+    // Regular expressions to match different formats
+    const metadataMatch = metadataLine.charAt(metadataLine.length - 3)
+    let numberOfGuesses = 0;
+    let isDNF = false;
+    if ( ! (parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
+      console.log("not found integer must be x ", metadataMatch); // Debugging line
+      isDNF = true;
+    } else {
+      numberOfGuesses = metadataMatch
     }
 
-    // Create an array of TextBlock objects for each line
-    const textBlocks = resultLines.map((line, index) => ({
-      type: "TextBlock",
-      text: line,
-      wrap: false, // Prevent text wrapping to keep the formatting intact
-      separator: false
-    }));
+    // Extract the result blocks (lines) from the remaining part
+  
+    const resultBlocks = lines.slice(2,lines.length);
+  
+    console.log("Number of Guesses: ", numberOfGuesses); // Debugging line
+    console.log("Meta-dataMatch: ", metadataMatch);
+    console.log("Result Blocks: ", resultBlocks); // Debugging line
+  
+    return [numberOfGuesses, resultBlocks, isDNF]; // Return as a tuple
+  };
+  
 
-    const payload = {
-      type: "message",
-      attachments: [
-        {
-          contentType: "application/vnd.microsoft.card.adaptive",
-          content: {
-            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-            "type": "AdaptiveCard",
-            "version": "1.2",
-            "body": [
-              {
-                "type": "TextBlock",
-                "text": `${name} scored ${didNotFinish ? 'X' : 'N/A'} DID NOT FINISH:`,
-                "weight": "bolder",
-                "size": "medium"
-              },
-              {
-                "type": "TextBlock",
-                "text": header, // Add the header
-                "wrap": false,
-                "separator": true
-              },
-              ...textBlocks // Add each TextBlock for each line of the Wordle result
-            ]
-          }
-        }
-      ]
-    };
+  const sendResultToTeams = async (numGuesses, name, didNotFinish, resultBlocks) => {
+    const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
+    let payload;
+    const messageText = didNotFinish
+    ? `${name} did not finish - spoon!`
+    : `${name} scored ${numGuesses} guesses.`;
+
+    if (wordleResult) {
+      const guessLines = numGuesses;
+      const textBlocks = resultBlocks.map((line) => ({
+        type: "TextBlock",
+        text: line,
+        wrap: false,
+        separator: false,
+      }));
+
+      payload = {
+        type: "message",
+        attachments: [
+          {
+            contentType: "application/vnd.microsoft.card.adaptive",
+            content: {
+              "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+              "type": "AdaptiveCard",
+              "version": "1.2",
+              "body": [
+                {
+                  "type": "TextBlock",
+                  "text": messageText,
+                  "weight": "bolder",
+                  "size": "medium",
+                },
+                ...textBlocks,
+              ],
+            },
+          },
+        ],
+      };
+    } else {
+      payload = {
+        type: "message",
+        attachments: [
+          {
+            contentType: "application/vnd.microsoft.card.adaptive",
+            content: {
+              "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+              "type": "AdaptiveCard",
+              "version": "1.2",
+              "body": [
+                {
+                  "type": "TextBlock",
+                  "text": messageText,
+                  "weight": "bolder",
+                  "size": "medium",
+                },
+              ],
+            },
+          },
+        ],
+      };
+    }
 
     try {
       console.log("Sending result to Teams:", payload);
@@ -162,124 +217,163 @@ const InputForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Extract the number of guesses from the pasted result
-    const wordleGuesses = parseWordleResult(wordleResult);
-    const resultGuesses = wordleGuesses.resultLines.length; // Number of lines is the number of guesses
-    const numGuesses = didNotFinish ? 0 : Number(guesses); // Get the number of guesses from input
-
-    console.log("Number of guesses:", numGuesses);
-    console.log("Parsed Wordle guesses:", wordleGuesses);
-
-    // Check if Wordle result is pasted
+    setLoading(true);
+    setShowOverlay(true);
+  
+    const [wordleGuesses, resultBlocks, isDNF] = parseWordleResult(wordleResult);
+    const numGuesses = didNotFinish ? 0 : Number(guesses);
     const isWordleResultPasted = wordleResult.trim().length > 0;
-
-    if (isWordleResultPasted) {
-      // If Wordle result is pasted, ignore `numGuesses` and `didNotFinish`
-      if (numGuesses !== 0 && numGuesses !== resultGuesses) {
-        // If there’s a mismatch between the number of guesses and the pasted result
-        alert(`Mismatch detected: Number of guesses (${numGuesses}) does not match the pasted result (${resultGuesses}).`);
-        return; // Prevent form submission
-      }
-    } else {
-      // If Wordle result is not pasted, validate based on the form fields
-      if (numGuesses === 0) {
-        alert("Better luck next time " + name + "!");
-        return; // Prevent form submission
-      }
-
-      if (
-        !name ||
-        (didNotFinish || (Number.isInteger(numGuesses) && (numGuesses >= 1 && numGuesses <= 6 || numGuesses === 7)))
-      ) {
-        alert("Guesses must be between 1 and 6 or exactly 7 for a fail.");
-        return; // Prevent form submission
-      }
+    const isNumGuessesProvided = numGuesses > 0;
+  
+    if (!name) {
+      alert("Please provide your name.");
+      setLoading(false);
+      setShowOverlay(false);
+      return;
     }
-
+  
+    if (pasteWordle) {
+      if (!isWordleResultPasted) {
+        alert("Please provide the Wordle result.");
+        setLoading(false);
+        setShowOverlay(false);
+        return;
+      }
+      if (isDNF) {
+        if (!didNotFinish) {
+          alert("The pasted result indicates DNF, but 'Did Not Finish' is not selected.");
+          setLoading(false);
+          setShowOverlay(false);
+          return;
+        }
+      } else if (isNumGuessesProvided && numGuesses !== parseInt(wordleGuesses)) {
+        alert(`Mismatch detected: Number of guesses (${numGuesses}) does not match the pasted result (${wordleGuesses}).`);
+        setLoading(false);
+        setShowOverlay(false);
+        return;
+      }
+    } else if (!isNumGuessesProvided && !didNotFinish) {
+      alert("Please provide the number of guesses or select 'Did Not Finish'.");
+      setLoading(false);
+      setShowOverlay(false);
+      return;
+    }
+  
     const utcDate = new Date();
-    const nzDate = new Date(utcDate.toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" }));
+    const nzDate = new Date(utcDate.toLocaleString("en-US", { timeZone: "Pacific/Auckland" }));
     const formattedNZDate = nzDate.toISOString().split("T")[0];
-
+  
     try {
+      const finalGuesses = isWordleResultPasted ? (isDNF ? 0 : wordleGuesses) : numGuesses;
+  
       await addDoc(collection(firestore, "scores"), {
         name,
-        guesses: isWordleResultPasted ? resultGuesses : numGuesses,
+        guesses: finalGuesses,
         date: formattedNZDate,
       });
-      setName(name);
+  
+      if (pasteWordle && isWordleResultPasted) {
+        await sendResultToTeams(wordleGuesses, name, isDNF, resultBlocks);
+      } else if (!pasteWordle && isNumGuessesProvided) {
+        await sendResultToTeams(numGuesses, name, didNotFinish, []);
+      }
+  
       setGuesses("");
       setDidNotFinish(false);
       setWordleResult("");
-
-      const result = didNotFinish ? 0 : wordleGuesses;
-      await sendResultToTeams(result, name, didNotFinish, wordleResult);
     } catch (error) {
       console.error("Error adding document: ", error);
+    } finally {
+      setLoading(false);
+      setTimeout(() => {
+        setShowOverlay(false);
+      }, 2000);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className={classes.form}>
-      <div>
-        <h2>Enter Results</h2>
-        <label htmlFor="name">Name:</label>
-        <select
-          id="name"
-          value={name}
-          onChange={handleNameChange}
-          required={!didNotFinish} // Make this required only if not DNF
-          className={classes.select}
-          disabled={didNotFinish} // Disable select if DNF is checked
-        >
-          <option value="" disabled>
-            Select your name
-          </option>
-          {names.map((name, index) => (
-            <option key={index} value={name}>
-              {name}
+    <>
+      {showOverlay && (
+        <div className={`${classes.overlay} ${loading ? "" : classes.hidden}`}>
+          <div>
+            <h2>Thank You!</h2>
+          </div>
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className={classes.form}>
+        <div>
+          <h2>Enter Results</h2>
+          <label htmlFor="name">Name:</label>
+          <select
+            id="name"
+            value={name}
+            onChange={handleNameChange}
+            required={!didNotFinish}
+            className={classes.select}
+            disabled={didNotFinish}
+          >
+            <option value="" disabled>
+              Select your name
             </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor="guesses">Number of Guesses:</label>
-        <input
-          type="number"
-          id="guesses"
-          value={didNotFinish ? "" : guesses} // Clear value if DNF is checked
-          onChange={(e) => setGuesses(e.target.value)}
-          min={0}
-          max={7}
-          required={!didNotFinish} // Make this required only if not DNF
-          className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`} // Apply disabled style if DNF
-          disabled={didNotFinish} // Disable input if DNF is checked
-        />
-      </div>
-      <div>
-        <label>
+            {names.map((name, index) => (
+              <option key={index} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="guesses">Number of Guesses:</label>
           <input
-            type="checkbox"
-            checked={didNotFinish}
-            onChange={(e) => setDidNotFinish(e.target.checked)}
-            className={classes.checkbox}
+            type="number"
+            id="guesses"
+            value={didNotFinish ? "" : guesses}
+            onChange={(e) => setGuesses(e.target.value)}
+            min={0}
+            max={7}
+            required={!didNotFinish}
+            className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`}
+            disabled={didNotFinish}
           />
-          Did Not Finish
-        </label>
-      </div>
-      <div>
-        <label htmlFor="wordleResult">Wordle Result:</label>
-        <textarea
-          id="wordleResult"
-          value={wordleResult}
-          onChange={(e) => setWordleResult(e.target.value)}
-          className={classes.textarea}
-        />
-      </div>
-      <button type="submit" className={classes.button}>
-        Submit
-      </button>
-    </form>
+        </div>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={didNotFinish}
+              onChange={(e) => setDidNotFinish(e.target.checked)}
+              className={classes.checkbox}
+            />
+            Did Not Finish
+          </label>
+        </div>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={pasteWordle}
+              onChange={(e) => setPasteWordle(e.target.checked)}
+              className={classes.checkbox}
+            />
+            Paste Wordle Output
+          </label>
+        </div>
+        {pasteWordle && (
+          <div>
+            <label htmlFor="wordleResult">Wordle Result:</label>
+            <textarea
+              id="wordleResult"
+              value={wordleResult}
+              onChange={(e) => setWordleResult(e.target.value)}
+              className={classes.textarea}
+            />
+          </div>
+        )}
+        <button type="submit" className={`${classes.button} ${loading ? classes.disabled : ""}`} disabled={loading}>
+          Submit
+        </button>
+      </form>
+    </>
   );
 };
 
