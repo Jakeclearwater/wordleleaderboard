@@ -109,11 +109,13 @@ const Leaderboard = () => {
         console.log('Fetched daily scores:', dailyScores); // Debug log
 
         const groupedDailyScores = dailyScores.reduce((acc, score) => {
-          if (score.guesses === 0) return acc; // Exclude zero guesses
+          const guesses = parseFloat(score.guesses); // Ensure guesses are integers
+          if (isNaN(guesses)) return acc;
+          if (guesses === 0) return acc; // Exclude zero guesses
           if (!acc[score.name]) {
             acc[score.name] = { totalGuesses: 0, count: 0 };
           }
-          acc[score.name].totalGuesses += score.guesses;
+          acc[score.name].totalGuesses += guesses;
           acc[score.name].count += 1;
           return acc;
         }, {});
@@ -128,11 +130,13 @@ const Leaderboard = () => {
         console.log('Fetched weekly scores:', weeklyScores); // Debug log
 
         const groupedWeeklyScores = weeklyScores.reduce((acc, score) => {
-          if (score.guesses === 0) return acc; // Exclude zero guesses
+          const guesses = parseFloat(score.guesses); // Ensure guesses are integers
+          if (isNaN(guesses)) return acc;
+          if (guesses === 0) return acc; // Exclude zero guesses
           if (!acc[score.name]) {
             acc[score.name] = { totalGuesses: 0, count: 0 };
           }
-          acc[score.name].totalGuesses += score.guesses;
+          acc[score.name].totalGuesses += guesses;
           acc[score.name].count += 1;
           return acc;
         }, {});
@@ -147,11 +151,13 @@ const Leaderboard = () => {
         console.log('Fetched all-time scores:', allTimeScores); // Debug log
 
         const groupedAllTimeScores = allTimeScores.reduce((acc, score) => {
-          if (score.guesses === 0) return acc; // Exclude zero guesses
+          const guesses = parseFloat(score.guesses); // Ensure guesses are integers
+          if (isNaN(guesses)) return acc;
+          if (guesses === 0) return acc; // Exclude zero guesses
           if (!acc[score.name]) {
             acc[score.name] = { totalGuesses: 0, count: 0 };
           }
-          acc[score.name].totalGuesses += score.guesses;
+          acc[score.name].totalGuesses += guesses;
           acc[score.name].count += 1;
           return acc;
         }, {});
