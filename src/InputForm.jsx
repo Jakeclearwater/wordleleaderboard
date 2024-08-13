@@ -50,6 +50,7 @@ const useStyles = createUseStyles({
     borderRadius: "4px",
     border: "1px solid #ccc",
     minHeight: "100px",
+    minWidth: "195px",
   },
   overlay: {
     position: "fixed",
@@ -123,6 +124,7 @@ const InputForm = () => {
   
     // Regular expressions to match different formats
     const metadataMatch = metadataLine.charAt(metadataLine.length - 3);
+    const wordleNumber = metadataLine.split(' ')[1];
     let numberOfGuesses = 0;
     let isDNF = false;
     if (!(parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
@@ -136,88 +138,73 @@ const InputForm = () => {
     const resultBlocks = lines.slice(2, lines.length);
   
     console.log("Number of Guesses: ", numberOfGuesses); // Debugging line
+    console.log("Wordle Result", wordleNumber)
     console.log("Meta-dataMatch: ", metadataMatch);
     console.log("Result Blocks: ", resultBlocks); // Debugging line
   
-    return [numberOfGuesses, resultBlocks, isDNF]; // Return as a tuple
+    return [numberOfGuesses, wordleNumber, resultBlocks, isDNF]; // Return as a tuple
   };
   
 
   const sendResultToTeams = async (
     numGuesses,
+    wordleNumber,
     name,
     didNotFinish,
-    resultBlocks
-  ) => {
+    resultBlocks,
+) => {
     const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
-    let payload;
-    const messageText = didNotFinish
-      ? `${name} did not finish - spoon!`
-      : `${name} scored ${numGuesses} guesses.`;
 
-    if (wordleResult) {
-      const guessLines = numGuesses;
-      const textBlocks = resultBlocks.map((line) => ({
+    // Format the message based on whether the player finished or not
+    const messageText = didNotFinish
+        ? `${name} did not finish - spoon!`
+        : `${name} scored ${numGuesses} in Wordle #${wordleNumber}${numGuesses < 4 ? ' - Well done!' : ''}`;
+
+    // Map the result blocks to TextBlocks with compact styling
+    const textBlocks = resultBlocks.map((line) => ({
         type: "TextBlock",
         text: line,
-        wrap: false,
-        separator: false,
-      }));
+        wrap: true, // Allow text to wrap within the card
+        spacing: "None", // Reduce spacing between lines
+        size: "Medium", // Use smaller text size
+    }));
 
-      payload = {
+    // Define the payload for the Teams webhook
+    const payload = {
         type: "message",
         attachments: [
-          {
-            contentType: "application/vnd.microsoft.card.adaptive",
-            content: {
-              $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-              type: "AdaptiveCard",
-              version: "1.2",
-              body: [
-                {
-                  type: "TextBlock",
-                  text: messageText,
-                  weight: "bolder",
-                  size: "medium",
+            {
+                contentType: "application/vnd.microsoft.card.adaptive",
+                content: {
+                    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+                    type: "AdaptiveCard",
+                    version: "1.2",
+                    body: [
+                        {
+                            type: "TextBlock",
+                            text: messageText,
+                            weight: "bolder",
+                            size: "Medium",
+                            spacing: "None" // Reduce spacing for the title text
+                        },
+                        ...textBlocks,
+                    ],
                 },
-                ...textBlocks,
-              ],
             },
-          },
         ],
-      };
-    } else {
-      payload = {
-        type: "message",
-        attachments: [
-          {
-            contentType: "application/vnd.microsoft.card.adaptive",
-            content: {
-              $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-              type: "AdaptiveCard",
-              version: "1.2",
-              body: [
-                {
-                  type: "TextBlock",
-                  text: messageText,
-                  weight: "bolder",
-                  size: "medium",
-                },
-              ],
-            },
-          },
-        ],
-      };
-    }
+    };
 
+    // Send the payload to the Teams webhook
     try {
-      console.log("Sending result to Teams:", payload);
-      const response = await axios.post(webhookUrl, payload);
-      console.log("Teams response:", response);
+        console.log("Sending result to Teams:", payload);
+        const response = await axios.post(webhookUrl, payload);
+        console.log("Teams response:", response);
     } catch (error) {
-      console.error("Error sending result to Teams:", error);
+        console.error("Error sending result to Teams:", error);
     }
-  };
+};
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -228,7 +215,7 @@ const InputForm = () => {
     const wordleGuesses = parseInt(wordleResult, 10) || 0;
     const numGuesses = didNotFinish ? 0 : parseInt(guesses, 10) || 0;
   
-    const [parsedWordleGuesses, resultBlocks, isDNF] =
+    const [parsedWordleGuesses, wordleNumber, resultBlocks, isDNF] =
       parseWordleResult(wordleResult);
   
     // Automatically set DNF if pasted result indicates it
@@ -298,7 +285,7 @@ const InputForm = () => {
       });
   
       if (pasteWordle && isWordleResultPasted) {
-        await sendResultToTeams(parsedWordleGuesses, name, isDNF, resultBlocks);
+        await sendResultToTeams(parsedWordleGuesses, wordleNumber, name, isDNF, resultBlocks);
       } else if (!pasteWordle && isNumGuessesProvided) {
         await sendResultToTeams(numGuesses, name, didNotFinish, []);
       }
@@ -388,7 +375,6 @@ const InputForm = () => {
         </div>
         {pasteWordle && (
           <div>
-            <label htmlFor="wordleResult">Wordle Result:</label>
             <textarea
               id="wordleResult"
               value={wordleResult}

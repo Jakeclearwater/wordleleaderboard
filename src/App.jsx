@@ -7,7 +7,7 @@ import bsod from './assets/bsod.png';
 const App = () => {
   const classes = useStyles();
   const wordle = "ITWORDLE";
-  const appVersion = '1.0.1'
+  const appVersion = '1.0.2'
   const classNames = ["green", "yellow", "gray"];
   // Split "Wordle" into individual characters and wrap each in a span
   const wordleSpans = wordle.split('').map((char, index) => (
