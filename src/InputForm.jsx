@@ -355,8 +355,8 @@ const InputForm = () => {
             id="guesses"
             value={didNotFinish ? "" : guesses}
             onChange={(e) => setGuesses(e.target.value)}
-            min={0}
-            max={7}
+            min={1}
+            max={6}
             required={!didNotFinish && !pasteWordle} // Only required if DNF is not checked and Wordle output is not pasted
             className={`${classes.input} ${
               didNotFinish || pasteWordle ? classes.disabled : ""
