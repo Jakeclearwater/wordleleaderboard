@@ -53,11 +53,12 @@ const useStyles = createUseStyles({
     position: 'absolute',
     top: 0,
     left: 0,
-    color: 'grey',
+    color: 'rgba(83, 73, 73, 0.87);',
     fontSize: '0.8rem',
     textAlign: 'left',
     display: 'block',
     marginLeft: '10px',
+    backgroundColor: '#E3E3E1',
   },
   spanicon: {
     color: 'red !important',
