@@ -49,6 +49,9 @@ const useStyles = createUseStyles({
       alignItems: 'center',
     },
   },
+  resultsHeader: {
+    color: 'rgba(83, 73, 73, 0.87);',
+  },
 });
 
 const Leaderboard = () => {
@@ -213,7 +216,7 @@ const Leaderboard = () => {
 
   return (
     <div className={classes.leaderboardContainer}>
-      <h1>Average Results</h1>
+      <h1 className={classes.resultsHeader}>Average Results</h1>
       <div className={classes.columns}>
         <section className={classes.col}>
           <h1 className={classes.title}>Daily</h1>

@@ -47,6 +47,7 @@ const useStyles = createUseStyles({
     '& p': {
       color: 'black !important'
     },
+    backgroundColor: '#E3E3E1',
   },
   versionInfo: {
     position: 'absolute',

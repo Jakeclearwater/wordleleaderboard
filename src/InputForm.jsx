@@ -315,7 +315,6 @@ const InputForm = () => {
       )}
       <form onSubmit={handleSubmit} className={classes.form}>
         <div>
-          <h2>Enter Results</h2>
           <label htmlFor="name">Name:</label>
           <select
             id="name"
