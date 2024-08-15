@@ -153,12 +153,20 @@ const InputForm = () => {
     didNotFinish,
     resultBlocks,
 ) => {
+    const grats = [
+                  'Genius'
+                  ,'Magnificent'
+                  ,'Impressive'
+                  ,'Splendid'
+                  ,'Great'
+                  ,'Phew'
+                ]
     const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
 
     // Format the message based on whether the player finished or not
     const messageText = didNotFinish
         ? `${name} did not finish - spoon!`
-        : `${name} scored ${numGuesses} in Wordle #${wordleNumber}${numGuesses < 4 ? ' - Well done!' : ''}`;
+        : `${name} scored ${numGuesses} in Wordle #${wordleNumber} - ${grats[ numGuesses - 1 ]}`;
 
     // Map the result blocks to TextBlocks with compact styling
     const textBlocks = resultBlocks.map((line) => ({
