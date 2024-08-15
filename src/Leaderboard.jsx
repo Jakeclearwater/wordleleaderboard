@@ -12,7 +12,7 @@ const useStyles = createUseStyles({
   title: {
     fontSize: '24px',
     textAlign: 'center',
-    color: '#333',
+    color: 'rgba(83, 73, 73, 0.87);',
     marginBottom: '20px',
   },
   list: {
@@ -216,10 +216,10 @@ const Leaderboard = () => {
 
   return (
     <div className={classes.leaderboardContainer}>
-      <h1 className={classes.resultsHeader}>Average Results</h1>
+      <h1 className={classes.resultsHeader}>Results Tables</h1>
       <div className={classes.columns}>
         <section className={classes.col}>
-          <h1 className={classes.title}>Daily</h1>
+          <h1 className={classes.title}>Daily Leaderboard</h1>
           <ul className={classes.list}>
             {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
@@ -235,7 +235,7 @@ const Leaderboard = () => {
           </ul>
         </section>
         <section className={classes.col}>
-          <h1 className={classes.title}>Weekly</h1>
+          <h1 className={classes.title}>Weekly Leaderboard</h1>
           <ul className={classes.list}>
             {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
