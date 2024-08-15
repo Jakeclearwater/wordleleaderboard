@@ -119,12 +119,12 @@ const InputForm = () => {
   const parseWordleResult = (result) => {
     const lines = result.toString().trim().split("\n");
     const metadataLine = lines[0].trim(); // The first line contains the metadata
-  
+
     console.log("Metadata Line:", metadataLine); // Debugging line
-  
+
     // Regular expressions to match different formats
     const metadataMatch = metadataLine.charAt(metadataLine.length - 3);
-    const wordleNumber = metadataLine.split(' ')[1];
+    const wordleNumber = metadataLine.split(" ")[1];
     let numberOfGuesses = 0;
     let isDNF = false;
     if (!(parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
@@ -133,106 +133,113 @@ const InputForm = () => {
     } else {
       numberOfGuesses = parseInt(metadataMatch, 10);
     }
-  
+
     // Extract the result blocks (lines) from the remaining part
     const resultBlocks = lines.slice(2, lines.length);
-  
+
     console.log("Number of Guesses: ", numberOfGuesses); // Debugging line
-    console.log("Wordle Result", wordleNumber)
+    console.log("Wordle Result", wordleNumber);
     console.log("Meta-dataMatch: ", metadataMatch);
     console.log("Result Blocks: ", resultBlocks); // Debugging line
-  
+
     return [numberOfGuesses, wordleNumber, resultBlocks, isDNF]; // Return as a tuple
   };
-  
 
   const sendResultToTeams = async (
     numGuesses,
     wordleNumber,
     name,
     didNotFinish,
-    resultBlocks,
-) => {
+    resultBlocks
+  ) => {
+    const grats = [
+      "Genius",
+      "Magnificent",
+      "Impressive",
+      "Splendid",
+      "Great",
+      "Phew",
+    ];
     const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
 
     // Format the message based on whether the player finished or not
     const messageText = didNotFinish
-        ? `${name} did not finish - spoon!`
-        : `${name} scored ${numGuesses} in Wordle #${wordleNumber}${numGuesses < 4 ? ' - Well done!' : ''}`;
+      ? `${name} did not finish - spoon!`
+      : `${name} scored ${numGuesses} in Wordle #${wordleNumber} - ${
+          grats[numGuesses - 1]
+        }`;
 
     // Map the result blocks to TextBlocks with compact styling
     const textBlocks = resultBlocks.map((line) => ({
-        type: "TextBlock",
-        text: line,
-        wrap: true, // Allow text to wrap within the card
-        spacing: "None", // Reduce spacing between lines
-        size: "Medium", // Use smaller text size
+      type: "TextBlock",
+      text: line,
+      wrap: true, // Allow text to wrap within the card
+      spacing: "None", // Reduce spacing between lines
+      size: "Medium", // Use smaller text size
     }));
 
     // Define the payload for the Teams webhook
     const payload = {
-        type: "message",
-        attachments: [
-            {
-                contentType: "application/vnd.microsoft.card.adaptive",
-                content: {
-                    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-                    type: "AdaptiveCard",
-                    version: "1.2",
-                    body: [
-                        {
-                            type: "TextBlock",
-                            text: messageText,
-                            weight: "bolder",
-                            size: "Medium",
-                            spacing: "None" // Reduce spacing for the title text
-                        },
-                        ...textBlocks,
-                    ],
-                },
-            },
-        ],
+      type: "message",
+      attachments: [
+        {
+          contentType: "application/vnd.microsoft.card.adaptive",
+          content: {
+            $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+            type: "AdaptiveCard",
+            version: "1.2",
+            body: [
+              {
+                type: "TextBlock",
+                text: messageText,
+                weight: "bolder",
+                size: "Medium",
+                spacing: "None", // Reduce spacing for the title text
+              },
+              ...textBlocks,
+            ],
+          },
+        },
+      ],
     };
 
     // Send the payload to the Teams webhook
     try {
-        console.log("Sending result to Teams:", payload);
-        const response = await axios.post(webhookUrl, payload);
-        console.log("Teams response:", response);
+      console.log("Sending result to Teams:", payload);
+      const response = await axios.post(webhookUrl, payload);
+      console.log("Teams response:", response);
     } catch (error) {
-        console.error("Error sending result to Teams:", error);
+      console.error("Error sending result to Teams:", error);
     }
-};
-
-
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setShowOverlay(true);
-  
+
     // Ensure wordleGuesses is an integer or default to 0
     const wordleGuesses = parseInt(wordleResult, 10) || 0;
     const numGuesses = didNotFinish ? 0 : parseInt(guesses, 10) || 0;
-  
+
     const [parsedWordleGuesses, wordleNumber, resultBlocks, isDNF] =
       parseWordleResult(wordleResult);
-  
+
     // Automatically set DNF if pasted result indicates it
     if (pasteWordle && isDNF) {
       setDidNotFinish(true);
     }
-  
+
     const isWordleResultPasted = wordleResult.trim().length > 0;
     const isNumGuessesProvided = numGuesses > 0;
-  
+
     if (!name) {
       alert("Please provide your name.");
       setLoading(false);
       setShowOverlay(false);
       return;
     }
-  
+
     if (pasteWordle) {
       if (!isWordleResultPasted) {
         alert("Please provide the Wordle result.");
@@ -263,13 +270,13 @@ const InputForm = () => {
       setShowOverlay(false);
       return;
     }
-  
+
     const utcDate = new Date();
     const nzDate = new Date(
       utcDate.toLocaleString("en-US", { timeZone: "Pacific/Auckland" })
     );
     const formattedNZDate = nzDate.toISOString().split("T")[0];
-  
+
     try {
       const finalGuesses =
         pasteWordle && isWordleResultPasted
@@ -277,19 +284,25 @@ const InputForm = () => {
             ? 0
             : parsedWordleGuesses // Use parsed guesses if Wordle output is pasted
           : numGuesses; // Otherwise use the provided number of guesses
-  
+
       await addDoc(collection(firestore, "scores"), {
         name,
         guesses: finalGuesses,
         date: formattedNZDate,
       });
-  
+
       if (pasteWordle && isWordleResultPasted) {
-        await sendResultToTeams(parsedWordleGuesses, wordleNumber, name, isDNF, resultBlocks);
+        await sendResultToTeams(
+          parsedWordleGuesses,
+          wordleNumber,
+          name,
+          isDNF,
+          resultBlocks
+        );
       } else if (!pasteWordle && isNumGuessesProvided) {
         await sendResultToTeams(numGuesses, name, didNotFinish, []);
       }
-  
+
       setGuesses("");
       setDidNotFinish(false);
       setWordleResult("");
@@ -302,7 +315,6 @@ const InputForm = () => {
       }, 2000);
     }
   };
-  
 
   return (
     <>
