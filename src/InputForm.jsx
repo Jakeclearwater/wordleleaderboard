@@ -294,6 +294,10 @@ const InputForm = () => {
         date: formattedNZDate,
       });
 
+    setGuesses("");
+    setDidNotFinish(false);
+    setWordleResult("");
+
       if (pasteWordle && isWordleResultPasted) {
         await sendResultToTeams(
           parsedWordleGuesses,
@@ -315,7 +319,7 @@ const InputForm = () => {
       setLoading(false);
       setTimeout(() => {
         setShowOverlay(false);
-      }, 2000);
+      }, 3000);
     }
   };
 

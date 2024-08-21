@@ -29,7 +29,7 @@ const App = () => {
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
-      <p>Pls dont <span className={classes.spanicon} onClick={hack}>break</span> it. It is an ongoing, currently 2.1 hour hack.</p>
+      <p>Please don't <span className={classes.spanicon} onClick={hack}>break</span> this app. It is an ongoing, currently a 2.4 hour hack.</p>
     </div>
   );
 };
