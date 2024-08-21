@@ -14,7 +14,9 @@ const useStyles = createUseStyles({
     fontSize: '24px',
     textAlign: 'center',
     color: 'rgba(83, 73, 73, 0.87);',
-    marginBottom: '20px',
+    marginBottom: '15px',
+    marginTop: '10px',
+    height: '55px',
   },
   list: {
     listStyleType: 'none',
@@ -24,6 +26,7 @@ const useStyles = createUseStyles({
     padding: '10px',
     borderBottom: '1px solid #ccc',
     color: '#555',
+    marginLeft: '10px',
   },
   listItemLast: {
     borderBottom: 'none',
@@ -48,11 +51,13 @@ const useStyles = createUseStyles({
     '@media (max-width: 1000px)': {
       flexDirection: 'column',
       alignItems: 'center',
+    
     },
   },
   resultsHeader: {
     color: 'rgba(83, 73, 73, 0.87)',
-    fontSize: '3em'
+    fontSize: '3em',
+    marginTop: '-10px'
   },
   loading: {
     display: 'flex',
@@ -62,8 +67,46 @@ const useStyles = createUseStyles({
     fontSize: '1.5em',
     color: '#555',
   },
-  
+  icon: {
+    // position: 'absolute',
+    marginLeft: '-20px', // Adjust this value as needed
+    paddingRight: '5px',
+    // transform: 'translateY(-50%)',
+  }
 });
+
+const grayShades = [
+  '#bebebe', // Step 0
+  '#c4c4c4', // Step 1
+  '#c9c9c9', // Step 2
+  '#d0d0d0', // Step 3
+  '#d5d5d5', // Step 4
+  '#dadada', // Step 5
+  '#dfdfdf', // Step 6
+  '#e4e4e4', // Step 7
+  '#e8e8e8', // Step 8
+  '#ededed', // Step 9
+  '#f2f2f2', // Step 10
+  '#f6f6f6', // Step 11
+  '#f9f9f9', // Step 12
+  '#fcfcfc', // Step 13
+  '#fdfdfd', // Step 14
+  '#fefefe', // Step 15
+  '#ffffff', // Step 16
+  '#ffffff', // Step 17
+  '#ffffff', // Step 18
+  '#ffffff', // Step 19
+];
+
+const calculateGradientColor = (index) => {
+  const baseColor = '#bebebe'; // Base color for the gradient
+  const endColor = '#d3d3d3'; // End color for the gradient
+  const fadeFactor = Math.min((index - 3) / 5, 1); // Calculate fade factor, adjust the denominator to control fading speed
+  const r = Math.round(parseInt(baseColor.slice(1, 3), 16) * (1 - fadeFactor) + parseInt(endColor.slice(1, 3), 16) * fadeFactor);
+  const g = Math.round(parseInt(baseColor.slice(3, 5), 16) * (1 - fadeFactor) + parseInt(endColor.slice(3, 5), 16) * fadeFactor);
+  const b = Math.round(parseInt(baseColor.slice(5, 7), 16) * (1 - fadeFactor) + parseInt(endColor.slice(5, 7), 16) * fadeFactor);
+  return `rgb(${r}, ${g}, ${b})`;
+};
 
 const Leaderboard = () => {
   const classes = useStyles();
@@ -205,7 +248,8 @@ const Leaderboard = () => {
         console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
         console.log('All-time Leaderboard:', allTimeLeaderboardArray); // Debug log
         console.log('All Attempts Leaderboard:', allAttemptsLeaderboardArray); // Debug log
-        console.log('Wooden spoon Leaderboard:', woodspoonLeaderboardArray); // Debug log
+        console.log('Wooden spoon Leaderboard:', woodspoonLeaderboardArray); // Debug lo
+
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
@@ -236,14 +280,15 @@ const Leaderboard = () => {
           <h1 className={classes.title}>Daily Leaderboard</h1>
           <ul className={classes.list}>
             {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
+              
               <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal',
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
                 }}
               >
-                {index === 0 ? '👑 ' : ''}
-                {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'guess' : 'guesses'}
+                {index === 0 && <span className={classes.icon}>👑</span>}
+                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'guess' : 'guesses'}
               </li>
             ))}
           </ul>
@@ -255,11 +300,11 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
                 }}
               >
-                {index === 0 ? '👑 ' : ''}
-                {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
+                {index === 0 && <span className={classes.icon}>👑</span>}
+                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
               </li>
             ))}
           </ul>
@@ -271,10 +316,10 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit', 
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
                 }}
               >
-                {index === 0 ? '👑 ' : ''}
+                {index === 0 && <span className={classes.icon}>👑</span>}
                 #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
               </li>
             ))}
@@ -287,10 +332,10 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit', 
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
                 }}
               >
-                {index === 0 ? '👑 ' : ''}
+                {index === 0 && <span className={classes.icon}>👑</span>}
                 #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'attempt' : 'attempts'}
               </li>
             ))}
@@ -303,10 +348,10 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal',
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit', 
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
                 }}
               >
-                {index === 0 ? '🥄 ' : ''}
+                {index === 0 && <span className={classes.icon}>🥄</span>}
                 #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
               </li>
             ))}
