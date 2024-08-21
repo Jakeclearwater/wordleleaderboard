@@ -297,6 +297,7 @@ const InputForm = () => {
     setGuesses("");
     setDidNotFinish(false);
     setWordleResult("");
+    setPasteWordle(false);
 
       if (pasteWordle && isWordleResultPasted) {
         await sendResultToTeams(
@@ -313,6 +314,7 @@ const InputForm = () => {
       setGuesses("");
       setDidNotFinish(false);
       setWordleResult("");
+      setPasteWordle(false);
     } catch (error) {
       console.error("Error adding document: ", error);
     } finally {
