@@ -29,6 +29,9 @@ const useStyles = createUseStyles({
     margin: "0.5rem",
     borderRadius: "4px",
     border: "1px solid #ccc",
+    backgroundColor: "white",
+    color: "black",
+    appearance: "none"
   },
   button: {
     padding: "10px",

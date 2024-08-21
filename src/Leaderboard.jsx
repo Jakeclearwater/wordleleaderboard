@@ -51,6 +51,7 @@ const useStyles = createUseStyles({
   },
   resultsHeader: {
     color: 'rgba(83, 73, 73, 0.87);',
+    fontSize: '3em;'
   },
 });
 
@@ -216,7 +217,7 @@ const Leaderboard = () => {
 
   return (
     <div className={classes.leaderboardContainer}>
-      <h1 className={classes.resultsHeader}>Results Tables</h1>
+      <h1 className={classes.resultsHeader}>Wordle Results</h1>
       <div className={classes.columns}>
         <section className={classes.col}>
           <h1 className={classes.title}>Daily Leaderboard</h1>
@@ -235,7 +236,7 @@ const Leaderboard = () => {
           </ul>
         </section>
         <section className={classes.col}>
-          <h1 className={classes.title}>Weekly Leaderboard</h1>
+          <h1 className={classes.title}>Seven day Running Leaderboard</h1>
           <ul className={classes.list}>
             {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
@@ -267,7 +268,7 @@ const Leaderboard = () => {
           </ul>
         </section>
         <section className={classes.col}>
-          <h1 className={classes.title}>Total Days Played Leaderboard</h1>
+          <h1 className={classes.title}>Attempts Leaderboard</h1>
           <ul className={classes.list}>
             {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
@@ -283,7 +284,7 @@ const Leaderboard = () => {
           </ul>
         </section>
         <section className={classes.col}>
-          <h1 className={classes.title}>Wooden spoon Leaderboard</h1>
+          <h1 className={classes.title}>Wooden Spoon Leaderboard</h1>
           <ul className={classes.list}>
             {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
