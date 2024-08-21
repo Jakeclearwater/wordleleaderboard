@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
-import { firestore } from './firebase'; // Adjust the import path as necessary
+import { firestore } from './firebase';
+import { BounceLoader } from 'react-spinners';
 
 const useStyles = createUseStyles({
   leaderboardContainer: {
@@ -30,15 +31,15 @@ const useStyles = createUseStyles({
   col: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'flex-start', // Align content to the top
-    alignItems: 'flex-start', // Align items to the start of the column (left side)
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     width: '40%',
     padding: '1rem',
     backgroundColor: '#fff',
     boxShadow: '0 0 5px rgba(0, 0, 0, 0.1)',
     borderRadius: '5px',
     margin: '1rem',
-    textAlign: 'left', // Align text to the left inside the column
+    textAlign: 'left',
   },
   columns: {
     display: 'flex',
@@ -50,9 +51,18 @@ const useStyles = createUseStyles({
     },
   },
   resultsHeader: {
-    color: 'rgba(83, 73, 73, 0.87);',
-    fontSize: '3em;'
+    color: 'rgba(83, 73, 73, 0.87)',
+    fontSize: '3em'
   },
+  loading: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    fontSize: '1.5em',
+    color: '#555',
+  },
+  
 });
 
 const Leaderboard = () => {
@@ -62,24 +72,21 @@ const Leaderboard = () => {
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
   const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
   const [woodspoonLeaderboard, setWoodspoonLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(firestore, 'scores'), (snapshot) => {
-      console.log('Scores collection updated');
-      fetchLeaderboards();
-    });
-
     const fetchLeaderboards = async () => {
+      setLoading(true);
       try {
         const today1 = new Date();
-        today1.setHours(0, 0, 0, 0); // Set time to 00:00:00.000
+        today1.setHours(0, 0, 0, 0);
         const today = today1.toISOString().split('T')[0];
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
         const weekAgoDate = weekAgo.toISOString().split('T')[0];
 
-        console.log('Fetching scores for date:', today); // Debug log
-        console.log('Fetching scores for week starting from:', weekAgoDate); // Debug log
+        console.log('Fetching scores for date:', today);
+        console.log('Fetching scores for week starting from:', weekAgoDate);
 
         // Fetch daily scores
         const dailyScoresQuery = query(
@@ -110,7 +117,7 @@ const Leaderboard = () => {
 
         // Process daily scores
         const dailyScores = dailySnapshot.docs.map(doc => doc.data());
-        console.log('Fetched daily scores:', dailyScores); // Debug log
+        console.log('Fetched daily scores:', dailyScores);
 
         const groupedDailyScores = dailyScores.reduce((acc, score) => {
           const guesses = parseFloat(score.guesses); // Ensure guesses are integers
@@ -121,6 +128,7 @@ const Leaderboard = () => {
           }
           acc[score.name].totalGuesses += guesses;
           acc[score.name].count += 1;
+          
           return acc;
         }, {});
 
@@ -204,48 +212,53 @@ const Leaderboard = () => {
         setAllTimeLeaderboard(allTimeLeaderboardArray);
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
         setWoodspoonLeaderboard(woodspoonLeaderboardArray);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching leaderboards: ', error);
       }
     };
 
     fetchLeaderboards();
-    return () => {
-      unsubscribe();
-    };
   }, []);
 
   return (
     <div className={classes.leaderboardContainer}>
-      <h1 className={classes.resultsHeader}>Wordle Results</h1>
+      {loading ? (
+        <div className={classes.loading}>
+          <BounceLoader color="#555" />
+        </div>
+      ) : (
+        <>
+          <h1 className={classes.resultsHeader}>Wordle Results</h1>
       <div className={classes.columns}>
+
         <section className={classes.col}>
           <h1 className={classes.title}>Daily Leaderboard</h1>
           <ul className={classes.list}>
             {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                  fontWeight: index < 3 ? 'bold' : 'normal',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit',
                 }}
               >
-                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                {index === 0 ? '👑 ' : ''}
                 {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'guess' : 'guesses'}
               </li>
             ))}
           </ul>
         </section>
         <section className={classes.col}>
-          <h1 className={classes.title}>Seven day Running Leaderboard</h1>
+          <h1 className={classes.title}>Seven-day Running Leaderboard</h1>
           <ul className={classes.list}>
             {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                  fontWeight: index < 3 ? 'bold' : 'normal', 
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit',
                 }}
               >
-                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                {index === 0 ? '👑 ' : ''}
                 {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
               </li>
             ))}
@@ -257,11 +270,11 @@ const Leaderboard = () => {
             {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                  fontWeight: index < 3 ? 'bold' : 'normal', 
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit', 
                 }}
               >
-                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                {index === 0 ? '👑 ' : ''}
                 #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
               </li>
             ))}
@@ -273,11 +286,11 @@ const Leaderboard = () => {
             {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                  fontWeight: index < 3 ? 'bold' : 'normal', 
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit', 
                 }}
               >
-                {index === 0 ? '👑 ' : ''} {/* Add crown emoji to first place */}
+                {index === 0 ? '👑 ' : ''}
                 #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'attempt' : 'attempts'}
               </li>
             ))}
@@ -289,17 +302,19 @@ const Leaderboard = () => {
             {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
               <li key={index} className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', // Apply bold font weight to top 3 entries
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : index > 2 ? 'black' : 'inherit', // Apply #F9A602, #C0C0C0, #CD7F32 colors
+                  fontWeight: index < 3 ? 'bold' : 'normal',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? '#bebebe' : 'inherit', 
                 }}
               >
-                {index === 0 ? '🥄 ' : ''} {/* Add crown emoji to first place */}
+                {index === 0 ? '🥄 ' : ''}
                 #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
               </li>
             ))}
           </ul>
         </section>
       </div>
+        </>
+      )}
     </div>
   );
 };
