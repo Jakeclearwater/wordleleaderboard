@@ -68,10 +68,8 @@ const useStyles = createUseStyles({
     color: '#555',
   },
   icon: {
-    // position: 'absolute',
-    marginLeft: '-20px', // Adjust this value as needed
+    marginLeft: '-24px',
     paddingRight: '5px',
-    // transform: 'translateY(-50%)',
   }
 });
 

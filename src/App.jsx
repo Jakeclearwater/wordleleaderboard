@@ -18,6 +18,11 @@ const getBuildDateVersion = () => {
 };
 
 const App = () => {
+  const gradientStyle = {
+    background: 'linear-gradient(to bottom, #e3e3e1, #d0d0c0)',
+    height: '100%', // Ensure the gradient covers the full viewport height
+    margin: 0
+  };
   const classes = useStyles();
   const wordle = "ITWORDLE";
   const appVersion = getBuildDateVersion();
@@ -40,8 +45,8 @@ const App = () => {
   };
 
   return (
-    <div className={classes.App}>
-      <div id="backgroundOverlay" className={classes.overlay}></div> {/* Background overlay div */}
+    <div className={classes.App}  style={gradientStyle}>
+      <div id="backgroundOverlay" className={classes.overlay}></div>
       <p><span className={classes.versionInfo}>Build: {appVersion}</span></p>
       <h1>{wordleSpans}</h1>
       <InputForm />
