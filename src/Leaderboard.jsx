@@ -70,6 +70,12 @@ const useStyles = createUseStyles({
   icon: {
     marginLeft: '-24px',
     paddingRight: '5px',
+  },
+  spoon: {
+    marginLeft: '-24px',
+    paddingRight: '5px',
+    filter: 'invert(0.6) sepia(1) saturate(3) hue-rotate(-15deg)',
+    transform: 'rotate(-8deg)', // Slight rotation for a natural look
   }
 });
 
@@ -91,9 +97,6 @@ const grayShades = [
   '#fdfdfd', // Step 14
   '#fefefe', // Step 15
   '#ffffff', // Step 16
-  '#ffffff', // Step 17
-  '#ffffff', // Step 18
-  '#ffffff', // Step 19
 ];
 
 const calculateGradientColor = (index) => {
@@ -282,7 +285,8 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal',
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
+       'white', // Default color if out of bounds
                 }}
               >
                 {index === 0 && <span className={classes.icon}>👑</span>}
@@ -298,7 +302,8 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
+                  'white', // Default color if out of bounds
                 }}
               >
                 {index === 0 && <span className={classes.icon}>👑</span>}
@@ -314,7 +319,8 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
+                  'white', // Default color if out of bounds
                 }}
               >
                 {index === 0 && <span className={classes.icon}>👑</span>}
@@ -330,7 +336,8 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
+                  'white', // Default color if out of bounds
                 }}
               >
                 {index === 0 && <span className={classes.icon}>👑</span>}
@@ -346,10 +353,11 @@ const Leaderboard = () => {
               <li key={index} className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
                 style={{
                   fontWeight: index < 3 ? 'bold' : 'normal',
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 ? grayShades[index] : 'inherit',
+                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
+                  'white', // Default color if out of bounds
                 }}
               >
-                {index === 0 && <span className={classes.icon}>🥄</span>}
+                {index === 0 && <span className={classes.spoon}>🥄</span>}
                 #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
               </li>
             ))}
