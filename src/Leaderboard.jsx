@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
 import { BounceLoader } from 'react-spinners';
 
@@ -13,7 +13,7 @@ const useStyles = createUseStyles({
   title: {
     fontSize: '24px',
     textAlign: 'center',
-    color: 'rgba(83, 73, 73, 0.87);',
+    color: 'rgba(83, 73, 73, 0.87)',
     marginBottom: '15px',
     marginTop: '10px',
     height: '55px',
@@ -51,7 +51,6 @@ const useStyles = createUseStyles({
     '@media (max-width: 1000px)': {
       flexDirection: 'column',
       alignItems: 'center',
-    
     },
   },
   resultsHeader: {
@@ -75,39 +74,16 @@ const useStyles = createUseStyles({
     marginLeft: '-24px',
     paddingRight: '5px',
     filter: 'invert(0.6) sepia(1) saturate(3) hue-rotate(-15deg)',
-    transform: 'rotate(-8deg)', // Slight rotation for a natural look
+    transform: 'rotate(-8deg)',
   }
 });
 
 const grayShades = [
-  '#bebebe', // Step 0
-  '#c4c4c4', // Step 1
-  '#c9c9c9', // Step 2
-  '#d0d0d0', // Step 3
-  '#d5d5d5', // Step 4
-  '#dadada', // Step 5
-  '#dfdfdf', // Step 6
-  '#e4e4e4', // Step 7
-  '#e8e8e8', // Step 8
-  '#ededed', // Step 9
-  '#f2f2f2', // Step 10
-  '#f6f6f6', // Step 11
-  '#f9f9f9', // Step 12
-  '#fcfcfc', // Step 13
-  '#fdfdfd', // Step 14
-  '#fefefe', // Step 15
-  '#ffffff', // Step 16
+  '#bebebe', '#c4c4c4', '#c9c9c9', '#d0d0d0', '#d5d5d5',
+  '#dadada', '#dfdfdf', '#e4e4e4', '#e8e8e8', '#ededed',
+  '#f2f2f2', '#f6f6f6', '#f9f9f9', '#fcfcfc', '#fdfdfd',
+  '#fefefe', '#ffffff',
 ];
-
-const calculateGradientColor = (index) => {
-  const baseColor = '#bebebe'; // Base color for the gradient
-  const endColor = '#d3d3d3'; // End color for the gradient
-  const fadeFactor = Math.min((index - 3) / 5, 1); // Calculate fade factor, adjust the denominator to control fading speed
-  const r = Math.round(parseInt(baseColor.slice(1, 3), 16) * (1 - fadeFactor) + parseInt(endColor.slice(1, 3), 16) * fadeFactor);
-  const g = Math.round(parseInt(baseColor.slice(3, 5), 16) * (1 - fadeFactor) + parseInt(endColor.slice(3, 5), 16) * fadeFactor);
-  const b = Math.round(parseInt(baseColor.slice(5, 7), 16) * (1 - fadeFactor) + parseInt(endColor.slice(5, 7), 16) * fadeFactor);
-  return `rgb(${r}, ${g}, ${b})`;
-};
 
 const Leaderboard = () => {
   const classes = useStyles();
@@ -129,9 +105,6 @@ const Leaderboard = () => {
         weekAgo.setDate(weekAgo.getDate() - 7);
         const weekAgoDate = weekAgo.toISOString().split('T')[0];
 
-        console.log('Fetching scores for date:', today);
-        console.log('Fetching scores for week starting from:', weekAgoDate);
-
         // Fetch daily scores
         const dailyScoresQuery = query(
           collection(firestore, 'scores'),
@@ -147,9 +120,7 @@ const Leaderboard = () => {
         const weeklySnapshot = await getDocs(weeklyScoresQuery);
 
         // Fetch all time scores
-        const allTimeScoresQuery = query(
-          collection(firestore, 'scores')
-        );
+        const allTimeScoresQuery = collection(firestore, 'scores');
         const allTimeSnapshot = await getDocs(allTimeScoresQuery);
 
         // Fetch woodspoon leaderboard
@@ -159,79 +130,93 @@ const Leaderboard = () => {
         );
         const woodspoonSnapshot = await getDocs(woodspoonScoresQuery);
 
-        // Process daily scores
         const dailyScores = dailySnapshot.docs.map(doc => doc.data());
-        console.log('Fetched daily scores:', dailyScores);
-
-        const groupedDailyScores = dailyScores.reduce((acc, score) => {
-          const guesses = parseFloat(score.guesses); // Ensure guesses are integers
-          if (isNaN(guesses)) return acc;
-          if (guesses === 0) return acc; // Exclude zero guesses
-          if (!acc[score.name]) {
-            acc[score.name] = { totalGuesses: 0, count: 0 };
-          }
-          acc[score.name].totalGuesses += guesses;
-          acc[score.name].count += 1;
-          
-          return acc;
-        }, {});
-
-        const dailyLeaderboardArray = Object.keys(groupedDailyScores).map(name => ({
-          name,
-          averageGuesses: groupedDailyScores[name].totalGuesses / groupedDailyScores[name].count,
-        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score
-
-        // Process weekly scores
         const weeklyScores = weeklySnapshot.docs.map(doc => doc.data());
-        console.log('Fetched weekly scores:', weeklyScores); // Debug log
-
-        const groupedWeeklyScores = weeklyScores.reduce((acc, score) => {
-          const guesses = parseFloat(score.guesses); // Ensure guesses are integers
-          if (isNaN(guesses)) return acc;
-          if (guesses === 0) return acc; // Exclude zero guesses
-          if (!acc[score.name]) {
-            acc[score.name] = { totalGuesses: 0, count: 0 };
-          }
-          acc[score.name].totalGuesses += guesses;
-          acc[score.name].count += 1;
-          return acc;
-        }, {});
-
-        const weeklyLeaderboardArray = Object.keys(groupedWeeklyScores).map(name => ({
-          name,
-          averageGuesses: groupedWeeklyScores[name].totalGuesses / groupedWeeklyScores[name].count,
-        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score
-
-        // Process all-time scores
         const allTimeScores = allTimeSnapshot.docs.map(doc => doc.data());
-        console.log('Fetched all-time scores:', allTimeScores); // Debug log
+        const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
 
-        const groupedAllTimeScores = allTimeScores.reduce((acc, score) => {
-          const guesses = parseFloat(score.guesses); // Ensure guesses are integers
-          if (isNaN(guesses)) return acc;
-          if (guesses === 0) return acc; // Exclude zero guesses
-          if (!acc[score.name]) {
-            acc[score.name] = { totalGuesses: 0, count: 0 };
+        // For daily & weekly: simple averages
+        const groupScoresSimple = (scores) => {
+          const grouped = scores.reduce((acc, s) => {
+            const g = parseFloat(s.guesses);
+            if (isNaN(g) || g <= 0) return acc;
+            if (!acc[s.name]) {
+              acc[s.name] = { totalGuesses: 0, attempts: 0 };
+            }
+            acc[s.name].totalGuesses += g;
+            acc[s.name].attempts += 1;
+            return acc;
+          }, {});
+          return Object.keys(grouped).map(name => {
+            const { totalGuesses, attempts } = grouped[name];
+            return {
+              name,
+              average: totalGuesses / attempts
+            };
+          });
+        };
+
+        const dailyLeaderboardArray = groupScoresSimple(dailyScores)
+          .sort((a, b) => a.average - b.average);
+
+        const weeklyLeaderboardArray = groupScoresSimple(weeklyScores)
+          .sort((a, b) => a.average - b.average);
+
+        // Compute global mean for Bayesian prior from allTimeScores
+        const allTimeSum = allTimeScores.reduce((acc, score) => {
+          const g = parseFloat(score.guesses);
+          if (!isNaN(g) && g > 0) {
+            acc.totalGuesses += g;
+            acc.totalCount += 1;
           }
-          acc[score.name].totalGuesses += guesses;
-          acc[score.name].count += 1;
+          return acc;
+        }, { totalGuesses: 0, totalCount: 0 });
+
+        const globalMean = allTimeSum.totalCount > 0 ? (allTimeSum.totalGuesses / allTimeSum.totalCount) : 4.5; 
+        const alpha = 20;   // Strength of the prior
+        const R = 30;       // Recency scaling factor
+        const C = 0.2;      // Attempts bonus scaling factor
+        const parseDate = (d) => new Date(d);
+        const now = new Date();
+
+        // Group for Bayesian leaderboard
+        const groupedAllTime = allTimeScores.reduce((acc, s) => {
+          const g = parseFloat(s.guesses);
+          if (isNaN(g) || g <= 0 || !s.date) return acc;
+          if (!acc[s.name]) {
+            acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: parseDate(s.date) };
+          }
+          acc[s.name].totalGuesses += g;
+          acc[s.name].attempts += 1;
+          const attemptDate = parseDate(s.date);
+          if (attemptDate > acc[s.name].lastAttempt) {
+            acc[s.name].lastAttempt = attemptDate;
+          }
           return acc;
         }, {});
 
-        const allTimeLeaderboardArray = Object.keys(groupedAllTimeScores).map(name => ({
+        const computeBayesianFinalScore = (playerData) => {
+          const { totalGuesses, attempts, lastAttempt } = playerData;
+          const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
+          const daysSinceLast = Math.floor((now - lastAttempt) / (24*60*60*1000));
+          const RecencyFactor = 1 + (daysSinceLast / R);
+          const AttemptsBonus = C * Math.log(attempts + 1);
+          const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
+          return { finalScore };
+        };
+
+        const allTimeLeaderboardArray = Object.keys(groupedAllTime).map(name => {
+          const { finalScore } = computeBayesianFinalScore(groupedAllTime[name]);
+          return { name, finalScore };
+        }).sort((a, b) => a.finalScore - b.finalScore);
+
+        // Attempts leaderboard
+        const allAttemptsLeaderboardArray = Object.keys(groupedAllTime).map(name => ({
           name,
-          averageGuesses: groupedAllTimeScores[name].totalGuesses / groupedAllTimeScores[name].count,
-        })).sort((a, b) => a.averageGuesses - b.averageGuesses); // Sort by score
+          attempts: groupedAllTime[name].attempts
+        })).sort((a, b) => b.attempts - a.attempts);
 
-        const allAttemptsLeaderboardArray = Object.keys(groupedAllTimeScores).map(name => ({
-          name,
-          averageGuesses: groupedAllTimeScores[name].count,
-        })).sort((a, b) => b.averageGuesses - a.averageGuesses); // Sort by count
-
-        // Process woodspoon scores
-        const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
-        console.log('Fetched wooden spoon scores:', woodspoonScores); // Debug log
-
+        // Woodspoon leaderboard
         const groupedWoodspoonScores = woodspoonScores.reduce((acc, score) => {
           if (!acc[score.name]) {
             acc[score.name] = { count: 0 };
@@ -239,18 +224,10 @@ const Leaderboard = () => {
           acc[score.name].count += 1;
           return acc;
         }, {});
-
         const woodspoonLeaderboardArray = Object.keys(groupedWoodspoonScores).map(name => ({
           name,
-          count: groupedWoodspoonScores[name].count,
-        })).sort((a, b) => b.count - a.count); // Sort by count of zeros
-
-        console.log('Daily Leaderboard:', dailyLeaderboardArray); // Debug log
-        console.log('Weekly Leaderboard:', weeklyLeaderboardArray); // Debug log
-        console.log('All-time Leaderboard:', allTimeLeaderboardArray); // Debug log
-        console.log('All Attempts Leaderboard:', allAttemptsLeaderboardArray); // Debug log
-        console.log('Wooden spoon Leaderboard:', woodspoonLeaderboardArray); // Debug lo
-
+          count: groupedWoodspoonScores[name].count
+        })).sort((a, b) => b.count - a.count);
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
@@ -258,6 +235,7 @@ const Leaderboard = () => {
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
         setWoodspoonLeaderboard(woodspoonLeaderboardArray);
         setLoading(false);
+
       } catch (error) {
         console.error('Error fetching leaderboards: ', error);
       }
@@ -275,95 +253,119 @@ const Leaderboard = () => {
       ) : (
         <>
           <h1 className={classes.resultsHeader}>Wordle Results</h1>
-      <div className={classes.columns}>
+          <div className={classes.columns}>
 
-        <section className={classes.col}>
-          <h1 className={classes.title}>Daily Leaderboard</h1>
-          <ul className={classes.list}>
-            {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
-              
-              <li key={index} className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal',
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
-       'white', // Default color if out of bounds
-                }}
-              >
-                {index === 0 && <span className={classes.icon}>👑</span>}
-                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'guess' : 'guesses'}
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className={classes.col}>
-          <h1 className={classes.title}>Seven-day Running Leaderboard</h1>
-          <ul className={classes.list}>
-            {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
-              <li key={index} className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
-                  'white', // Default color if out of bounds
-                }}
-              >
-                {index === 0 && <span className={classes.icon}>👑</span>}
-                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className={classes.col}>
-          <h1 className={classes.title}>All Time Leaderboard</h1>
-          <ul className={classes.list}>
-            {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
-              <li key={index} className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
-                  'white', // Default color if out of bounds
-                }}
-              >
-                {index === 0 && <span className={classes.icon}>👑</span>}
-                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(2)} guesses
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className={classes.col}>
-          <h1 className={classes.title}>Attempts Leaderboard</h1>
-          <ul className={classes.list}>
-            {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
-              <li key={index} className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal', 
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
-                  'white', // Default color if out of bounds
-                }}
-              >
-                {index === 0 && <span className={classes.icon}>👑</span>}
-                #{index + 1} {entry.name}: {parseFloat(entry.averageGuesses).toFixed(0)} {parseFloat(entry.averageGuesses).toFixed(0) === 1 ? 'attempt' : 'attempts'}
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className={classes.col}>
-          <h1 className={classes.title}>Wooden Spoon Leaderboard</h1>
-          <ul className={classes.list}>
-            {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
-              <li key={index} className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                style={{
-                  fontWeight: index < 3 ? 'bold' : 'normal',
-                  color: index === 0 ? '#F9A602' : index === 1 ? '#848482' : index === 2 ? '#CD7F32' : index > 2 && index < grayShades.length ? grayShades[index] : // Use grayShades if within bounds
-                  'white', // Default color if out of bounds
-                }}
-              >
-                {index === 0 && <span className={classes.spoon}>🥄</span>}
-                #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+            <section className={classes.col}>
+              <h1 className={classes.title}>Daily Leaderboard</h1>
+              <ul className={classes.list}>
+                {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
+                  <li key={index}
+                      className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                      style={{
+                        fontWeight: index < 3 ? 'bold' : 'normal',
+                        color: index === 0 ? '#F9A602' 
+                              : index === 1 ? '#848482'
+                              : index === 2 ? '#CD7F32'
+                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                              : 'white',
+                      }}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={classes.col}>
+              <h1 className={classes.title}>Seven-day Running Leaderboard</h1>
+              <ul className={classes.list}>
+                {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
+                  <li key={index}
+                      className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                      style={{
+                        fontWeight: index < 3 ? 'bold' : 'normal',
+                        color: index === 0 ? '#F9A602' 
+                              : index === 1 ? '#848482'
+                              : index === 2 ? '#CD7F32'
+                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                              : 'white',
+                      }}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={classes.col}>
+              <h1 className={classes.title}>Bayesian Average Leaderboard</h1>
+              <ul className={classes.list}>
+                {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
+                  <li key={index}
+                      className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                      style={{
+                        fontWeight: index < 3 ? 'bold' : 'normal',
+                        color: index === 0 ? '#F9A602' 
+                              : index === 1 ? '#848482'
+                              : index === 2 ? '#CD7F32'
+                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                              : 'white',
+                      }}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.finalScore.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={classes.col}>
+              <h1 className={classes.title}>Attempts Leaderboard</h1>
+              <ul className={classes.list}>
+                {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
+                  <li key={index}
+                      className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                      style={{
+                        fontWeight: index < 3 ? 'bold' : 'normal',
+                        color: index === 0 ? '#F9A602' 
+                              : index === 1 ? '#848482'
+                              : index === 2 ? '#CD7F32'
+                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                              : 'white',
+                      }}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.attempts} attempts
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={classes.col}>
+              <h1 className={classes.title}>Wooden Spoon Leaderboard</h1>
+              <ul className={classes.list}>
+                {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
+                  <li key={index}
+                      className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                      style={{
+                        fontWeight: index < 3 ? 'bold' : 'normal',
+                        color: index === 0 ? '#F9A602' 
+                              : index === 1 ? '#848482'
+                              : index === 2 ? '#CD7F32'
+                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                              : 'white',
+                      }}
+                  >
+                    {index === 0 && <span className={classes.spoon}>🥄</span>}
+                    #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+          </div>
         </>
       )}
     </div>
