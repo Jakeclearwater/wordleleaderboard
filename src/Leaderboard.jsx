@@ -17,10 +17,12 @@ const useStyles = createUseStyles({
     marginBottom: '15px',
     marginTop: '10px',
     height: '55px',
+    margin: 'auto',
   },
   list: {
     listStyleType: 'none',
     padding: '0',
+    margin: '0 auto 0 auto',
   },
   listItem: {
     padding: '10px',
@@ -172,9 +174,9 @@ const Leaderboard = () => {
           return acc;
         }, { totalGuesses: 0, totalCount: 0 });
 
-        const globalMean = allTimeSum.totalCount > 0 ? (allTimeSum.totalGuesses / allTimeSum.totalCount) : 4.5; 
+        const globalMean = allTimeSum.totalCount > 0 ? (allTimeSum.totalGuesses / allTimeSum.totalCount) : 4.5;
         const alpha = 20;   // Strength of the prior
-        const R = 30;       // Recency scaling factor
+        const R = 40;       // Recency scaling factor
         const C = 0.2;      // Attempts bonus scaling factor
         const parseDate = (d) => new Date(d);
         const now = new Date();
@@ -198,7 +200,7 @@ const Leaderboard = () => {
         const computeBayesianFinalScore = (playerData) => {
           const { totalGuesses, attempts, lastAttempt } = playerData;
           const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
-          const daysSinceLast = Math.floor((now - lastAttempt) / (24*60*60*1000));
+          const daysSinceLast = Math.floor((now - lastAttempt) / (24 * 60 * 60 * 1000));
           const RecencyFactor = 1 + (daysSinceLast / R);
           const AttemptsBonus = C * Math.log(attempts + 1);
           const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
@@ -206,8 +208,20 @@ const Leaderboard = () => {
         };
 
         const allTimeLeaderboardArray = Object.keys(groupedAllTime).map(name => {
-          const { finalScore } = computeBayesianFinalScore(groupedAllTime[name]);
-          return { name, finalScore };
+          const { totalGuesses, attempts, lastAttempt } = groupedAllTime[name];
+          const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
+          const daysSinceLast = Math.floor((now - lastAttempt) / (24 * 60 * 60 * 1000));
+          const RecencyFactor = 1 + (daysSinceLast / R);
+          const AttemptsBonus = C * Math.log(attempts + 1);
+          const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
+
+          return {
+            name,
+            finalScore,
+            BayesAvg,
+            RecencyFactor,
+            AttemptsBonus,
+          };
         }).sort((a, b) => a.finalScore - b.finalScore);
 
         // Attempts leaderboard
@@ -260,15 +274,15 @@ const Leaderboard = () => {
               <ul className={classes.list}>
                 {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
                   <li key={index}
-                      className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                      style={{
-                        fontWeight: index < 3 ? 'bold' : 'normal',
-                        color: index === 0 ? '#F9A602' 
-                              : index === 1 ? '#848482'
-                              : index === 2 ? '#CD7F32'
-                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                    className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
                               : 'white',
-                      }}
+                    }}
                   >
                     {index === 0 && <span className={classes.icon}>👑</span>}
                     #{index + 1} {entry.name}: {entry.average.toFixed(2)}
@@ -282,15 +296,15 @@ const Leaderboard = () => {
               <ul className={classes.list}>
                 {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
                   <li key={index}
-                      className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                      style={{
-                        fontWeight: index < 3 ? 'bold' : 'normal',
-                        color: index === 0 ? '#F9A602' 
-                              : index === 1 ? '#848482'
-                              : index === 2 ? '#CD7F32'
-                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                    className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
                               : 'white',
-                      }}
+                    }}
                   >
                     {index === 0 && <span className={classes.icon}>👑</span>}
                     #{index + 1} {entry.name}: {entry.average.toFixed(2)}
@@ -298,21 +312,64 @@ const Leaderboard = () => {
                 ))}
               </ul>
             </section>
-
             <section className={classes.col}>
-              <h1 className={classes.title}>Bayesian Average Leaderboard</h1>
+              <h1 className={classes.title}>
+                <span
+                  style={{ cursor: 'help' }}
+                  title={`Bayesian Average:
+      
+      The Bayesian Average adjusts a player's average guesses using a global prior (global mean) for fairness, especially when the number of attempts is low.
+      
+      Formula:
+      BayesAvg = (TotalGuesses + (GlobalMean × Alpha)) / (Attempts + Alpha)
+      
+      - TotalGuesses: The sum of all guesses by the player.
+      - GlobalMean: The average number of guesses across all players (used as a prior).
+      - Alpha: The prior strength, which determines how much weight is given to the global mean.
+
+      Rot Factor (RecencyFactor):
+      Encourages recent activity and penalizes long periods of inactivity.
+
+      Formula:
+      RecencyFactor = 1 + (DaysSinceLast / R)
+      
+      - DaysSinceLast: The number of days since the player's last recorded attempt.
+      - R: A scaling factor to control the penalty for inactivity.
+
+      Attempts Bonus:
+      A slight penalty applied for more frequent attempts to balance scores.
+
+      Formula:
+      AttemptsBonus = C × log(Attempts + 1)
+      
+      - C: A scaling factor for the penalty.
+      `}
+                >
+                Bayesian Average Leaderboard
+                </span>
+              </h1>
               <ul className={classes.list}>
                 {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
-                  <li key={index}
-                      className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                      style={{
-                        fontWeight: index < 3 ? 'bold' : 'normal',
-                        color: index === 0 ? '#F9A602' 
-                              : index === 1 ? '#848482'
-                              : index === 2 ? '#CD7F32'
-                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                  <li
+                    key={index}
+                    className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
                               : 'white',
-                      }}
+                    }}
+                    title={`FinalScore = (BayesAvg x RecencyFactor) - AttemptsBonus
+        
+        Formula:
+        FinalScore = (${entry.BayesAvg.toFixed(2)} x ${entry.RecencyFactor.toFixed(2)}) - ${entry.AttemptsBonus.toFixed(2)}
+
+        Explanation:
+        - BayesAvg (${entry.BayesAvg.toFixed(2)}): Your average guesses adjusted with a global prior for fairness.
+        - RecencyFactor (${entry.RecencyFactor.toFixed(2)}): Rewards recent activity, penalizes inactivity over time.
+        - AttemptsBonus (${entry.AttemptsBonus.toFixed(2)}): A slight penalty for more attempts, balancing frequent guesses.`}
                   >
                     {index === 0 && <span className={classes.icon}>👑</span>}
                     #{index + 1} {entry.name}: {entry.finalScore.toFixed(2)}
@@ -321,20 +378,21 @@ const Leaderboard = () => {
               </ul>
             </section>
 
+
             <section className={classes.col}>
               <h1 className={classes.title}>Attempts Leaderboard</h1>
               <ul className={classes.list}>
                 {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
                   <li key={index}
-                      className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                      style={{
-                        fontWeight: index < 3 ? 'bold' : 'normal',
-                        color: index === 0 ? '#F9A602' 
-                              : index === 1 ? '#848482'
-                              : index === 2 ? '#CD7F32'
-                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                    className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
                               : 'white',
-                      }}
+                    }}
                   >
                     {index === 0 && <span className={classes.icon}>👑</span>}
                     #{index + 1} {entry.name}: {entry.attempts} attempts
@@ -348,15 +406,15 @@ const Leaderboard = () => {
               <ul className={classes.list}>
                 {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
                   <li key={index}
-                      className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
-                      style={{
-                        fontWeight: index < 3 ? 'bold' : 'normal',
-                        color: index === 0 ? '#F9A602' 
-                              : index === 1 ? '#848482'
-                              : index === 2 ? '#CD7F32'
-                              : index > 2 && index < grayShades.length ? grayShades[index] 
+                    className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
                               : 'white',
-                      }}
+                    }}
                   >
                     {index === 0 && <span className={classes.spoon}>🥄</span>}
                     #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
