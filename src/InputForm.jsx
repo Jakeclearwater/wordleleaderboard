@@ -117,9 +117,12 @@ const InputForm = () => {
     "Sean",
     "Don",
     "Simon",
+    "Cam",
+    "Callum"
   ];
 
-  const parseWordleResult = (result) => {
+  
+    const parseWordleResult = (result) => {
     const lines = result.toString().trim().split("\n");
     const metadataLine = lines[0].trim(); // The first line contains the metadata
 
