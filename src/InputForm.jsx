@@ -78,6 +78,8 @@ const useStyles = createUseStyles({
 const InputForm = () => {
   const classes = useStyles();
   const [name, setName] = useState("");
+  const [customName, setCustomName] = useState("");
+  const [isCustomName, setIsCustomName] = useState(false);
   const [guesses, setGuesses] = useState("");
   const [didNotFinish, setDidNotFinish] = useState(false);
   const [wordleResult, setWordleResult] = useState("");
@@ -88,14 +90,33 @@ const InputForm = () => {
   useEffect(() => {
     const lastChosenName = localStorage.getItem("lastChosenName");
     if (lastChosenName) {
-      setName(lastChosenName);
+      if (names.includes(lastChosenName)) {
+        setName(lastChosenName);
+      } else {
+        setCustomName(lastChosenName);
+        setName("__new__");
+        setIsCustomName(true);
+      }
     }
   }, []);
 
   const handleNameChange = (event) => {
     const newName = event.target.value;
     setName(newName);
-    localStorage.setItem("lastChosenName", newName);
+    if (newName === "__new__") {
+      setIsCustomName(true);
+    } else {
+      setIsCustomName(false);
+      localStorage.setItem("lastChosenName", newName);
+    }
+  };
+
+  const handleCustomNameChange = (event) => {
+    const newCustomName = event.target.value;
+    setCustomName(newCustomName);
+    if (newCustomName) {
+      localStorage.setItem("lastChosenName", newCustomName);
+    }
   };
 
   const names = [
@@ -224,6 +245,16 @@ const InputForm = () => {
     setLoading(true);
     setShowOverlay(true);
 
+    // Get the final name to use
+    const finalName = isCustomName ? customName.trim() : name;
+
+    if (!finalName) {
+      alert("Please provide your name.");
+      setLoading(false);
+      setShowOverlay(false);
+      return;
+    }
+
     // Ensure wordleGuesses is an integer or default to 0
     const wordleGuesses = parseInt(wordleResult, 10) || 0;
     const numGuesses = didNotFinish ? 0 : parseInt(guesses, 10) || 0;
@@ -292,32 +323,28 @@ const InputForm = () => {
           : numGuesses; // Otherwise use the provided number of guesses
 
       await addDoc(collection(firestore, "scores"), {
-        name,
+        name: finalName,
         guesses: finalGuesses,
         date: formattedNZDate,
       });
-
-    setGuesses("");
-    setDidNotFinish(false);
-    setWordleResult("");
-    setPasteWordle(false);
-
-      if (pasteWordle && isWordleResultPasted) {
-        await sendResultToTeams(
-          parsedWordleGuesses,
-          wordleNumber,
-          name,
-          isDNF,
-          resultBlocks
-        );
-      } else if (!pasteWordle && isNumGuessesProvided) {
-        await sendResultToTeams(numGuesses, name, didNotFinish, []);
-      }
 
       setGuesses("");
       setDidNotFinish(false);
       setWordleResult("");
       setPasteWordle(false);
+
+      if (pasteWordle && isWordleResultPasted) {
+        await sendResultToTeams(
+          parsedWordleGuesses,
+          wordleNumber,
+          finalName,
+          isDNF,
+          resultBlocks
+        );
+      } else if (!pasteWordle && isNumGuessesProvided) {
+        await sendResultToTeams(numGuesses, finalName, didNotFinish, []);
+      }
+
     } catch (error) {
       console.error("Error adding document: ", error);
     } finally {
@@ -344,7 +371,7 @@ const InputForm = () => {
             id="name"
             value={name}
             onChange={handleNameChange}
-            required={!didNotFinish}
+            required={!didNotFinish && !isCustomName}
             className={classes.select}
             disabled={didNotFinish}
           >
@@ -356,8 +383,24 @@ const InputForm = () => {
                 {name}
               </option>
             ))}
+            <option value="__new__">Add New Name</option>
           </select>
         </div>
+        {isCustomName && (
+          <div>
+            <label htmlFor="customName">Enter your name:</label>
+            <input
+              type="text"
+              id="customName"
+              value={customName}
+              onChange={handleCustomNameChange}
+              required={!didNotFinish && isCustomName}
+              className={classes.input}
+              disabled={didNotFinish}
+              placeholder="Type your name"
+            />
+          </div>
+        )}
         <div>
           <label htmlFor="guesses">Number of Guesses:</label>
           <input
