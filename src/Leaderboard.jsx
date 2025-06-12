@@ -125,10 +125,10 @@ const Leaderboard = () => {
         const allTimeScoresQuery = collection(firestore, 'scores');
         const allTimeSnapshot = await getDocs(allTimeScoresQuery);
 
-        // Fetch woodspoon leaderboard
+        // Fetch woodspoon leaderboard - now looking for score of 7 instead of 0
         const woodspoonScoresQuery = query(
           collection(firestore, 'scores'),
-          where('guesses', '==', 0)
+          where('guesses', '==', 7)
         );
         const woodspoonSnapshot = await getDocs(woodspoonScoresQuery);
 
@@ -137,11 +137,11 @@ const Leaderboard = () => {
         const allTimeScores = allTimeSnapshot.docs.map(doc => doc.data());
         const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
 
-        // For daily & weekly: simple averages
+        // For daily & weekly: simple averages - now treating 7 as DNF
         const groupScoresSimple = (scores) => {
           const grouped = scores.reduce((acc, s) => {
             const g = parseFloat(s.guesses);
-            if (isNaN(g) || g <= 0) return acc;
+            if (isNaN(g)) return acc;
             if (!acc[s.name]) {
               acc[s.name] = { totalGuesses: 0, attempts: 0 };
             }
@@ -181,10 +181,10 @@ const Leaderboard = () => {
         const parseDate = (d) => new Date(d);
         const now = new Date();
 
-        // Group for Bayesian leaderboard
+        // Group for Bayesian leaderboard - now includes 7s in calculations
         const groupedAllTime = allTimeScores.reduce((acc, s) => {
           const g = parseFloat(s.guesses);
-          if (isNaN(g) || g <= 0 || !s.date) return acc;
+          if (isNaN(g) || !s.date) return acc;
           if (!acc[s.name]) {
             acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: parseDate(s.date) };
           }

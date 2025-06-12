@@ -255,9 +255,9 @@ const InputForm = () => {
       return;
     }
 
-    // Ensure wordleGuesses is an integer or default to 0
-    const wordleGuesses = parseInt(wordleResult, 10) || 0;
-    const numGuesses = didNotFinish ? 0 : parseInt(guesses, 10) || 0;
+    // Ensure wordleGuesses is an integer or default to 7 for DNF
+    const wordleGuesses = parseInt(wordleResult, 10) || (didNotFinish ? 7 : 0);
+    const numGuesses = didNotFinish ? 7 : parseInt(guesses, 10) || 0;
 
     const [parsedWordleGuesses, wordleNumber, resultBlocks, isDNF] =
       parseWordleResult(wordleResult);
@@ -318,7 +318,7 @@ const InputForm = () => {
       const finalGuesses =
         pasteWordle && isWordleResultPasted
           ? isDNF
-            ? 0
+            ? 7
             : parsedWordleGuesses // Use parsed guesses if Wordle output is pasted
           : numGuesses; // Otherwise use the provided number of guesses
 
