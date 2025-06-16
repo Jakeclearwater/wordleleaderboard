@@ -125,23 +125,42 @@ const Leaderboard = () => {
         const allTimeScoresQuery = collection(firestore, 'scores');
         const allTimeSnapshot = await getDocs(allTimeScoresQuery);
 
-        // Fetch woodspoon leaderboard - now looking for score of 7 instead of 0
+        // Fetch all scores for client-side filtering
+        const allScoresQuery = collection(firestore, 'scores');
+        const allScoresSnapshot = await getDocs(allScoresQuery);
+        const allScores = allScoresSnapshot.docs.map(doc => doc.data());
+
+        // Fetch woodspoon leaderboard with guesses=7
         const woodspoonScoresQuery = query(
           collection(firestore, 'scores'),
           where('guesses', '==', 7)
         );
         const woodspoonSnapshot = await getDocs(woodspoonScoresQuery);
+        const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
+
+        // Also find scores that are 0 or null/undefined to include them as DNFs
+        const additionalDNFs = allScores.filter(score => 
+          score.guesses === 0 || score.guesses === null || score.guesses === undefined
+        );
+
+        // Combine both types of DNFs
+        const allDNFScores = [...woodspoonScores, ...additionalDNFs];
 
         const dailyScores = dailySnapshot.docs.map(doc => doc.data());
         const weeklyScores = weeklySnapshot.docs.map(doc => doc.data());
         const allTimeScores = allTimeSnapshot.docs.map(doc => doc.data());
-        const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
 
-        // For daily & weekly: simple averages - now treating 7 as DNF
+        // For daily & weekly: simple averages - treating 0, null, undefined as 7 (DNF)
         const groupScoresSimple = (scores) => {
           const grouped = scores.reduce((acc, s) => {
-            const g = parseFloat(s.guesses);
-            if (isNaN(g)) return acc;
+            // Extract the guesses value
+            let g = parseFloat(s.guesses);
+            
+            // Convert 0, NaN, null, undefined to 7 (DNF)
+            if (isNaN(g) || g === 0) {
+              g = 7;  // Treat as DNF
+            }
+            
             if (!acc[s.name]) {
               acc[s.name] = { totalGuesses: 0, attempts: 0 };
             }
@@ -149,6 +168,7 @@ const Leaderboard = () => {
             acc[s.name].attempts += 1;
             return acc;
           }, {});
+          
           return Object.keys(grouped).map(name => {
             const { totalGuesses, attempts } = grouped[name];
             return {
@@ -166,11 +186,15 @@ const Leaderboard = () => {
 
         // Compute global mean for Bayesian prior from allTimeScores
         const allTimeSum = allTimeScores.reduce((acc, score) => {
-          const g = parseFloat(score.guesses);
-          if (!isNaN(g) && g > 0) {
-            acc.totalGuesses += g;
-            acc.totalCount += 1;
+          let g = parseFloat(score.guesses);
+          
+          // Convert 0, NaN, null, undefined to 7 (DNF)
+          if (isNaN(g) || g === 0) {
+            g = 7;  // Treat as DNF
           }
+          
+          acc.totalGuesses += g;
+          acc.totalCount += 1;
           return acc;
         }, { totalGuesses: 0, totalCount: 0 });
 
@@ -181,19 +205,30 @@ const Leaderboard = () => {
         const parseDate = (d) => new Date(d);
         const now = new Date();
 
-        // Group for Bayesian leaderboard - now includes 7s in calculations
+        // Group for Bayesian leaderboard - now properly handles DNFs
         const groupedAllTime = allTimeScores.reduce((acc, s) => {
-          const g = parseFloat(s.guesses);
-          if (isNaN(g) || !s.date) return acc;
+          // Extract and normalize guesses
+          let g = parseFloat(s.guesses);
+          
+          // Convert 0, NaN, null, undefined to 7 (DNF)
+          if (isNaN(g) || g === 0) {
+            g = 7;  // Treat as DNF
+          }
+          
+          if (!s.date) return acc;
+          
           if (!acc[s.name]) {
             acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: parseDate(s.date) };
           }
+          
           acc[s.name].totalGuesses += g;
           acc[s.name].attempts += 1;
+          
           const attemptDate = parseDate(s.date);
           if (attemptDate > acc[s.name].lastAttempt) {
             acc[s.name].lastAttempt = attemptDate;
           }
+          
           return acc;
         }, {});
 
@@ -230,14 +265,15 @@ const Leaderboard = () => {
           attempts: groupedAllTime[name].attempts
         })).sort((a, b) => b.attempts - a.attempts);
 
-        // Woodspoon leaderboard
-        const groupedWoodspoonScores = woodspoonScores.reduce((acc, score) => {
+        // Woodspoon leaderboard - use the combined DNFs
+        const groupedWoodspoonScores = allDNFScores.reduce((acc, score) => {
           if (!acc[score.name]) {
             acc[score.name] = { count: 0 };
           }
           acc[score.name].count += 1;
           return acc;
         }, {});
+        
         const woodspoonLeaderboardArray = Object.keys(groupedWoodspoonScores).map(name => ({
           name,
           count: groupedWoodspoonScores[name].count

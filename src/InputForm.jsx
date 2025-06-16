@@ -68,7 +68,7 @@ const useStyles = createUseStyles({
     alignItems: "center",
     zIndex: 1000,
     opacity: 1,
-    transition: "opacity 0.5s ease",
+    transition: "opacity 1s ease",
   },
   hidden: {
     opacity: 0,
@@ -255,20 +255,34 @@ const InputForm = () => {
       return;
     }
 
-    // Ensure wordleGuesses is an integer or default to 7 for DNF
-    const wordleGuesses = parseInt(wordleResult, 10) || (didNotFinish ? 7 : 0);
-    const numGuesses = didNotFinish ? 7 : parseInt(guesses, 10) || 0;
-
-    const [parsedWordleGuesses, wordleNumber, resultBlocks, isDNF] =
-      parseWordleResult(wordleResult);
-
-    // Automatically set DNF if pasted result indicates it
-    if (pasteWordle && isDNF) {
-      setDidNotFinish(true);
+    // This is the problematic part - we need to ensure DNF is always 7
+    let finalGuesses = 0;
+    let wordleNumber = '';
+    let resultBlocks = [];
+    let isDNF = didNotFinish; // Start with the checkbox value
+    
+    if (pasteWordle && wordleResult.trim().length > 0) {
+      // Parse the pasted result
+      const [parsedWordleGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF] = 
+        parseWordleResult(wordleResult);
+      
+      // Update DNF status if the pasted result indicates it
+      isDNF = isDNF || parsedIsDNF;
+      
+      // Set the values from parsing
+      wordleNumber = parsedWordleNumber;
+      resultBlocks = parsedResultBlocks;
+      
+      // If DNF, set guesses to 7, otherwise use parsed value
+      finalGuesses = isDNF ? 7 : parsedWordleGuesses;
+    } else {
+      // Manual entry - if DNF, set to 7, otherwise use the entered guesses
+      finalGuesses = isDNF ? 7 : parseInt(guesses, 10) || 0;
     }
-
+    
+    // Additional validation
     const isWordleResultPasted = wordleResult.trim().length > 0;
-    const isNumGuessesProvided = numGuesses > 0;
+    const isNumGuessesProvided = parseInt(guesses, 10) > 0;
 
     if (!name) {
       alert("Please provide your name.");
@@ -308,6 +322,19 @@ const InputForm = () => {
       return;
     }
 
+    // Make sure we always have a valid guesses value (should be 1-6 or 7 for DNF)
+    if (finalGuesses <= 0 || finalGuesses > 7) {
+      finalGuesses = isDNF ? 7 : 0;
+    }
+
+    // Proceed only if we have valid guesses
+    if (finalGuesses === 0 && !isDNF) {
+      alert("Please provide the number of guesses or select 'Did Not Finish'.");
+      setLoading(false);
+      setShowOverlay(false);
+      return;
+    }
+
     const utcDate = new Date();
     const nzDate = new Date(
       utcDate.toLocaleString("en-US", { timeZone: "Pacific/Auckland" })
@@ -315,36 +342,37 @@ const InputForm = () => {
     const formattedNZDate = nzDate.toISOString().split("T")[0];
 
     try {
-      const finalGuesses =
-        pasteWordle && isWordleResultPasted
-          ? isDNF
-            ? 7
-            : parsedWordleGuesses // Use parsed guesses if Wordle output is pasted
-          : numGuesses; // Otherwise use the provided number of guesses
-
+      // Store in Firestore - ensure guesses is 7 for DNF
       await addDoc(collection(firestore, "scores"), {
         name: finalName,
-        guesses: finalGuesses,
+        guesses: isDNF ? 7 : finalGuesses, // Explicitly set 7 for DNF
         date: formattedNZDate,
       });
 
+      // Reset form
       setGuesses("");
       setDidNotFinish(false);
       setWordleResult("");
       setPasteWordle(false);
 
+      // Send to Teams webhook if applicable
       if (pasteWordle && isWordleResultPasted) {
         await sendResultToTeams(
-          parsedWordleGuesses,
+          finalGuesses,  // Use the calculated final guesses
           wordleNumber,
           finalName,
-          isDNF,
+          isDNF,        // Use the calculated isDNF
           resultBlocks
         );
       } else if (!pasteWordle && isNumGuessesProvided) {
-        await sendResultToTeams(numGuesses, finalName, didNotFinish, []);
+        await sendResultToTeams(
+          finalGuesses,  
+          wordleNumber || "Unknown", 
+          finalName, 
+          isDNF, 
+          []
+        );
       }
-
     } catch (error) {
       console.error("Error adding document: ", error);
     } finally {
@@ -360,7 +388,7 @@ const InputForm = () => {
       {showOverlay && (
         <div className={`${classes.overlay} ${loading ? "" : classes.hidden}`}>
           <div>
-            <h2>Thank You!</h2>
+            <h2>Submitting Result...</h2>
           </div>
         </div>
       )}
