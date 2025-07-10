@@ -73,6 +73,36 @@ const useStyles = createUseStyles({
   hidden: {
     opacity: 0,
   },
+  confetti: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+    zIndex: 9999,
+    '& .confetti-piece': {
+      position: 'absolute',
+      width: '10px',
+      height: '10px',
+      backgroundColor: '#FFD700',
+      animation: '$confettiBurst 3s ease-out forwards',
+    }
+  },
+  '@keyframes confettiBurst': {
+    '0%': {
+      transform: 'translate(-50%, -50%) scale(0) rotateZ(0deg)',
+      opacity: 1,
+    },
+    '10%': {
+      transform: 'translate(-50%, -50%) scale(1) rotateZ(90deg)',
+      opacity: 1,
+    },
+    '100%': {
+      transform: 'translate(calc(-50% + var(--end-x, 0px)), calc(-50% + var(--end-y, 0px))) scale(0.5) rotateZ(720deg)',
+      opacity: 0,
+    }
+  }
 });
 
 const InputForm = () => {
@@ -86,6 +116,8 @@ const InputForm = () => {
   const [loading, setLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const [pasteWordle, setPasteWordle] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [testConfetti, setTestConfetti] = useState(false);
 
   useEffect(() => {
     const lastChosenName = localStorage.getItem("lastChosenName");
@@ -98,6 +130,29 @@ const InputForm = () => {
         setIsCustomName(true);
       }
     }
+
+    // Platform detection for debugging - runs when app loads
+    const userAgent = navigator.userAgent.toLowerCase();
+    let platformEmoji = '❓'; // Default unknown
+    
+    if (userAgent.includes('windows') || userAgent.includes('win32') || userAgent.includes('win64')) {
+      platformEmoji = '🪟'; // Windows
+    } else if (userAgent.includes('macintosh') || userAgent.includes('mac os x') || userAgent.includes('darwin')) {
+      platformEmoji = '🍎'; // Mac
+    } else if (userAgent.includes('linux') && !userAgent.includes('android')) {
+      platformEmoji = '🐧'; // Linux
+    } else if (userAgent.includes('android')) {
+      platformEmoji = '🤖'; // Android
+    } else if (userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ios')) {
+      platformEmoji = '📱'; // iOS
+    }
+    
+    // Debug logging on app load
+    console.log('=== Platform Detection (App Load) ===');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Detected Platform:', platformEmoji);
+    console.log('Modern Platform API:', navigator.userAgentData?.platform || 'not available');
+    console.log('=====================================');
   }, []);
 
   const handleNameChange = (event) => {
@@ -113,10 +168,16 @@ const InputForm = () => {
 
   const handleCustomNameChange = (event) => {
     const newCustomName = event.target.value;
-    setCustomName(newCustomName);
-    if (newCustomName) {
-      localStorage.setItem("lastChosenName", newCustomName);
+    // Only allow letters (a-z, A-Z) and spaces
+    const isValid = /^[a-zA-Z ]*$/.test(newCustomName);
+    
+    if (isValid) {
+      setCustomName(newCustomName);
+      if (newCustomName) {
+        localStorage.setItem("lastChosenName", newCustomName);
+      }
     }
+    // If invalid, don't update the state (effectively blocking the input)
   };
 
   const names = [
@@ -141,6 +202,37 @@ const InputForm = () => {
     "Cam",
     "Callum"
   ];
+
+  // Create confetti pieces
+  const createConfetti = () => {
+    const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+    const pieces = [];
+    
+    for (let i = 0; i < 50; i++) {
+      // Generate random angle and distance for burst effect
+      const angle = (Math.PI * 2 * i) / 50 + Math.random() * 0.5; // Distribute around circle with some randomness
+      const distance = 50 + Math.random() * 300; // Random distance from center
+      const endX = Math.cos(angle) * distance;
+      const endY = Math.sin(angle) * distance;
+      
+      pieces.push(
+        <div
+          key={i}
+          className="confetti-piece"
+          style={{
+            left: '50%',
+            top: '50%',
+            backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+            animationDelay: `${Math.random() * 0.5}s`,
+            animationDuration: `${2 + Math.random() * 1}s`,
+            '--end-x': `${endX}px`,
+            '--end-y': `${endY}px`,
+          }}
+        />
+      );
+    }
+    return pieces;
+  };
 
   
     const parseWordleResult = (result) => {
@@ -178,7 +270,7 @@ const InputForm = () => {
     name,
     didNotFinish,
     resultBlocks,
-    deviceHash = null
+    platformEmoji = null
   ) => {
     const grats = [
       "Genius",
@@ -206,10 +298,10 @@ const InputForm = () => {
       size: "Medium", // Use smaller text size
     }));
 
-    // Add hostname info if available
-    const hostnameBlock = deviceHash ? [{
+    // Add platform emoji if available
+    const platformBlock = platformEmoji ? [{
       type: "TextBlock",
-      text: `🖥️ Device: ${deviceHash}`,
+      text: `${platformEmoji} Platform`,
       wrap: true,
       spacing: "Small",
       size: "Small",
@@ -235,7 +327,7 @@ const InputForm = () => {
                 spacing: "None", // Reduce spacing for the title text
               },
               ...textBlocks,
-              ...hostnameBlock,
+              ...platformBlock,
             ],
           },
         },
@@ -267,25 +359,29 @@ const InputForm = () => {
       return;
     }
 
-    // Collect hostname information (client-side only)
-    const hostname = window.location.hostname || 'unknown';
-    const userAgent = navigator.userAgent;
-    const platform = navigator.platform;
+    // Detect platform and assign emoji
+    const userAgent = navigator.userAgent.toLowerCase();
+    let platformEmoji = '❓'; // Default unknown
     
-    // Create a simple hash function for client fingerprinting
-    const simpleHash = (str) => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32-bit integer
-      }
-      return Math.abs(hash).toString(36).substr(0, 6); // Short hash (6 chars)
-    };
+    if (userAgent.includes('windows') || userAgent.includes('win32') || userAgent.includes('win64')) {
+      platformEmoji = '🪟'; // Windows
+    } else if (userAgent.includes('macintosh') || userAgent.includes('mac os x') || userAgent.includes('darwin')) {
+      platformEmoji = '🍎'; // Mac
+    } else if (userAgent.includes('linux') && !userAgent.includes('android')) {
+      platformEmoji = '🐧'; // Linux
+    } else if (userAgent.includes('android')) {
+      platformEmoji = '🤖'; // Android
+    } else if (userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ios')) {
+      platformEmoji = '📱'; // iOS
+    }
     
-    // Create fingerprint from available client data
-    const fingerprint = `${hostname}-${platform}-${userAgent.slice(0, 50)}`;
-    const deviceHash = simpleHash(fingerprint);
+    // Debug logging
+    console.log('Platform Detection:', {
+      userAgent: navigator.userAgent,
+      detectedPlatform: platformEmoji,
+      // Using userAgent for detection instead of deprecated navigator.platform
+      modernPlatform: navigator.userAgentData?.platform || 'not available'
+    });
 
     // This is the problematic part - we need to ensure DNF is always 7
     let finalGuesses = 0;
@@ -384,7 +480,13 @@ const InputForm = () => {
       setWordleResult("");
       setPasteWordle(false);
 
-      // Send to Teams webhook with hostname info
+      // Show confetti for excellent scores (1 to 3 guesses)
+      if (!isDNF && finalGuesses <= 3) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000); // Hide after 4 seconds
+      }
+
+      // Send to Teams webhook with platform info
       if (pasteWordle && isWordleResultPasted) {
         await sendResultToTeams(
           finalGuesses,  // Use the calculated final guesses
@@ -392,7 +494,7 @@ const InputForm = () => {
           finalName,
           isDNF,        // Use the calculated isDNF
           resultBlocks,
-          deviceHash // Include device hash
+          platformEmoji // Include platform emoji
         );
       } else if (!pasteWordle && isNumGuessesProvided) {
         await sendResultToTeams(
@@ -401,7 +503,7 @@ const InputForm = () => {
           finalName, 
           isDNF, 
           [],
-          deviceHash // Include device hash
+          platformEmoji // Include platform emoji
         );
       }
     } catch (error) {
@@ -414,6 +516,18 @@ const InputForm = () => {
     }
   };
 
+  // Handle test confetti checkbox
+  const handleTestConfetti = (e) => {
+    setTestConfetti(e.target.checked);
+    if (e.target.checked) {
+      setShowConfetti(true);
+      setTimeout(() => {
+        setShowConfetti(false);
+        setTestConfetti(false);
+      }, 4000); // Hide after 4 seconds and uncheck
+    }
+  };
+
   return (
     <>
       {showOverlay && (
@@ -421,6 +535,11 @@ const InputForm = () => {
           <div>
             <h2>Submitting Result...</h2>
           </div>
+        </div>
+      )}
+      {showConfetti && (
+        <div className={classes.confetti}>
+          {createConfetti()}
         </div>
       )}
       <form onSubmit={handleSubmit} className={classes.form}>
@@ -456,7 +575,9 @@ const InputForm = () => {
               required={!didNotFinish && isCustomName}
               className={classes.input}
               disabled={didNotFinish}
-              placeholder="Type your name"
+              placeholder="Type your name (letters only)"
+              pattern="[a-zA-Z ]*"
+              title="Only letters and spaces are allowed"
             />
           </div>
         )}
@@ -508,6 +629,7 @@ const InputForm = () => {
             />
           </div>
         )}
+
         <button
           type="submit"
           className={`${classes.button} ${loading ? classes.disabled : ""}`}
