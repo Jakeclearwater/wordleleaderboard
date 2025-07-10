@@ -177,7 +177,8 @@ const InputForm = () => {
     wordleNumber,
     name,
     didNotFinish,
-    resultBlocks
+    resultBlocks,
+    deviceHash = null
   ) => {
     const grats = [
       "Genius",
@@ -205,6 +206,16 @@ const InputForm = () => {
       size: "Medium", // Use smaller text size
     }));
 
+    // Add hostname info if available
+    const hostnameBlock = deviceHash ? [{
+      type: "TextBlock",
+      text: `🖥️ Device: ${deviceHash}`,
+      wrap: true,
+      spacing: "Small",
+      size: "Small",
+      isSubtle: true
+    }] : [];
+
     // Define the payload for the Teams webhook
     const payload = {
       type: "message",
@@ -224,6 +235,7 @@ const InputForm = () => {
                 spacing: "None", // Reduce spacing for the title text
               },
               ...textBlocks,
+              ...hostnameBlock,
             ],
           },
         },
@@ -254,6 +266,26 @@ const InputForm = () => {
       setShowOverlay(false);
       return;
     }
+
+    // Collect hostname information (client-side only)
+    const hostname = window.location.hostname || 'unknown';
+    const userAgent = navigator.userAgent;
+    const platform = navigator.platform;
+    
+    // Create a simple hash function for client fingerprinting
+    const simpleHash = (str) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      return Math.abs(hash).toString(36).substr(0, 6); // Short hash (6 chars)
+    };
+    
+    // Create fingerprint from available client data
+    const fingerprint = `${hostname}-${platform}-${userAgent.slice(0, 50)}`;
+    const deviceHash = simpleHash(fingerprint);
 
     // This is the problematic part - we need to ensure DNF is always 7
     let finalGuesses = 0;
@@ -300,12 +332,8 @@ const InputForm = () => {
       }
       if (isDNF) {
         if (!didNotFinish) {
-          alert(
-            "The pasted result indicates DNF, but 'Did Not Finish' is not selected."
-          );
-          setLoading(false);
-          setShowOverlay(false);
-          return;
+          // Automatically check the DNF box when detected from pasted result
+          setDidNotFinish(true);
         }
       } else if (isNumGuessesProvided && numGuesses !== parsedWordleGuesses) {
         alert(
@@ -342,11 +370,12 @@ const InputForm = () => {
     const formattedNZDate = nzDate.toISOString().split("T")[0];
 
     try {
-      // Store in Firestore - ensure guesses is 7 for DNF
+      // Store in Firestore - ensure guesses is 7 for DNF and include dnf flag
       await addDoc(collection(firestore, "scores"), {
         name: finalName,
         guesses: isDNF ? 7 : finalGuesses, // Explicitly set 7 for DNF
         date: formattedNZDate,
+        dnf: isDNF, // Add DNF flag to database
       });
 
       // Reset form
@@ -355,14 +384,15 @@ const InputForm = () => {
       setWordleResult("");
       setPasteWordle(false);
 
-      // Send to Teams webhook if applicable
+      // Send to Teams webhook with hostname info
       if (pasteWordle && isWordleResultPasted) {
         await sendResultToTeams(
           finalGuesses,  // Use the calculated final guesses
           wordleNumber,
           finalName,
           isDNF,        // Use the calculated isDNF
-          resultBlocks
+          resultBlocks,
+          deviceHash // Include device hash
         );
       } else if (!pasteWordle && isNumGuessesProvided) {
         await sendResultToTeams(
@@ -370,7 +400,8 @@ const InputForm = () => {
           wordleNumber || "Unknown", 
           finalName, 
           isDNF, 
-          []
+          [],
+          deviceHash // Include device hash
         );
       }
     } catch (error) {
