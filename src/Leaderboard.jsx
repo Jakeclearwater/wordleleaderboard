@@ -81,9 +81,9 @@ const useStyles = createUseStyles({
 });
 
 const grayShades = [
-  '#bebebe', '#c4c4c4', '#c9c9c9', '#d0d0d0', '#d5d5d5',
-  '#dadada', '#dfdfdf', '#e4e4e4', '#e8e8e8', '#ededed',
-  '#f2f2f2', '#f6f6f6', '#f9f9f9', '#fcfcfc', '#fdfdfd',
+  '#8a8a8a', '#949494', '#9e9e9e', '#a8a8a8', '#b2b2b2',
+  '#bcbcbc', '#c6c6c6', '#d0d0d0', '#dadada', '#e4e4e4',
+  '#eeeeee', '#f2f2f2', '#f6f6f6', '#f9f9f9', '#fcfcfc',
   '#fefefe', '#ffffff',
 ];
 
