@@ -130,29 +130,6 @@ const InputForm = () => {
         setIsCustomName(true);
       }
     }
-
-    // Platform detection for debugging - runs when app loads
-    const userAgent = navigator.userAgent.toLowerCase();
-    let platformEmoji = '❓'; // Default unknown
-    
-    if (userAgent.includes('windows') || userAgent.includes('win32') || userAgent.includes('win64')) {
-      platformEmoji = '🪟'; // Windows
-    } else if (userAgent.includes('macintosh') || userAgent.includes('mac os x') || userAgent.includes('darwin')) {
-      platformEmoji = '🍎'; // Mac
-    } else if (userAgent.includes('linux') && !userAgent.includes('android')) {
-      platformEmoji = '🐧'; // Linux
-    } else if (userAgent.includes('android')) {
-      platformEmoji = '🤖'; // Android
-    } else if (userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ios')) {
-      platformEmoji = '📱'; // iOS
-    }
-    
-    // Debug logging on app load
-    console.log('=== Platform Detection (App Load) ===');
-    console.log('User Agent:', navigator.userAgent);
-    console.log('Detected Platform:', platformEmoji);
-    console.log('Modern Platform API:', navigator.userAgentData?.platform || 'not available');
-    console.log('=====================================');
   }, []);
 
   const handleNameChange = (event) => {
@@ -168,12 +145,13 @@ const InputForm = () => {
 
   const handleCustomNameChange = (event) => {
     const newCustomName = event.target.value;
-    // Only allow letters (a-z, A-Z) and spaces
-    const isValid = /^[a-zA-Z ]*$/.test(newCustomName);
+    // Only allow letters (a-z, A-Z) and spaces, up to 12 characters max
+    // Allow 0+ characters during typing, but we'll validate 3+ on submission
+    const isValid = /^[a-zA-Z ]{0,12}$/.test(newCustomName);
     
     if (isValid) {
       setCustomName(newCustomName);
-      if (newCustomName) {
+      if (newCustomName && newCustomName.length >= 3) {
         localStorage.setItem("lastChosenName", newCustomName);
       }
     }
@@ -269,8 +247,7 @@ const InputForm = () => {
     wordleNumber,
     name,
     didNotFinish,
-    resultBlocks,
-    platformEmoji = null
+    resultBlocks
   ) => {
     const grats = [
       "Genius",
@@ -298,16 +275,6 @@ const InputForm = () => {
       size: "Medium", // Use smaller text size
     }));
 
-    // Add platform emoji if available
-    const platformBlock = platformEmoji ? [{
-      type: "TextBlock",
-      text: `${platformEmoji} Platform`,
-      wrap: true,
-      spacing: "Small",
-      size: "Small",
-      isSubtle: true
-    }] : [];
-
     // Define the payload for the Teams webhook
     const payload = {
       type: "message",
@@ -327,7 +294,6 @@ const InputForm = () => {
                 spacing: "None", // Reduce spacing for the title text
               },
               ...textBlocks,
-              ...platformBlock,
             ],
           },
         },
@@ -359,29 +325,13 @@ const InputForm = () => {
       return;
     }
 
-    // Detect platform and assign emoji
-    const userAgent = navigator.userAgent.toLowerCase();
-    let platformEmoji = '❓'; // Default unknown
-    
-    if (userAgent.includes('windows') || userAgent.includes('win32') || userAgent.includes('win64')) {
-      platformEmoji = '🪟'; // Windows
-    } else if (userAgent.includes('macintosh') || userAgent.includes('mac os x') || userAgent.includes('darwin')) {
-      platformEmoji = '🍎'; // Mac
-    } else if (userAgent.includes('linux') && !userAgent.includes('android')) {
-      platformEmoji = '🐧'; // Linux
-    } else if (userAgent.includes('android')) {
-      platformEmoji = '🤖'; // Android
-    } else if (userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ios')) {
-      platformEmoji = '📱'; // iOS
+    // Validate custom name length (3-12 characters)
+    if (isCustomName && (finalName.length < 3 || finalName.length > 12)) {
+      alert("Name must be between 3 and 12 characters long.");
+      setLoading(false);
+      setShowOverlay(false);
+      return;
     }
-    
-    // Debug logging
-    console.log('Platform Detection:', {
-      userAgent: navigator.userAgent,
-      detectedPlatform: platformEmoji,
-      // Using userAgent for detection instead of deprecated navigator.platform
-      modernPlatform: navigator.userAgentData?.platform || 'not available'
-    });
 
     // This is the problematic part - we need to ensure DNF is always 7
     let finalGuesses = 0;
@@ -486,15 +436,14 @@ const InputForm = () => {
         setTimeout(() => setShowConfetti(false), 4000); // Hide after 4 seconds
       }
 
-      // Send to Teams webhook with platform info
+      // Send to Teams webhook
       if (pasteWordle && isWordleResultPasted) {
         await sendResultToTeams(
           finalGuesses,  // Use the calculated final guesses
           wordleNumber,
           finalName,
           isDNF,        // Use the calculated isDNF
-          resultBlocks,
-          platformEmoji // Include platform emoji
+          resultBlocks
         );
       } else if (!pasteWordle && isNumGuessesProvided) {
         await sendResultToTeams(
@@ -502,8 +451,7 @@ const InputForm = () => {
           wordleNumber || "Unknown", 
           finalName, 
           isDNF, 
-          [],
-          platformEmoji // Include platform emoji
+          []
         );
       }
     } catch (error) {
@@ -566,7 +514,7 @@ const InputForm = () => {
         </div>
         {isCustomName && (
           <div>
-            <label htmlFor="customName">Enter your name:</label>
+            <label htmlFor="customName">Enter your name: </label>
             <input
               type="text"
               id="customName"
@@ -575,9 +523,11 @@ const InputForm = () => {
               required={!didNotFinish && isCustomName}
               className={classes.input}
               disabled={didNotFinish}
-              placeholder="Type your name (letters only)"
-              pattern="[a-zA-Z ]*"
-              title="Only letters and spaces are allowed"
+              placeholder="Type your name (3-12 characters)"
+              pattern="[a-zA-Z ]{3,12}"
+              title="Name must be 3-12 characters, letters and spaces only"
+              minLength={3}
+              maxLength={12}
             />
           </div>
         )}

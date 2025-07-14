@@ -203,6 +203,150 @@ class WordleLeaderboardDBA {
     }
   }
 
+  // Find names with emojis or special characters
+  async findProblematicNames(collectionName = 'scores') {
+    console.log(`\n=== Finding names with emojis or special characters in ${collectionName} ===`);
+    try {
+      const snapshot = await getDocs(collection(this.db, collectionName));
+      
+      if (snapshot.empty) {
+        console.log('No documents found in this collection.');
+        return;
+      }
+
+      const problematicDocs = [];
+      const validNamePattern = /^[a-zA-Z ]*$/;
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.name && !validNamePattern.test(data.name)) {
+          problematicDocs.push({
+            id: doc.id,
+            name: data.name,
+            guesses: data.guesses,
+            date: data.date,
+            dnf: data.dnf
+          });
+        }
+      });
+
+      if (problematicDocs.length === 0) {
+        console.log('✓ No problematic names found. All names contain only letters and spaces.');
+        return;
+      }
+
+      console.log(`Found ${problematicDocs.length} documents with problematic names:`);
+      problematicDocs.forEach((doc, index) => {
+        console.log(`${index + 1}. Document ID: ${doc.id}`);
+        console.log(`   Name: "${doc.name}"`);
+        console.log(`   Guesses: ${doc.guesses}, Date: ${doc.date}, DNF: ${doc.dnf}`);
+        console.log('---');
+      });
+
+      return problematicDocs;
+    } catch (error) {
+      console.error('Error finding problematic names:', error.message);
+    }
+  }
+
+  // Bulk fix names with emojis/special characters
+  async fixProblematicNames(collectionName = 'scores', dryRun = true) {
+    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Fixing problematic names in ${collectionName} ===`);
+    
+    const problematicDocs = await this.findProblematicNames(collectionName);
+    
+    if (!problematicDocs || problematicDocs.length === 0) {
+      return;
+    }
+
+    console.log(`\n${dryRun ? 'Would fix' : 'Fixing'} ${problematicDocs.length} documents:`);
+    
+    for (const docData of problematicDocs) {
+      // Remove emojis and special characters, keep only letters and spaces
+      const cleanedName = docData.name.replace(/[^a-zA-Z ]/g, '').trim();
+      
+      if (cleanedName.length === 0) {
+        console.log(`⚠️  Document ${docData.id}: Name "${docData.name}" would become empty after cleaning. Skipping.`);
+        continue;
+      }
+
+      console.log(`Document ${docData.id}:`);
+      console.log(`  Before: "${docData.name}"`);
+      console.log(`  After:  "${cleanedName}"`);
+      
+      if (!dryRun) {
+        try {
+          await this.updateDocument(collectionName, docData.id, { name: cleanedName });
+          console.log(`  ✓ Updated successfully`);
+        } catch (error) {
+          console.log(`  ✗ Failed to update: ${error.message}`);
+        }
+      } else {
+        console.log(`  (dry run - no changes made)`);
+      }
+      console.log('---');
+    }
+
+    if (dryRun) {
+      console.log('\nThis was a dry run. To actually make changes, use:');
+      console.log(`node dba-script.js fix-names ${collectionName} --execute`);
+    }
+  }
+
+  // Conditional bulk update - update multiple documents that match a condition
+  async conditionalUpdate(collectionName, field, operator, value, updateData, dryRun = true) {
+    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Conditional Update: ${collectionName} where ${field} ${operator} ${value} ===`);
+    
+    try {
+      // First, find all matching documents
+      const q = query(
+        collection(this.db, collectionName),
+        where(field, operator, value)
+      );
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        console.log('No documents found matching the criteria.');
+        return;
+      }
+
+      console.log(`Found ${snapshot.size} documents matching the criteria:`);
+      
+      const documentsToUpdate = [];
+      snapshot.forEach((doc) => {
+        documentsToUpdate.push({
+          id: doc.id,
+          currentData: doc.data()
+        });
+        console.log(`Document ID: ${doc.id}`);
+        console.log('Current data:', JSON.stringify(doc.data(), null, 2));
+        console.log('---');
+      });
+
+      console.log(`\n${dryRun ? 'Would update' : 'Updating'} ${documentsToUpdate.length} documents with:`);
+      console.log('Update data:', JSON.stringify(updateData, null, 2));
+
+      if (!dryRun) {
+        // Use batch update for efficiency
+        const batch = writeBatch(this.db);
+        
+        documentsToUpdate.forEach(docInfo => {
+          const docRef = doc(this.db, collectionName, docInfo.id);
+          batch.update(docRef, updateData);
+        });
+
+        await batch.commit();
+        console.log(`✓ Successfully updated ${documentsToUpdate.length} documents`);
+      } else {
+        console.log('\nThis was a dry run. To actually make changes, add --execute flag');
+      }
+
+      return documentsToUpdate.length;
+    } catch (error) {
+      console.error('Error in conditional update:', error.message);
+    }
+  }
+
   // Show help
   showHelp() {
     console.log(`
@@ -217,8 +361,11 @@ Commands:
   search <collection> <field> <op> <value> [limit] - Search documents
   add <collection> <jsonData>          - Add a new document
   update <collection> <docId> <jsonData> - Update a document
+  conditional-update <collection> <field> <op> <value> <jsonData> [--execute] - Update all docs matching condition
   delete <collection> <docId>          - Delete a document
   count <collection>                   - Count documents in a collection
+  find-emoji-names [collection]        - Find names with emojis or special characters
+  fix-names [collection] [--execute]   - Fix problematic names (dry run by default)
   help                                 - Show this help
 
 Examples:
@@ -228,8 +375,11 @@ Examples:
   node dba-script.js search scores dnf == true
   node dba-script.js add scores '{"name":"John","score":5,"date":"2025-07-11","dnf":false}'
   node dba-script.js update scores abc123 '{"score":6}'
+  node dba-script.js conditional-update scores name == "John🎉" '{"name":"John"}' --execute
   node dba-script.js delete scores abc123
   node dba-script.js count scores
+  node dba-script.js find-emoji-names scores
+  node dba-script.js fix-names scores --execute
 
 Search operators: ==, !=, <, <=, >, >=, array-contains, in, array-contains-any
     `);
@@ -307,6 +457,25 @@ async function main() {
         await dba.updateDocument(args[1], args[2], updateData);
         break;
 
+      case 'conditional-update':
+        if (args.length < 6) {
+          console.log('Usage: conditional-update <collection> <field> <operator> <value> <jsonData> [--execute]');
+          return;
+        }
+        let condValue = args[4];
+        // Try to parse as number or boolean
+        if (!isNaN(condValue)) {
+          condValue = Number(condValue);
+        } else if (condValue === 'true') {
+          condValue = true;
+        } else if (condValue === 'false') {
+          condValue = false;
+        }
+        const condUpdateData = JSON.parse(args[5]);
+        const isCondExecute = args.includes('--execute');
+        await dba.conditionalUpdate(args[1], args[2], args[3], condValue, condUpdateData, !isCondExecute);
+        break;
+
       case 'delete':
         if (args.length < 3) {
           console.log('Usage: delete <collection> <documentId>');
@@ -323,6 +492,17 @@ async function main() {
         await dba.countDocuments(args[1]);
         break;
 
+      case 'find-emoji-names':
+        const findCollection = args[1] || 'scores';
+        await dba.findProblematicNames(findCollection);
+        break;
+
+      case 'fix-names':
+        const fixCollection = args[1] || 'scores';
+        const isExecute = args.includes('--execute');
+        await dba.fixProblematicNames(fixCollection, !isExecute);
+        break;
+
       case 'help':
         dba.showHelp();
         break;
@@ -337,4 +517,12 @@ async function main() {
 }
 
 // Run the script
-main().catch(console.error);
+main()
+  .then(() => {
+    console.log('\n=== Operation completed ===');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+    process.exit(1);
+  });
