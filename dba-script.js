@@ -92,6 +92,12 @@ class WordleLeaderboardDBA {
 
   // Show collection data
   async showCollection(collectionName, limitCount = 10) {
+    // Validate limit parameter
+    if (isNaN(limitCount) || limitCount <= 0) {
+      console.log(`Error: Invalid limit "${limitCount}". Please provide a positive number.`);
+      return;
+    }
+    
     console.log(`\n=== ${collectionName} Collection (limited to ${limitCount} documents) ===`);
     try {
       const q = query(collection(this.db, collectionName), limit(limitCount));
