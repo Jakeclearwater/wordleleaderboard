@@ -309,6 +309,7 @@ const Leaderboard = () => {
 
         const allTimeLeaderboardArray = Object.keys(groupedAllTime).map(name => {
           const { totalGuesses, attempts, lastAttempt } = groupedAllTime[name];
+          const actualAverage = totalGuesses / attempts; // Calculate actual average
           const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
           const daysSinceLast = Math.floor((now - lastAttempt) / (24 * 60 * 60 * 1000));
           const RecencyFactor = 1 + (daysSinceLast / R);
@@ -321,6 +322,7 @@ const Leaderboard = () => {
             BayesAvg,
             RecencyFactor,
             AttemptsBonus,
+            actualAverage, // Include actual average in the data
           };
         }).sort((a, b) => a.finalScore - b.finalScore);
 
@@ -465,10 +467,13 @@ const Leaderboard = () => {
                     }}
                     title={`FinalScore = (BayesAvg x RecencyFactor) - AttemptsBonus
         
+        Your Actual Average: ${entry.actualAverage.toFixed(2)}
+        
         Formula:
         FinalScore = (${entry.BayesAvg.toFixed(2)} x ${entry.RecencyFactor.toFixed(2)}) - ${entry.AttemptsBonus.toFixed(2)}
 
         Explanation:
+        - Actual Average (${entry.actualAverage.toFixed(2)}): Your raw average score across all attempts.
         - BayesAvg (${entry.BayesAvg.toFixed(2)}): Your average guesses adjusted with a global prior for fairness.
         - RecencyFactor (${entry.RecencyFactor.toFixed(2)}): Rewards recent activity, penalizes inactivity over time.
         - AttemptsBonus (${entry.AttemptsBonus.toFixed(2)}): A slight penalty for more attempts, balancing frequent guesses.`}

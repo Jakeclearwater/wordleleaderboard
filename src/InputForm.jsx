@@ -344,15 +344,33 @@ const InputForm = () => {
       const [parsedWordleGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF] = 
         parseWordleResult(wordleResult);
       
-      // Update DNF status if the pasted result indicates it
-      isDNF = isDNF || parsedIsDNF;
+      // Check for conflict between pasted result and DNF checkbox
+      if (didNotFinish && !parsedIsDNF && parsedWordleGuesses > 0 && parsedWordleGuesses <= 6) {
+        // User checked DNF but pasted a successful result - show confirmation
+        const confirmOverride = window.confirm(
+          `Conflict detected: You checked "Did Not Finish" but your pasted result shows you completed it in ${parsedWordleGuesses} guesses.\n\n` +
+          `Click OK to use your actual score (${parsedWordleGuesses}) or Cancel to submit as DNF (7).`
+        );
+        
+        if (confirmOverride) {
+          // Use the pasted result and uncheck DNF
+          isDNF = false;
+          setDidNotFinish(false);
+          finalGuesses = parsedWordleGuesses;
+        } else {
+          // Keep DNF status
+          isDNF = true;
+          finalGuesses = 7;
+        }
+      } else {
+        // No conflict - use parsed result or update DNF status if detected
+        isDNF = isDNF || parsedIsDNF;
+        finalGuesses = isDNF ? 7 : parsedWordleGuesses;
+      }
       
       // Set the values from parsing
       wordleNumber = parsedWordleNumber;
       resultBlocks = parsedResultBlocks;
-      
-      // If DNF, set guesses to 7, otherwise use parsed value
-      finalGuesses = isDNF ? 7 : parsedWordleGuesses;
     } else {
       // Manual entry - if DNF, set to 7, otherwise use the entered guesses
       finalGuesses = isDNF ? 7 : parseInt(guesses, 10) || 0;
