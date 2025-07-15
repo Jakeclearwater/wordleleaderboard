@@ -150,7 +150,7 @@ const Leaderboard = () => {
         const weeklyScores = weeklySnapshot.docs.map(doc => doc.data());
         const allTimeScores = allTimeSnapshot.docs.map(doc => doc.data());
 
-        // For daily & weekly: simple averages - treating 0, null, undefined as 7 (DNF)
+        // For daily: simple averages - treating 0, null, undefined as 7 (DNF)
         const groupScoresSimple = (scores) => {
           const grouped = scores.reduce((acc, s) => {
             // Extract the guesses value
@@ -178,10 +178,75 @@ const Leaderboard = () => {
           });
         };
 
+        // For weekly: consider missed weekdays as DNFs (score of 7), excluding weekends
+        const groupWeeklyScores = (scores) => {
+          // Get all weekdays (Monday-Friday) in the past 7 days
+          const weekdays = [];
+          for (let i = 0; i < 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+            
+            // Only include weekdays (Monday=1 through Friday=5)
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+              weekdays.push(date.toISOString().split('T')[0]);
+            }
+          }
+
+          const grouped = scores.reduce((acc, s) => {
+            // Only process scores from weekdays
+            const scoreDate = new Date(s.date);
+            const scoreDayOfWeek = scoreDate.getDay();
+            
+            // Skip weekend scores
+            if (scoreDayOfWeek === 0 || scoreDayOfWeek === 6) {
+              return acc;
+            }
+            
+            // Extract the guesses value
+            let g = parseFloat(s.guesses);
+            
+            // Convert 0, NaN, null, undefined to 7 (DNF)
+            if (isNaN(g) || g === 0) {
+              g = 7;  // Treat as DNF
+            }
+            
+            if (!acc[s.name]) {
+              acc[s.name] = { 
+                totalGuesses: 0, 
+                playedDays: new Set(),
+                scores: {}
+              };
+            }
+            acc[s.name].totalGuesses += g;
+            acc[s.name].playedDays.add(s.date);
+            acc[s.name].scores[s.date] = g;
+            return acc;
+          }, {});
+          
+          return Object.keys(grouped).map(name => {
+            const playerData = grouped[name];
+            const playedWeekdaysCount = playerData.playedDays.size;
+            const totalWeekdays = weekdays.length;
+            const missedWeekdaysCount = totalWeekdays - playedWeekdaysCount;
+            
+            // Add 7 points for each missed weekday
+            const totalWithMissedDays = playerData.totalGuesses + (missedWeekdaysCount * 7);
+            
+            return {
+              name,
+              average: totalWeekdays > 0 ? totalWithMissedDays / totalWeekdays : 0, // Divide by actual weekdays
+              playedDays: playedWeekdaysCount,
+              missedDays: missedWeekdaysCount,
+              totalWeekdays: totalWeekdays
+            };
+          });
+        };
+
         const dailyLeaderboardArray = groupScoresSimple(dailyScores)
           .sort((a, b) => a.average - b.average);
 
-        const weeklyLeaderboardArray = groupScoresSimple(weeklyScores)
+        const weeklyLeaderboardArray = groupWeeklyScores(weeklyScores)
           .sort((a, b) => a.average - b.average);
 
         // Compute global mean for Bayesian prior from allTimeScores
@@ -328,7 +393,7 @@ const Leaderboard = () => {
             </section>
 
             <section className={classes.col}>
-              <h1 className={classes.title}>Seven-day Running Leaderboard</h1>
+              <h1 className={classes.title}>Weekly Average Leaderboard</h1>
               <ul className={classes.list}>
                 {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
                   <li key={index}
@@ -341,9 +406,10 @@ const Leaderboard = () => {
                             : index > 2 && index < grayShades.length ? grayShades[index]
                               : 'white',
                     }}
+                    title={`Played ${entry.playedDays} out of ${entry.totalWeekdays} weekdays. Missed weekdays count as DNF (7 points).`}
                   >
                     {index === 0 && <span className={classes.icon}>👑</span>}
-                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
+                    #{index + 1} {entry.name}: {entry.average.toFixed(2)} ({entry.playedDays}/{entry.totalWeekdays} weekdays)
                   </li>
                 ))}
               </ul>
