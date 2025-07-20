@@ -98,6 +98,7 @@ const BayesianChart = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dateData, setDateData] = useState({}); // Store dateData for tooltip access
   
   // Load preferences from cookies
   const [timeRange, setTimeRange] = useState(() => getCookie('bayesian-time-range') || '1month');
@@ -201,6 +202,7 @@ const BayesianChart = () => {
     
     setChartData(processedData.chartData);
     setAllUsers(processedData.users);
+    setDateData(processedData.dateData); // Store dateData for tooltip access
     
     // Update selected users if needed (maintain selection if users still exist)
     setSelectedUsers(prev => {
@@ -237,10 +239,24 @@ const BayesianChart = () => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
     
-    // Group by date and calculate cumulative Bayesian scores
+    // Calculate the final global mean from ALL scores (for Bayesian prior consistency)
+    const allTimeSum = sortedScores.reduce((acc, score) => {
+      let g = parseFloat(score.guesses);
+      if (isNaN(g) || g === 0) {
+        g = 7;  // Treat as DNF
+      }
+      acc.totalGuesses += g;
+      acc.totalCount += 1;
+      return acc;
+    }, { totalGuesses: 0, totalCount: 0 });
+
+    const globalMeanForPrior = allTimeSum.totalCount > 0 ? (allTimeSum.totalGuesses / allTimeSum.totalCount) : 4.5;
+
+    // Group by date and calculate cumulative user stats
     const userStats = {};
     const dateData = {};
     const users = new Set();
+    let cumulativeGlobalSum = { totalGuesses: 0, totalCount: 0 };
 
     // Bayesian parameters
     const alpha = 20;
@@ -251,10 +267,11 @@ const BayesianChart = () => {
     allDates.forEach(date => {
       dateData[date] = { 
         date,
-        globalAverage: 4.5 // Default global average
+        globalAverage: 4.5 // Will be updated as we process scores
       };
     });
 
+    // First pass: collect all user attempts and update cumulative global average
     sortedScores.forEach(score => {
       const date = score.date;
       const name = score.name;
@@ -263,6 +280,17 @@ const BayesianChart = () => {
       // Convert invalid scores to 7 (DNF)
       if (isNaN(guesses) || guesses === 0) {
         guesses = 7;
+      }
+
+      // Update cumulative global average for chart display
+      cumulativeGlobalSum.totalGuesses += guesses;
+      cumulativeGlobalSum.totalCount += 1;
+      const currentGlobalAvg = cumulativeGlobalSum.totalGuesses / cumulativeGlobalSum.totalCount;
+      
+      // Update global average for this date and all future dates
+      const currentDateIndex = allDates.indexOf(date);
+      for (let i = currentDateIndex; i < allDates.length; i++) {
+        dateData[allDates[i]].globalAverage = currentGlobalAvg;
       }
 
       users.add(name);
@@ -279,35 +307,63 @@ const BayesianChart = () => {
       userStats[name].attempts += 1;
       userStats[name].lastDate = date;
 
-      // Calculate global mean up to this point
-      const totalGuessesAllUsers = Object.values(userStats).reduce((sum, user) => sum + user.totalGuesses, 0);
-      const totalAttemptsAllUsers = Object.values(userStats).reduce((sum, user) => sum + user.attempts, 0);
-      const globalMean = totalAttemptsAllUsers > 0 ? totalGuessesAllUsers / totalAttemptsAllUsers : 4.5;
-
-      // Calculate Bayesian average for this user at this point in time
-      const bayesAvg = (userStats[name].totalGuesses + globalMean * alpha) / (userStats[name].attempts + alpha);
-      
-      // Calculate recency factor (simplified to 1 for historical data to avoid extreme values)
-      const recencyFactor = 1;
+      // Calculate Bayesian average using consistent prior
+      const BayesAvg = (userStats[name].totalGuesses + globalMeanForPrior * alpha) / (userStats[name].attempts + alpha);
       
       // Calculate attempts bonus
       const attemptsBonus = C * Math.log(userStats[name].attempts + 1);
       
-      // Final Bayesian score
-      const finalScore = (bayesAvg * recencyFactor) - attemptsBonus;
-
+      // Store the base data (we'll calculate recency factor in second pass)
       dateData[date][name] = {
-        finalScore,
-        bayesAvg,
+        bayesAvg: BayesAvg,
         actualAverage: userStats[name].totalGuesses / userStats[name].attempts,
         attempts: userStats[name].attempts,
+        attemptsBonus,
+        lastPlayedDate: date, // Mark this as the date they actually played
       };
-      
-      // Update global average for this date and all subsequent dates
-      const dateIndex = allDates.indexOf(date);
-      for (let i = dateIndex; i < allDates.length; i++) {
-        dateData[allDates[i]].globalAverage = globalMean;
-      }
+    });
+
+    // Second pass: calculate final scores with proper recency factors for all dates
+    allDates.forEach(currentDateStr => {
+      Array.from(users).forEach(userName => {
+        // Find this user's most recent play date up to the current date
+        let mostRecentPlayDate = null;
+        let mostRecentData = null;
+        
+        for (let i = 0; i < allDates.length; i++) {
+          const checkDate = allDates[i];
+          if (checkDate > currentDateStr) break; // Don't look into the future
+          
+          if (dateData[checkDate][userName]) {
+            mostRecentPlayDate = checkDate;
+            mostRecentData = dateData[checkDate][userName];
+          }
+        }
+        
+        if (mostRecentData) {
+          // Calculate recency factor from current date perspective
+          const currentDate = new Date(currentDateStr);
+          const lastPlayDate = new Date(mostRecentPlayDate);
+          const daysSinceLastPlay = Math.floor((currentDate - lastPlayDate) / (24 * 60 * 60 * 1000));
+          const recencyFactor = 1 + (daysSinceLastPlay / R);
+          
+          // Calculate final score
+          const finalScore = (mostRecentData.bayesAvg * recencyFactor) - mostRecentData.attemptsBonus;
+          
+          // Update or create entry for this date
+          if (!dateData[currentDateStr][userName]) {
+            dateData[currentDateStr][userName] = {};
+          }
+          
+          // Merge the data
+          dateData[currentDateStr][userName] = {
+            ...mostRecentData,
+            finalScore,
+            recencyFactor,
+            daysSinceLastPlay,
+          };
+        }
+      });
     });
 
     // Convert to chart format - handle both contiguous and broken line modes
@@ -315,35 +371,38 @@ const BayesianChart = () => {
     
     allDates.forEach((date, dateIndex) => {
       const dayData = dateData[date];
+      
+      // Calculate average of all users' Bayesian scores for this date
+      const userBayesianScores = [];
+      Array.from(users).forEach(userName => {
+        if (dayData[userName] && dayData[userName].finalScore) {
+          userBayesianScores.push(dayData[userName].finalScore);
+        }
+      });
+      
+      const bayesianGlobalAvg = userBayesianScores.length > 0 
+        ? userBayesianScores.reduce((sum, score) => sum + score, 0) / userBayesianScores.length
+        : dayData.globalAverage; // Fallback to raw average if no Bayesian scores
+      
       const result = { 
         date: dayData.date,
-        globalAverage: dayData.globalAverage
+        globalAverage: bayesianGlobalAvg
       };
       
       if (shouldConnectLines) {
-        // Contiguous mode: Forward-fill missing values to connect lines
+        // Contiguous mode: Show recency decay for all users on all dates
         Array.from(users).forEach(userName => {
           if (dayData[userName]) {
             result[userName] = dayData[userName].finalScore;
             result[`${userName}_actual`] = dayData[userName].actualAverage;
             result[`${userName}_attempts`] = dayData[userName].attempts;
-          } else {
-            // Forward-fill from most recent previous data
-            for (let i = dateIndex - 1; i >= 0; i--) {
-              const prevResult = chartData[i];
-              if (prevResult && prevResult[userName] !== undefined) {
-                result[userName] = prevResult[userName];
-                result[`${userName}_actual`] = prevResult[`${userName}_actual`];
-                result[`${userName}_attempts`] = prevResult[`${userName}_attempts`];
-                break;
-              }
-            }
           }
         });
       } else {
         // Broken mode: Only add user data for dates where they actually played
         Array.from(users).forEach(userName => {
-          if (dayData[userName]) {
+          if (dayData[userName] && dayData[userName].lastPlayedDate === date) {
+            // Only show on days they actually played
             result[userName] = dayData[userName].finalScore;
             result[`${userName}_actual`] = dayData[userName].actualAverage;
             result[`${userName}_attempts`] = dayData[userName].attempts;
@@ -362,7 +421,7 @@ const BayesianChart = () => {
       attempts: userStats[name].attempts,
     }));
 
-    return { chartData, users: userList };
+    return { chartData, users: userList, dateData };
   };
 
   const toggleUser = (userName) => {
@@ -391,23 +450,80 @@ const BayesianChart = () => {
       return (
         <div style={{ 
           backgroundColor: 'white', 
-          padding: '10px', 
+          padding: '12px', 
           border: '1px solid #ccc',
-          borderRadius: '4px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          borderRadius: '6px',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+          fontSize: '13px',
+          minWidth: '200px'
         }}>
-          <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
-            {formatDate(label)}
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', fontSize: '14px' }}>
+            📅 {formatDate(label)}
           </p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ 
-              margin: '2px 0', 
-              color: entry.color,
-              fontSize: '14px'
-            }}>
-              {entry.dataKey === 'globalAverage' ? 'Global Avg' : entry.dataKey}: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
-            </p>
-          ))}
+          {payload.map((entry, index) => {
+            if (entry.dataKey === 'globalAverage') {
+              return (
+                <p key={index} style={{ 
+                  margin: '2px 0', 
+                  color: entry.color,
+                  fontSize: '13px'
+                }}>
+                  🌍 Bayesian Global Avg: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+                  <br />
+                  <span style={{ fontSize: '11px', color: '#888' }}>
+                    (Average of all players' Bayesian scores)
+                  </span>
+                </p>
+              );
+            } else {
+              // Find the user data for this entry
+              const userData = chartData.find(d => d.date === label);
+              const userName = entry.dataKey;
+              const actualAvg = userData ? userData[`${userName}_actual`] : null;
+              const attempts = userData ? userData[`${userName}_attempts`] : null;
+              
+              // Get additional recency info from dateData
+              const dateInfo = dateData[label] && dateData[label][userName];
+              const daysSincePlay = dateInfo ? dateInfo.daysSinceLastPlay : null;
+              const recencyFactor = dateInfo ? dateInfo.recencyFactor : null;
+              
+              return (
+                <div key={index} style={{ margin: '4px 0', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                  <p style={{ 
+                    margin: '0', 
+                    color: entry.color,
+                    fontSize: '13px',
+                    fontWeight: '500'
+                  }}>
+                    👤 {userName}
+                  </p>
+                  <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                    📊 Bayesian: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+                  </p>
+                  {actualAvg && (
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                      📈 Actual Avg: {actualAvg.toFixed(2)}
+                    </p>
+                  )}
+                  {attempts && (
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                      🎯 Attempts: {attempts}
+                    </p>
+                  )}
+                  {daysSincePlay !== null && (
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                      ⏱️ Days since last: {daysSincePlay}
+                    </p>
+                  )}
+                  {recencyFactor && (
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                      📉 Recency factor: {recencyFactor.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+              );
+            }
+          })}
         </div>
       );
     }
@@ -676,7 +792,7 @@ const BayesianChart = () => {
           <Tooltip content={<CustomTooltip />} />
           <Legend />
           
-          {/* Global Average Line - dashed */}
+          {/* Bayesian Global Average Line - dashed */}
           <Line
             type="monotone"
             dataKey="globalAverage"
@@ -684,7 +800,7 @@ const BayesianChart = () => {
             strokeWidth={2}
             strokeDasharray="5 5"
             dot={false}
-            name="Global Average"
+            name="Bayesian Global Average"
           />
           
           {/* Individual User Lines */}
@@ -730,7 +846,8 @@ const BayesianChart = () => {
         }}>
           <li>📈 Shows how each player's Bayesian score evolves over time</li>
           <li>🎯 Lower scores are better (representing fewer average guesses)</li>
-          <li>🧮 Bayesian scoring adjusts for number of attempts and recency</li>
+          <li>🧮 All lines use Bayesian scoring with recency penalty and attempts bonus</li>
+          <li>🌍 Dashed line: Average of all players' Bayesian scores for each date</li>
           <li>🔗 Toggle "Contiguous" to connect/break lines on missing days</li>
           <li>⏰ Use time range selector to focus on specific periods</li>
         </ul>
