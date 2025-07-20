@@ -1,6 +1,7 @@
 import React from 'react';
 import InputForm from './InputForm';
 import Leaderboard from './Leaderboard';
+import BayesianChart from './BayesianChart';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
 
@@ -51,6 +52,7 @@ const App = () => {
       <h1>{wordleSpans}</h1>
       <InputForm />
       <Leaderboard />
+      <BayesianChart />
       <p>Please don't <span className={classes.spanicon} onClick={hack}>break</span> this app. It is an ongoing, currently a 2.4 hour hack.</p>
     </div>
   );
