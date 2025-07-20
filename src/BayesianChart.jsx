@@ -1,0 +1,742 @@
+import React, { useState, useEffect } from 'react';
+import { createUseStyles } from 'react-jss';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { firestore } from './firebase';
+
+const useStyles = createUseStyles({
+  chartContainer: {
+    padding: '24px',
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    margin: '20px',
+    border: '1px solid #f1f3f4',
+  },
+  title: {
+    fontSize: '22px',
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: '20px',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+  },
+  controls: {
+    marginBottom: '20px',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    alignItems: 'center',
+  },
+  userSelector: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    marginTop: '10px',
+  },
+  userCheckbox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 10px',
+    border: '1px solid #e9ecef',
+    borderRadius: '6px',
+    backgroundColor: '#ffffff',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: '400',
+    transition: 'all 0.2s ease',
+    '&:hover': {
+      backgroundColor: '#f8f9fa',
+      borderColor: '#dee2e6',
+    },
+  },
+  selectedUser: {
+    backgroundColor: '#e7f3ff',
+    borderColor: '#2196f3',
+    fontWeight: '500',
+  },
+  loading: {
+    textAlign: 'center',
+    padding: '60px 40px',
+    fontSize: '16px',
+    color: '#6c757d',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '12px',
+  },
+});
+
+// Color palette for different users
+const userColors = [
+  '#2196F3', '#4CAF50', '#FF9800', '#F44336', '#9C27B0',
+  '#00BCD4', '#FFEB3B', '#795548', '#607D8B', '#E91E63',
+  '#3F51B5', '#8BC34A', '#FFC107', '#FF5722', '#673AB7',
+];
+
+// Cookie helper functions
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const setCookie = (name, value, days = 365) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+const BayesianChart = () => {
+  const classes = useStyles();
+  const [chartData, setChartData] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Load preferences from cookies
+  const [timeRange, setTimeRange] = useState(() => getCookie('bayesian-time-range') || '1month');
+  const [connectLines, setConnectLines] = useState(() => getCookie('bayesian-connect-lines') === 'true');
+  const [allScoresData, setAllScoresData] = useState([]); // Store all scores for filtering
+
+  // Save preferences to cookies when they change
+  useEffect(() => {
+    setCookie('bayesian-time-range', timeRange);
+  }, [timeRange]);
+
+  useEffect(() => {
+    setCookie('bayesian-connect-lines', connectLines.toString());
+  }, [connectLines]);
+
+  useEffect(() => {
+    fetchAllDataAndProcess();
+  }, []);
+
+  useEffect(() => {
+    // Reprocess data when time range changes
+    if (allScoresData.length > 0) {
+      processDataForTimeRange();
+    }
+  }, [timeRange]);
+
+  useEffect(() => {
+    // Reprocess data when connectLines setting changes
+    if (allScoresData.length > 0) {
+      processDataForTimeRange();
+    }
+  }, [connectLines]);
+
+  const fetchAllDataAndProcess = async () => {
+    setLoading(true);
+    try {
+      // Fetch all scores ordered by date
+      const scoresQuery = query(collection(firestore, 'scores'), orderBy('date', 'asc'));
+      const snapshot = await getDocs(scoresQuery);
+      const allScores = snapshot.docs.map(doc => doc.data());
+
+      setAllScoresData(allScores);
+      
+      // Process data for default time range
+      processDataWithScores(allScores);
+    } catch (error) {
+      console.error('Error fetching data for chart:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const processDataForTimeRange = () => {
+    processDataWithScores(allScoresData);
+  };
+
+  const getFilteredScoresByTimeRange = (scores) => {
+    const now = new Date();
+    let startDate;
+
+    switch (timeRange) {
+      case '1week':
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case '2weeks':
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 14);
+        break;
+      case '1month':
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case '3months':
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 3);
+        break;
+      case '6months':
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 6);
+        break;
+      case '1year':
+        startDate = new Date();
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'all':
+      default:
+        return scores; // Return all scores
+    }
+
+    const startDateStr = startDate.toISOString().split('T')[0];
+    return scores.filter(score => score.date >= startDateStr);
+  };
+
+  const processDataWithScores = (allScores) => {
+    // Filter scores by selected time range
+    const filteredScores = getFilteredScoresByTimeRange(allScores);
+    
+    // Calculate Bayesian data over time
+    const processedData = calculateBayesianOverTime(filteredScores, connectLines);
+    
+    setChartData(processedData.chartData);
+    setAllUsers(processedData.users);
+    
+    // Update selected users if needed (maintain selection if users still exist)
+    setSelectedUsers(prev => {
+      const availableUsers = processedData.users.map(u => u.name);
+      const validSelection = prev.filter(name => availableUsers.includes(name));
+      
+      // If no valid selection or empty, select top 5 by default
+      if (validSelection.length === 0) {
+        return processedData.users
+          .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate))
+          .slice(0, 5)
+          .map(user => user.name);
+      }
+      
+      return validSelection;
+    });
+  };
+
+  const calculateBayesianOverTime = (scores, shouldConnectLines = false) => {
+    // Sort scores by date
+    const sortedScores = scores.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    if (sortedScores.length === 0) return { chartData: [], users: [] };
+    
+    // Get date range
+    const firstDate = new Date(sortedScores[0].date);
+    const lastDate = new Date(sortedScores[sortedScores.length - 1].date);
+    
+    // Create complete date range
+    const allDates = [];
+    const currentDate = new Date(firstDate);
+    while (currentDate <= lastDate) {
+      allDates.push(currentDate.toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Group by date and calculate cumulative Bayesian scores
+    const userStats = {};
+    const dateData = {};
+    const users = new Set();
+
+    // Bayesian parameters
+    const alpha = 20;
+    const R = 40;
+    const C = 0.2;
+
+    // Initialize dateData for all dates
+    allDates.forEach(date => {
+      dateData[date] = { 
+        date,
+        globalAverage: 4.5 // Default global average
+      };
+    });
+
+    sortedScores.forEach(score => {
+      const date = score.date;
+      const name = score.name;
+      let guesses = parseFloat(score.guesses);
+      
+      // Convert invalid scores to 7 (DNF)
+      if (isNaN(guesses) || guesses === 0) {
+        guesses = 7;
+      }
+
+      users.add(name);
+
+      if (!userStats[name]) {
+        userStats[name] = {
+          totalGuesses: 0,
+          attempts: 0,
+          lastDate: date,
+        };
+      }
+
+      userStats[name].totalGuesses += guesses;
+      userStats[name].attempts += 1;
+      userStats[name].lastDate = date;
+
+      // Calculate global mean up to this point
+      const totalGuessesAllUsers = Object.values(userStats).reduce((sum, user) => sum + user.totalGuesses, 0);
+      const totalAttemptsAllUsers = Object.values(userStats).reduce((sum, user) => sum + user.attempts, 0);
+      const globalMean = totalAttemptsAllUsers > 0 ? totalGuessesAllUsers / totalAttemptsAllUsers : 4.5;
+
+      // Calculate Bayesian average for this user at this point in time
+      const bayesAvg = (userStats[name].totalGuesses + globalMean * alpha) / (userStats[name].attempts + alpha);
+      
+      // Calculate recency factor (simplified to 1 for historical data to avoid extreme values)
+      const recencyFactor = 1;
+      
+      // Calculate attempts bonus
+      const attemptsBonus = C * Math.log(userStats[name].attempts + 1);
+      
+      // Final Bayesian score
+      const finalScore = (bayesAvg * recencyFactor) - attemptsBonus;
+
+      dateData[date][name] = {
+        finalScore,
+        bayesAvg,
+        actualAverage: userStats[name].totalGuesses / userStats[name].attempts,
+        attempts: userStats[name].attempts,
+      };
+      
+      // Update global average for this date and all subsequent dates
+      const dateIndex = allDates.indexOf(date);
+      for (let i = dateIndex; i < allDates.length; i++) {
+        dateData[allDates[i]].globalAverage = globalMean;
+      }
+    });
+
+    // Convert to chart format - handle both contiguous and broken line modes
+    const chartData = [];
+    
+    allDates.forEach((date, dateIndex) => {
+      const dayData = dateData[date];
+      const result = { 
+        date: dayData.date,
+        globalAverage: dayData.globalAverage
+      };
+      
+      if (shouldConnectLines) {
+        // Contiguous mode: Forward-fill missing values to connect lines
+        Array.from(users).forEach(userName => {
+          if (dayData[userName]) {
+            result[userName] = dayData[userName].finalScore;
+            result[`${userName}_actual`] = dayData[userName].actualAverage;
+            result[`${userName}_attempts`] = dayData[userName].attempts;
+          } else {
+            // Forward-fill from most recent previous data
+            for (let i = dateIndex - 1; i >= 0; i--) {
+              const prevResult = chartData[i];
+              if (prevResult && prevResult[userName] !== undefined) {
+                result[userName] = prevResult[userName];
+                result[`${userName}_actual`] = prevResult[`${userName}_actual`];
+                result[`${userName}_attempts`] = prevResult[`${userName}_attempts`];
+                break;
+              }
+            }
+          }
+        });
+      } else {
+        // Broken mode: Only add user data for dates where they actually played
+        Array.from(users).forEach(userName => {
+          if (dayData[userName]) {
+            result[userName] = dayData[userName].finalScore;
+            result[`${userName}_actual`] = dayData[userName].actualAverage;
+            result[`${userName}_attempts`] = dayData[userName].attempts;
+          }
+          // Don't add anything if they didn't play - this creates gaps/breaks in the lines
+        });
+      }
+      
+      chartData.push(result);
+    });
+
+    // Get user info for selection
+    const userList = Array.from(users).map(name => ({
+      name,
+      lastDate: userStats[name].lastDate,
+      attempts: userStats[name].attempts,
+    }));
+
+    return { chartData, users: userList };
+  };
+
+  const toggleUser = (userName) => {
+    setSelectedUsers(prev => 
+      prev.includes(userName) 
+        ? prev.filter(name => name !== userName)
+        : [...prev, userName]
+    );
+  };
+
+  const selectTopUsers = (count) => {
+    const topUsers = allUsers
+      .sort((a, b) => b.attempts - a.attempts)
+      .slice(0, count)
+      .map(user => user.name);
+    setSelectedUsers(topUsers);
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' });
+  };
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '10px', 
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>
+            {formatDate(label)}
+          </p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ 
+              margin: '2px 0', 
+              color: entry.color,
+              fontSize: '14px'
+            }}>
+              {entry.dataKey === 'globalAverage' ? 'Global Avg' : entry.dataKey}: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className={classes.chartContainer}>
+        <div className={classes.loading}>
+          <div style={{ fontSize: '24px' }}>📊</div>
+          <div>Loading Bayesian chart data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={classes.chartContainer}>
+      <h2 className={classes.title}>
+        📊 Bayesian Score Evolution
+      </h2>
+      
+      {/* Control Row */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '15px',
+        padding: '12px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+        border: '1px solid #e9ecef'
+      }}>
+        {/* Quick Select Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ 
+            fontSize: '14px', 
+            color: '#495057',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            👥 Quick Select:
+          </span>
+          <button 
+            onClick={() => selectTopUsers(3)} 
+            style={{ 
+              padding: '4px 8px',
+              fontSize: '13px',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              fontWeight: '400',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#e9ecef';
+              e.target.style.borderColor = '#adb5bd';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.borderColor = '#dee2e6';
+            }}
+          >
+            Top 3
+          </button>
+          <button 
+            onClick={() => selectTopUsers(5)} 
+            style={{ 
+              padding: '4px 8px',
+              fontSize: '13px',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              fontWeight: '400',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#e9ecef';
+              e.target.style.borderColor = '#adb5bd';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.borderColor = '#dee2e6';
+            }}
+          >
+            Top 5
+          </button>
+          <button 
+            onClick={() => selectTopUsers(10)} 
+            style={{ 
+              padding: '4px 8px',
+              fontSize: '13px',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              fontWeight: '400',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#e9ecef';
+              e.target.style.borderColor = '#adb5bd';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.borderColor = '#dee2e6';
+            }}
+          >
+            Top 10
+          </button>
+          <button 
+            onClick={() => setSelectedUsers([])}
+            style={{ 
+              padding: '4px 8px',
+              fontSize: '13px',
+              border: '1px solid #dc3545',
+              borderRadius: '4px',
+              backgroundColor: '#fff5f5',
+              color: '#dc3545',
+              cursor: 'pointer',
+              fontWeight: '400',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#f8d7da';
+              e.target.style.borderColor = '#b02a37';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#fff5f5';
+              e.target.style.borderColor = '#dc3545';
+            }}
+          >
+            🗑️ Clear
+          </button>
+        </div>
+
+        {/* Data Options */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Time Range Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label style={{ 
+              fontSize: '13px',
+              color: '#495057',
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              📅 Time:
+            </label>
+            <select 
+              value={timeRange} 
+              onChange={(e) => setTimeRange(e.target.value)}
+              style={{ 
+                padding: '4px 6px', 
+                fontSize: '13px', 
+                borderRadius: '4px', 
+                border: '1px solid #dee2e6',
+                backgroundColor: 'white',
+                fontWeight: '400',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="1week">Last Week</option>
+              <option value="2weeks">Last 2 Weeks</option>
+              <option value="1month">Last Month</option>
+              <option value="3months">Last 3 Months</option>
+              <option value="6months">Last 6 Months</option>
+              <option value="1year">Last Year</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
+
+          {/* Connect Lines Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label style={{ 
+              fontSize: '13px',
+              color: '#495057',
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <input
+                type="checkbox"
+                checked={connectLines}
+                onChange={(e) => setConnectLines(e.target.checked)}
+                style={{ marginRight: '4px' }}
+              />
+              🔗 Contiguous
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div className={classes.controls}>
+        <div style={{ 
+          marginBottom: '8px',
+          fontSize: '14px',
+          color: '#495057',
+          fontWeight: '500',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          🎯 Select Players:
+        </div>
+        <div className={classes.userSelector}>
+          {allUsers
+            .sort((a, b) => b.attempts - a.attempts)
+            .map((user, index) => (
+            <label
+              key={user.name}
+              className={`${classes.userCheckbox} ${
+                selectedUsers.includes(user.name) ? classes.selectedUser : ''
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={selectedUsers.includes(user.name)}
+                onChange={() => toggleUser(user.name)}
+                style={{ 
+                  margin: 0,
+                  accentColor: userColors[index % userColors.length]
+                }}
+              />
+              <span style={{ 
+                color: userColors[index % userColors.length],
+                fontWeight: selectedUsers.includes(user.name) ? '500' : '400',
+                fontSize: '13px'
+              }}>
+                {user.name} ({user.attempts})
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis 
+            dataKey="date" 
+            tickFormatter={formatDate}
+            interval="preserveStartEnd"
+            minTickGap={30}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+          />
+          <YAxis 
+            domain={[3, 7]}
+            label={{ value: 'Bayesian Score', angle: -90, position: 'insideLeft' }}
+            tickFormatter={(value) => value.toFixed(1)}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          
+          {/* Global Average Line - dashed */}
+          <Line
+            type="monotone"
+            dataKey="globalAverage"
+            stroke="#666666"
+            strokeWidth={2}
+            strokeDasharray="5 5"
+            dot={false}
+            name="Global Average"
+          />
+          
+          {/* Individual User Lines */}
+          {selectedUsers.map((userName, index) => (
+            <Line
+              key={userName}
+              type="monotone"
+              dataKey={userName}
+              stroke={userColors[allUsers.findIndex(u => u.name === userName) % userColors.length]}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              connectNulls={false}
+              name={userName}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+      
+      <div style={{ 
+        marginTop: '24px', 
+        padding: '16px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+        border: '1px solid #e9ecef'
+      }}>
+        <div style={{ 
+          fontSize: '14px', 
+          color: '#495057',
+          fontWeight: '500',
+          marginBottom: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          ℹ️ About this chart:
+        </div>
+        <ul style={{ 
+          fontSize: '13px', 
+          color: '#6c757d',
+          margin: '0',
+          paddingLeft: '16px',
+          lineHeight: '1.5'
+        }}>
+          <li>📈 Shows how each player's Bayesian score evolves over time</li>
+          <li>🎯 Lower scores are better (representing fewer average guesses)</li>
+          <li>🧮 Bayesian scoring adjusts for number of attempts and recency</li>
+          <li>🔗 Toggle "Contiguous" to connect/break lines on missing days</li>
+          <li>⏰ Use time range selector to focus on specific periods</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+export default BayesianChart;
