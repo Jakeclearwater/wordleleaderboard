@@ -6,11 +6,11 @@ import { firestore } from './firebase';
 
 const useStyles = createUseStyles({
   chartContainer: {
-    padding: '24px',
+    padding: '1rem',
     backgroundColor: '#fff',
     borderRadius: '12px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-    margin: '20px',
+    margin: '0px 30px 0px 30px',
     border: '1px solid #f1f3f4',
   },
   title: {
@@ -455,7 +455,9 @@ const BayesianChart = () => {
           borderRadius: '6px',
           boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
           fontSize: '13px',
-          minWidth: '200px'
+          minWidth: '200px',
+          zIndex: 9999,
+          position: 'relative'
         }}>
           <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', fontSize: '14px' }}>
             📅 {formatDate(label)}
@@ -773,7 +775,7 @@ const BayesianChart = () => {
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <LineChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
             dataKey="date" 
@@ -790,7 +792,7 @@ const BayesianChart = () => {
             tickFormatter={(value) => value.toFixed(1)}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend />
+          <Legend wrapperStyle={{ position: 'relative', zIndex: 1 }} />
           
           {/* Bayesian Global Average Line - dashed */}
           <Line
@@ -820,7 +822,8 @@ const BayesianChart = () => {
       </ResponsiveContainer>
       
       <div style={{ 
-        marginTop: '24px', 
+        marginTop: '20px', 
+        marginBottom: '0', // Remove bottom margin for cleaner spacing
         padding: '16px',
         backgroundColor: '#f8f9fa',
         borderRadius: '8px',
