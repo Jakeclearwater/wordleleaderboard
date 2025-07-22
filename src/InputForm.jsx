@@ -411,8 +411,8 @@ const InputForm = () => {
             backdropFilter: "blur(8px)",
             color: activeTab === tab ? "#1a1a1a" : "#555",
             boxShadow: activeTab === tab 
-              ? "0 -2px 8px rgba(0,0,0,0.08)" 
-              : "none",
+              ? "none" 
+              : "0 2px 4px rgba(0,0,0,0.05)",
             marginRight: idx < TABS.length - 1 ? "4px" : "0",
             cursor: "pointer",
             transition: "all 0.2s ease",

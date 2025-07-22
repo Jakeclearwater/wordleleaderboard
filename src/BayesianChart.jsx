@@ -136,6 +136,55 @@ const useStyles = createUseStyles({
     '0%': { transform: 'rotate(0deg)' },
     '100%': { transform: 'rotate(360deg)' },
   },
+  customTooltip: {
+    backgroundColor: 'white !important',
+    padding: '12px',
+    border: '1px solid #ccc',
+    borderRadius: '6px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    fontSize: '13px',
+    minWidth: '200px',
+    zIndex: 9999,
+    position: 'relative',
+    color: '#333 !important',
+    '& *': {
+      color: '#333 !important',
+    },
+    '& p': {
+      color: '#333 !important',
+    },
+    '& span': {
+      color: '#666 !important',
+    },
+  },
+  tooltipTitle: {
+    margin: '0 0 8px 0',
+    fontWeight: 'bold',
+    fontSize: '14px',
+    color: '#333 !important',
+  },
+  tooltipGlobal: {
+    margin: '2px 0',
+    color: '#333 !important',
+    fontSize: '13px',
+  },
+  tooltipUserContainer: {
+    margin: '4px 0',
+    padding: '4px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '4px',
+  },
+  tooltipUserName: {
+    margin: '0',
+    color: '#333 !important',
+    fontSize: '13px',
+    fontWeight: '500',
+  },
+  tooltipUserData: {
+    margin: '1px 0',
+    fontSize: '12px',
+    color: '#666 !important',
+  },
 });
 
 // Color palette for different users
@@ -570,31 +619,17 @@ const BayesianChart = () => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{ 
-          backgroundColor: 'white', 
-          padding: '12px', 
-          border: '1px solid #ccc',
-          borderRadius: '6px',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          fontSize: '13px',
-          minWidth: '200px',
-          zIndex: 9999,
-          position: 'relative'
-        }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', fontSize: '14px' }}>
+        <div className={classes.customTooltip}>
+          <p className={classes.tooltipTitle}>
             📅 {formatDate(label)}
           </p>
           {payload.map((entry, index) => {
             if (entry.dataKey === 'globalAverage') {
               return (
-                <p key={index} style={{ 
-                  margin: '2px 0', 
-                  color: entry.color,
-                  fontSize: '13px'
-                }}>
+                <p key={index} className={classes.tooltipGlobal}>
                   🌍 Bayesian Global Avg: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
                   <br />
-                  <span style={{ fontSize: '11px', color: '#888' }}>
+                  <span style={{ fontSize: '11px' }}>
                     (Average of all players' Bayesian scores)
                   </span>
                 </p>
@@ -612,35 +647,30 @@ const BayesianChart = () => {
               const recencyFactor = dateInfo ? dateInfo.recencyFactor : null;
               
               return (
-                <div key={index} style={{ margin: '4px 0', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                  <p style={{ 
-                    margin: '0', 
-                    color: entry.color,
-                    fontSize: '13px',
-                    fontWeight: '500'
-                  }}>
+                <div key={index} className={classes.tooltipUserContainer}>
+                  <p className={classes.tooltipUserName}>
                     👤 {userName}
                   </p>
-                  <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                  <p className={classes.tooltipUserData}>
                     📊 Bayesian: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
                   </p>
                   {actualAvg && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                    <p className={classes.tooltipUserData}>
                       📈 Actual Avg: {actualAvg.toFixed(2)}
                     </p>
                   )}
                   {attempts && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                    <p className={classes.tooltipUserData}>
                       🎯 Attempts: {attempts}
                     </p>
                   )}
                   {daysSincePlay !== null && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                    <p className={classes.tooltipUserData}>
                       ⏱️ Days since last: {daysSincePlay}
                     </p>
                   )}
                   {recencyFactor && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666' }}>
+                    <p className={classes.tooltipUserData}>
                       📉 Recency factor: {recencyFactor.toFixed(2)}
                     </p>
                   )}
