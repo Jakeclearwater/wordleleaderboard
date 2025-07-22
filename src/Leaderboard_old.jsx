@@ -109,11 +109,6 @@ const useStyles = createUseStyles({
     lineHeight: 1,
   },
   
-  statSubtitle: {
-    fontSize: '0.9rem',
-    color: 'var(--text-secondary)',
-    margin: 0,
-  },
   
   leaderboardGrid: {
     display: 'grid',
@@ -255,6 +250,13 @@ const useStyles = createUseStyles({
   },
 });
 
+const grayShades = [
+  '#8a8a8a', '#949494', '#9e9e9e', '#a8a8a8', '#b2b2b2',
+  '#bcbcbc', '#c6c6c6', '#d0d0d0', '#dadada', '#e4e4e4',
+  '#eeeeee', '#f2f2f2', '#f6f6f6', '#f9f9f9', '#fcfcfc',
+  '#fefefe', '#ffffff',
+];
+
 const Leaderboard = () => {
   const classes = useStyles();
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
@@ -296,87 +298,153 @@ const Leaderboard = () => {
         const getEffectiveDate = (score) => {
           // Only use isoDate - ignore records without it
           if (score.isoDate) {
+            // Convert ISO datetime to NZ date
+            const isoDate = new Date(score.isoDate);
             return new Intl.DateTimeFormat('en-CA', {
               timeZone: 'Pacific/Auckland',
               year: 'numeric',
               month: '2-digit',
               day: '2-digit'
-            }).format(new Date(score.isoDate));
+            }).format(isoDate);
+          } else {
+            // No isoDate - ignore this record
+            return null;
           }
-          return null;
         };
 
-        // Filter scores by time periods
-        const dailyScores = allScores.filter(score => {
+        // Filter out records without isoDate first, then filter by date range
+        const validScores = allScores.filter(score => score.isoDate);
+
+        const dailyScores = validScores.filter(score => {
           const effectiveDate = getEffectiveDate(score);
           return effectiveDate === todayNZ;
         });
 
-        const weeklyScores = allScores.filter(score => {
+        const weeklyScores = validScores.filter(score => {
           const effectiveDate = getEffectiveDate(score);
-          return effectiveDate && effectiveDate >= weekAgoNZStr && effectiveDate <= todayNZ;
+          return effectiveDate >= weekAgoNZStr;
         });
 
-        const allTimeScores = allScores.filter(score => getEffectiveDate(score)); // Only include scores with valid dates
+        // Use only valid scores for all-time leaderboard
+        const allTimeScores = validScores;
 
-        // Simple grouping function for daily and weekly leaderboards
+        // Fetch woodspoon leaderboard with guesses=7 (only from valid scores)
+        const woodspoonScores = validScores.filter(score => score.guesses === 7);
+
+        // Also find scores that are 0 or null/undefined to include them as DNFs (only from valid scores)
+        const additionalDNFs = validScores.filter(score => 
+          score.guesses === 0 || score.guesses === null || score.guesses === undefined
+        );
+
+        // Combine both types of DNFs
+        const allDNFScores = [...woodspoonScores, ...additionalDNFs];
+
+        console.log('Total scores fetched:', allScores.length);
+        console.log('Valid scores (with isoDate):', validScores.length);
+        console.log('Daily scores found:', dailyScores.length, dailyScores);
+        console.log('Weekly scores found:', weeklyScores.length);
+        console.log('All time scores found:', allTimeScores.length);
+
+        // For daily: simple averages - treating 0, null, undefined as 7 (DNF)
         const groupScoresSimple = (scores) => {
-          const grouped = scores.reduce((acc, score) => {
-            if (!acc[score.name]) {
-              acc[score.name] = { totalGuesses: 0, attempts: 0 };
+          const grouped = scores.reduce((acc, s) => {
+            // Extract the guesses value
+            let g = parseFloat(s.guesses);
+            
+            // Convert 0, NaN, null, undefined to 7 (DNF)
+            if (isNaN(g) || g === 0) {
+              g = 7;  // Treat as DNF
             }
-            acc[score.name].totalGuesses += parseFloat(score.guesses) || 7; // DNF = 7
-            acc[score.name].attempts += 1;
+            
+            if (!acc[s.name]) {
+              acc[s.name] = { totalGuesses: 0, attempts: 0 };
+            }
+            acc[s.name].totalGuesses += g;
+            acc[s.name].attempts += 1;
             return acc;
           }, {});
-
-          return Object.keys(grouped).map(name => ({
-            name,
-            average: grouped[name].totalGuesses / grouped[name].attempts,
-            attempts: grouped[name].attempts
-          }));
+          
+          return Object.keys(grouped).map(name => {
+            const { totalGuesses, attempts } = grouped[name];
+            return {
+              name,
+              average: totalGuesses / attempts
+            };
+          });
         };
 
-        // Weekly grouping that counts missing weekdays as DNF
+        // For weekly: consider missed weekdays as DNFs (score of 7), excluding weekends
         const groupWeeklyScores = (scores) => {
-          const grouped = scores.reduce((acc, score) => {
-            if (!acc[score.name]) {
-              acc[score.name] = { totalGuesses: 0, attempts: 0, playedDays: new Set() };
-            }
-            acc[score.name].totalGuesses += parseFloat(score.guesses) || 7;
-            acc[score.name].attempts += 1;
+          // Get all weekdays (Monday-Friday) in the past 7 days using NZ timezone
+          const weekdays = [];
+          const currentNZTime = new Date();
+          
+          for (let i = 0; i < 7; i++) {
+            const checkDate = new Date(currentNZTime.getTime() - i * 24 * 60 * 60 * 1000);
+            const nzDateStr = new Intl.DateTimeFormat('en-CA', {
+              timeZone: 'Pacific/Auckland',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).format(checkDate);
             
-            const effectiveDate = getEffectiveDate(score);
-            if (effectiveDate) {
-              acc[score.name].playedDays.add(effectiveDate);
-            }
-            return acc;
-          }, {});
-
-          // Count weekdays in the period
-          const startDate = new Date(weekAgoNZStr);
-          const endDate = new Date(todayNZ);
-          let weekdays = 0;
-          for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-            const dayOfWeek = d.getDay();
-            if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday
-              weekdays++;
+            const dayOfWeek = checkDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            
+            // Only include weekdays (Monday=1 to Friday=5)
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+              weekdays.push(nzDateStr);
             }
           }
 
+          const grouped = scores.reduce((acc, s) => {
+            // Get effective date using the helper function
+            const effectiveDate = getEffectiveDate(s);
+            
+            // Check if score date is a weekday using the effective date
+            const scoreDate = new Date(effectiveDate + 'T00:00:00');
+            const dayOfWeek = scoreDate.getDay();
+            
+            // Skip weekend scores (Sunday=0, Saturday=6)
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+              return acc;
+            }
+            
+            // Extract the guesses value
+            let g = parseFloat(s.guesses);
+            
+            // Convert 0, NaN, null, undefined to 7 (DNF)
+            if (isNaN(g) || g === 0) {
+              g = 7;  // Treat as DNF
+            }
+            
+            if (!acc[s.name]) {
+              acc[s.name] = { 
+                totalGuesses: 0, 
+                playedDays: new Set(),
+                scores: {}
+              };
+            }
+            acc[s.name].totalGuesses += g;
+            acc[s.name].playedDays.add(effectiveDate);
+            acc[s.name].scores[effectiveDate] = g;
+            return acc;
+          }, {});
+          
           return Object.keys(grouped).map(name => {
-            const player = grouped[name];
-            const playedDays = player.playedDays.size;
-            const missedDays = weekdays - playedDays;
-            const totalScore = player.totalGuesses + (missedDays * 7); // Add 7 for each missed day
-            const totalAttempts = weekdays; // Total possible attempts
-
+            const playerData = grouped[name];
+            const playedWeekdaysCount = playerData.playedDays.size;
+            const totalWeekdays = weekdays.length;
+            const missedWeekdaysCount = totalWeekdays - playedWeekdaysCount;
+            
+            // Add 7 points for each missed weekday
+            const totalWithMissedDays = playerData.totalGuesses + (missedWeekdaysCount * 7);
+            
             return {
               name,
-              average: totalScore / totalAttempts,
-              attempts: player.attempts,
-              playedDays,
-              totalWeekdays: weekdays
+              average: totalWeekdays > 0 ? totalWithMissedDays / totalWeekdays : 0, // Divide by actual weekdays
+              playedDays: playedWeekdaysCount,
+              missedDays: missedWeekdaysCount,
+              totalWeekdays: totalWeekdays
             };
           });
         };
@@ -437,65 +505,70 @@ const Leaderboard = () => {
           return acc;
         }, {});
 
+        const computeBayesianFinalScore = (playerData) => {
+          const { totalGuesses, attempts, lastAttempt } = playerData;
+          const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
+          const daysSinceLast = Math.floor((currentTime - lastAttempt) / (24 * 60 * 60 * 1000));
+          const RecencyFactor = 1 + (daysSinceLast / R);
+          const AttemptsBonus = C * Math.log(attempts + 1);
+          const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
+          return { finalScore };
+        };
+
         const allTimeLeaderboardArray = Object.keys(groupedAllTime).map(name => {
-          const player = groupedAllTime[name];
-          const daysSinceLastAttempt = Math.max(0, (currentTime - player.lastAttempt) / (1000 * 60 * 60 * 24));
-          const rotFactor = Math.exp(-daysSinceLastAttempt / R);
-          const attemptsBonus = Math.log(1 + C * player.attempts);
-          const bayesianAverage = (player.totalGuesses + (globalMean * alpha)) / (player.attempts + alpha);
-          const adjustedScore = bayesianAverage * rotFactor + attemptsBonus;
+          const { totalGuesses, attempts, lastAttempt } = groupedAllTime[name];
+          const actualAverage = totalGuesses / attempts; // Calculate actual average
+          const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
+          const daysSinceLast = Math.floor((currentTime - lastAttempt) / (24 * 60 * 60 * 1000));
+          const RecencyFactor = 1 + (daysSinceLast / R);
+          const AttemptsBonus = C * Math.log(attempts + 1);
+          const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
 
           return {
             name,
-            bayesianAverage,
-            rotFactor,
-            attemptsBonus,
-            adjustedScore,
-            attempts: player.attempts,
-            average: player.totalGuesses / player.attempts
+            finalScore,
+            BayesAvg,
+            RecencyFactor,
+            AttemptsBonus,
+            actualAverage, // Include actual average in the data
           };
-        }).sort((a, b) => a.adjustedScore - b.adjustedScore);
+        }).sort((a, b) => a.finalScore - b.finalScore);
 
-        const allAttemptsLeaderboardArray = Object.keys(groupedAllTime).map(name => {
-          const player = groupedAllTime[name];
-          return {
-            name,
-            attempts: player.attempts,
-            average: player.totalGuesses / player.attempts
-          };
-        }).sort((a, b) => b.attempts - a.attempts);
+        // Attempts leaderboard
+        const allAttemptsLeaderboardArray = Object.keys(groupedAllTime).map(name => ({
+          name,
+          attempts: groupedAllTime[name].attempts
+        })).sort((a, b) => b.attempts - a.attempts);
 
-        // Wooden spoon leaderboard (most DNFs this week)
-        const woodspoonData = weeklyScores.reduce((acc, score) => {
+        // Woodspoon leaderboard - use the combined DNFs
+        const groupedWoodspoonScores = allDNFScores.reduce((acc, score) => {
           if (!acc[score.name]) {
-            acc[score.name] = { totalDNFs: 0, attempts: 0 };
+            acc[score.name] = { count: 0, entries: [] };
           }
-          const guesses = parseFloat(score.guesses);
-          if (isNaN(guesses) || guesses === 0 || guesses === 7 || score.dnf) {
-            acc[score.name].totalDNFs += 1;
-          }
-          acc[score.name].attempts += 1;
+          acc[score.name].count += 1;
+          acc[score.name].entries.push({
+            date: getEffectiveDate(score),
+            wordleNumber: score.wordleNumber,
+            guesses: score.guesses
+          });
           return acc;
         }, {});
-
-        const woodspoonLeaderboardArray = Object.keys(woodspoonData)
-          .map(name => ({
-            name,
-            totalDNFs: woodspoonData[name].totalDNFs,
-            attempts: woodspoonData[name].attempts
-          }))
-          .filter(entry => entry.totalDNFs > 0)
-          .sort((a, b) => b.totalDNFs - a.totalDNFs);
+        
+        const woodspoonLeaderboardArray = Object.keys(groupedWoodspoonScores).map(name => ({
+          name,
+          count: groupedWoodspoonScores[name].count,
+          entries: groupedWoodspoonScores[name].entries.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date descending
+        })).sort((a, b) => b.count - a.count);
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
         setAllTimeLeaderboard(allTimeLeaderboardArray);
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
         setWoodspoonLeaderboard(woodspoonLeaderboardArray);
-      } catch (error) {
-        console.error('Error fetching leaderboards:', error);
-      } finally {
         setLoading(false);
+
+      } catch (error) {
+        console.error('Error fetching leaderboards: ', error);
       }
     };
 
@@ -735,6 +808,160 @@ const Leaderboard = () => {
                 </ul>
               </div>
             )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+                              : 'white',
+                    }}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={classes.col}>
+              <h1 className={classes.title}>Weekly Average Leaderboard</h1>
+              <ul className={classes.list}>
+                {weeklyLeaderboard && weeklyLeaderboard.slice(0, 12).map((entry, index) => (
+                  <li key={index}
+                    className={`${classes.listItem} ${index === Math.min(weeklyLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
+                              : 'white',
+                    }}
+                    title={`Played ${entry.playedDays} out of ${entry.totalWeekdays} weekdays. Missed weekdays count as DNF (7 points).`}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section className={classes.col}>
+              <h1 className={classes.title}>
+                <span
+                  style={{ cursor: 'help' }}
+                  title={`Bayesian Average:
+      
+      The Bayesian Average adjusts a player's average guesses using a global prior (global mean) for fairness, especially when the number of attempts is low.
+      
+      Formula:
+      BayesAvg = (TotalGuesses + (GlobalMean × Alpha)) / (Attempts + Alpha)
+      
+      - TotalGuesses: The sum of all guesses by the player.
+      - GlobalMean: The average number of guesses across all players (used as a prior).
+      - Alpha: The prior strength, which determines how much weight is given to the global mean.
+
+      Rot Factor (RecencyFactor):
+      Encourages recent activity and penalizes long periods of inactivity.
+
+      Formula:
+      RecencyFactor = 1 + (DaysSinceLast / R)
+      
+      - DaysSinceLast: The number of days since the player's last recorded attempt.
+      - R: A scaling factor to control the penalty for inactivity.
+
+      Attempts Bonus:
+      A slight penalty applied for more frequent attempts to balance scores.
+
+      Formula:
+      AttemptsBonus = C × log(Attempts + 1)
+      
+      - C: A scaling factor for the penalty.
+      `}
+                >
+                Bayesian Average Leaderboard
+                </span>
+              </h1>
+              <ul className={classes.list}>
+                {allTimeLeaderboard && allTimeLeaderboard.slice(0, 12).map((entry, index) => (
+                  <li
+                    key={index}
+                    className={`${classes.listItem} ${index === Math.min(allTimeLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
+                              : 'white',
+                    }}
+                    title={`FinalScore = (BayesAvg x RecencyFactor) - AttemptsBonus
+        
+        Your Actual Average: ${entry.actualAverage.toFixed(2)}
+        
+        Formula:
+        FinalScore = (${entry.BayesAvg.toFixed(2)} x ${entry.RecencyFactor.toFixed(2)}) - ${entry.AttemptsBonus.toFixed(2)}
+
+        Explanation:
+        - Actual Average (${entry.actualAverage.toFixed(2)}): Your raw average score across all attempts.
+        - BayesAvg (${entry.BayesAvg.toFixed(2)}): Your average guesses adjusted with a global prior for fairness.
+        - RecencyFactor (${entry.RecencyFactor.toFixed(2)}): Rewards recent activity, penalizes inactivity over time.
+        - AttemptsBonus (${entry.AttemptsBonus.toFixed(2)}): A slight penalty for more attempts, balancing frequent guesses.`}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.finalScore.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+
+            <section className={classes.col}>
+              <h1 className={classes.title}>Attempts Leaderboard</h1>
+              <ul className={classes.list}>
+                {allAttemptsLeaderboard && allAttemptsLeaderboard.slice(0, 12).map((entry, index) => (
+                  <li key={index}
+                    className={`${classes.listItem} ${index === Math.min(allAttemptsLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
+                              : 'white',
+                    }}
+                  >
+                    {index === 0 && <span className={classes.icon}>👑</span>}
+                    #{index + 1} {entry.name}: {entry.attempts}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className={classes.col}>
+              <h1 className={classes.title}>Wooden Spoon Leaderboard</h1>
+              <ul className={classes.list}>
+                {woodspoonLeaderboard && woodspoonLeaderboard.slice(0, 12).map((entry, index) => (
+                  <li key={index}
+                    className={`${classes.listItem} ${index === Math.min(woodspoonLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
+                    style={{
+                      fontWeight: index < 3 ? 'bold' : 'normal',
+                      color: index === 0 ? '#F9A602'
+                        : index === 1 ? '#848482'
+                          : index === 2 ? '#CD7F32'
+                            : index > 2 && index < grayShades.length ? grayShades[index]
+                              : 'white',
+                    }}
+                    title={`Recent DNFs:\n${entry.entries.slice(0, 5).map(e => 
+                      `${e.date}${e.wordleNumber ? ` - Wordle #${e.wordleNumber}` : ''} - DNF`
+                    ).join('\n')}${entry.entries.length > 5 ? `\n... and ${entry.entries.length - 5} more` : ''}`}
+                  >
+                    {index === 0 && <span className={classes.spoon}>🥄</span>}
+                    #{index + 1} {entry.name}: {entry.count}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
           </div>
         </>
       )}

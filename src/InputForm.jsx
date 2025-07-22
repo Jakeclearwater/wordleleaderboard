@@ -8,238 +8,360 @@ import axios from "axios"; // For sending HTTP requests
 const useStyles = createUseStyles({
   formContainer: {
     overflow: "hidden",
-    transition: "max-height 0.3s ease-out, opacity 0.3s ease-out",
+    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
     width: "100%",
-    maxWidth: 440,
+    maxWidth: 500,
     margin: "0 auto",
     boxSizing: "border-box",
-    background: "rgba(255,255,255,0.95)",
-    borderRadius: 24,
-    boxShadow: "0 8px 32px rgba(60,60,120,0.12)",
-    padding: 0,
+    background: "var(--card-bg)",
+    borderRadius: "var(--radius-2xl)",
+    boxShadow: "var(--shadow-large)",
+    border: "1px solid var(--border-light)",
     position: "relative",
+    backdropFilter: "blur(20px)",
     "@media (max-width: 480px)": {
-      maxWidth: "calc(100vw - 1rem)",
+      maxWidth: "calc(100vw - 2rem)",
+      margin: "0 1rem",
     },
     "&.collapsed": {
       maxHeight: "0",
       opacity: "0",
+      transform: "translateY(-20px)",
     },
     "&.expanded": {
-      maxHeight: "1200px",
+      maxHeight: "1500px",
       opacity: "1",
+      transform: "translateY(0)",
     },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: "4px",
+      background: "var(--gradient-hero)",
+      borderRadius: "var(--radius-2xl) var(--radius-2xl) 0 0",
+    }
   },
+  
   formHeader: {
-    background: "#6aaa64", // Wordle green
+    background: "linear-gradient(135deg, var(--wordle-green) 0%, #5a9954 100%)",
     color: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: "1.2rem 2rem 0.7rem 2rem",
-    fontWeight: 700,
-    fontSize: 22,
-    letterSpacing: 1,
+    borderTopLeftRadius: "var(--radius-2xl)",
+    borderTopRightRadius: "var(--radius-2xl)",
+    padding: "var(--space-8) var(--space-8) var(--space-6)",
     textAlign: "center",
-    boxShadow: "0 2px 8px #0001",
+    position: "relative",
+    overflow: "hidden",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)",
+      pointerEvents: "none",
+    }
   },
+
+  headerTitle: {
+    fontSize: "1.5rem",
+    fontWeight: "700",
+    marginBottom: "var(--space-2)",
+    letterSpacing: "-0.01em",
+    position: "relative",
+    zIndex: 1,
+  },
+
+  headerSubtitle: {
+    fontSize: "0.9rem",
+    opacity: 0.85,
+    fontWeight: "400",
+    position: "relative",
+    zIndex: 1,
+  },
+  
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "1.2rem",
-    padding: "2rem 2rem 2rem 2rem",
+    gap: "var(--space-6)",
+    padding: "var(--space-8)",
     boxSizing: "border-box",
-    '@media (max-width: 480px)': {
-      padding: "1rem",
-    },
   },
+  
   formGroup: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.3rem",
+    gap: "var(--space-2)",
     marginBottom: 0,
   },
+  
   label: {
-    color: "#2d2d2d",
-    fontWeight: 500,
-    fontSize: 15,
-    marginBottom: 2,
-    letterSpacing: 0.2,
+    color: "var(--text-primary)",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    marginBottom: "var(--space-1)",
+    letterSpacing: "-0.01em",
   },
+  
   input: {
-    padding: "14px 16px",
-    borderRadius: 12,
-    border: "1.5px solid #e0e0e0",
-    fontSize: 17,
-    background: "#f8fafc",
-    color: "#222",
+    padding: "var(--space-4) var(--space-4)",
+    borderRadius: "var(--radius-lg)",
+    border: "2px solid var(--border-light)",
+    fontSize: "1rem",
+    background: "var(--secondary-bg)",
+    color: "var(--text-primary)",
     width: "100%",
     boxSizing: "border-box",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-    marginBottom: 0,
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    fontFamily: "inherit",
     '&:focus': {
       outline: "none",
-      borderColor: "#fc575e",
-      boxShadow: "0 0 0 2px #fc575e33",
+      borderColor: "var(--wordle-green)",
+      boxShadow: "0 0 0 3px rgba(106, 170, 100, 0.1)",
+      background: "#fff",
+    },
+    '&:hover': {
+      borderColor: "var(--wordle-light-gray)",
     },
     '&.disabled': {
-      backgroundColor: "#f3f3f3",
+      backgroundColor: "var(--border-light)",
       cursor: "not-allowed",
-      color: "#b0b0b0",
+      color: "var(--text-muted)",
+      borderColor: "var(--border-light)",
     },
   },
+  
   select: {
-    composes: '$input',
-    appearance: "none",
-    background: "#f8fafc url('data:image/svg+xml;utf8,<svg fill=\'gray\' height=\'20\' viewBox=\'0 0 20 20\' width=\'20\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z\'/></svg>') no-repeat right 1rem center/1.2em auto",
-    paddingRight: "2.5em",
-  },
-  button: {
-    padding: "13px 0",
-    border: "none",
-    borderRadius: 12,
-    background: "#c9b458", // Wordle yellow
-    color: "#222",
-    cursor: "pointer",
-    fontSize: 18,
-    fontWeight: 700,
+    padding: "var(--space-4) var(--space-4)",
+    borderRadius: "var(--radius-lg)",
+    border: "2px solid var(--border-light)",
+    fontSize: "1rem",
+    background: "var(--secondary-bg)",
+    color: "var(--text-primary)",
     width: "100%",
-    marginTop: "0.5rem",
-    boxShadow: "0 2px 8px #0001",
-    transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
+    boxSizing: "border-box",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    fontFamily: "inherit",
+    appearance: "none",
+    backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
+    backgroundPosition: "right var(--space-3) center",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "1.2em",
+    paddingRight: "var(--space-12)",
+    '&:focus': {
+      outline: "none",
+      borderColor: "var(--wordle-green)",
+      boxShadow: "0 0 0 3px rgba(106, 170, 100, 0.1)",
+      background: "#fff",
+    },
     '&:hover': {
-      background: "#b59f3b",
-      color: "#fff",
-      transform: "translateY(-2px) scale(1.03)",
-      boxShadow: "0 6px 16px #0002",
+      borderColor: "var(--wordle-light-gray)",
+    },
+  },
+  
+  button: {
+    padding: "var(--space-4) var(--space-6)",
+    border: "none",
+    borderRadius: "var(--radius-lg)",
+    background: "var(--gradient-button)",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: "1.1rem",
+    fontWeight: "600",
+    width: "100%",
+    marginTop: "var(--space-4)",
+    boxShadow: "var(--shadow-medium)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    letterSpacing: "-0.01em",
+    fontFamily: "inherit",
+    '&:hover': {
+      transform: "translateY(-1px)",
+      boxShadow: "var(--shadow-large)",
     },
     '&:active': {
       transform: "translateY(0)",
     },
     '&.disabled': {
-      background: "#e0e0e0",
-      color: "#b0b0b0",
+      background: "var(--border-light)",
+      color: "var(--text-muted)",
       cursor: "not-allowed",
       boxShadow: "none",
       transform: "none",
     },
   },
+  
   checkboxGroup: {
     display: "flex",
-    flexDirection: "row",
-    gap: "1.5rem",
-    margin: "0.5rem 0 0.5rem 0",
-    justifyContent: "center",
+    flexDirection: "column",
+    gap: "var(--space-4)",
+    margin: "var(--space-2) 0",
+    '@media (min-width: 480px)': {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
   },
+  
   checkboxWrapper: {
     display: "flex",
     alignItems: "center",
-    gap: "0.5rem",
+    gap: "var(--space-3)",
     position: "relative",
+    padding: "var(--space-3) var(--space-4)",
+    borderRadius: "var(--radius-lg)",
+    border: "2px solid var(--border-light)",
+    background: "var(--secondary-bg)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    cursor: "pointer",
+    '&:hover': {
+      borderColor: "var(--wordle-green)",
+      background: "rgba(106, 170, 100, 0.03)",
+    },
+    '&.checked': {
+      borderColor: "var(--wordle-green)",
+      background: "rgba(106, 170, 100, 0.08)",
+    },
   },
+  
   checkbox: {
     width: 0,
     height: 0,
     opacity: 0,
     position: "absolute",
     '& + $customCheckbox': {
-      border: "2px solid #6aaa64",
-      borderRadius: 999,
-      width: 38,
-      height: 22,
-      background: "#f8fafc",
+      border: "2px solid var(--border-light)",
+      borderRadius: "50px",
+      width: "48px",
+      height: "26px",
+      background: "var(--border-light)",
       display: "inline-block",
       position: "relative",
-      transition: "background 0.2s",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       cursor: "pointer",
+      flexShrink: 0,
     },
     '&:checked + $customCheckbox': {
-      background: "#6aaa64",
+      background: "var(--wordle-green)",
+      borderColor: "var(--wordle-green)",
     },
     '&:checked + $customCheckbox:after': {
-      left: 18,
+      left: "22px",
       background: "#fff",
     },
   },
+  
   customCheckbox: {
-    border: "2px solid #6aaa64",
-    borderRadius: 999,
-    width: 38,
-    height: 22,
-    background: "#f8fafc",
+    border: "2px solid var(--border-light)",
+    borderRadius: "50px",
+    width: "48px",
+    height: "26px",
+    background: "var(--border-light)",
     display: "inline-block",
     position: "relative",
-    transition: "background 0.2s",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     cursor: "pointer",
+    flexShrink: 0,
     '&:after': {
       content: '""',
       position: "absolute",
-      top: 1,
-      left: 2,
-      width: 18,
-      height: 18,
-      borderRadius: 999,
-      background: "#6aaa64",
-      transition: "left 0.2s, background 0.2s",
+      top: "2px",
+      left: "2px",
+      width: "18px",
+      height: "18px",
+      borderRadius: "50%",
+      background: "#fff",
+      transition: "left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease",
       display: 'block',
+      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
     },
   },
+  
   checkboxLabel: {
-    marginLeft: 10,
-    fontSize: 15,
-    color: "#2d2d2d",
-    fontWeight: 500,
+    fontSize: "0.95rem",
+    color: "var(--text-primary)",
+    fontWeight: "500",
     cursor: "pointer",
     userSelect: "none",
+    flex: 1,
   },
+  
   textarea: {
-    padding: "14px 16px",
-    borderRadius: 12,
-    border: "1.5px solid #e0e0e0",
-    minHeight: 120,
+    padding: "var(--space-4)",
+    borderRadius: "var(--radius-lg)",
+    border: "2px solid var(--border-light)",
+    minHeight: "120px",
     width: "100%",
     boxSizing: "border-box",
-    fontSize: 15,
-    fontFamily: "monospace",
-    background: "#f8fafc",
+    fontSize: "0.9rem",
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+    background: "var(--secondary-bg)",
     resize: "vertical",
-    transition: "border-color 0.2s, box-shadow 0.2s",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    lineHeight: "1.5",
+    color: "var(--text-primary)",
     '&:focus': {
       outline: "none",
-      borderColor: "#fc575e",
-      boxShadow: "0 0 0 2px #fc575e33",
+      borderColor: "var(--wordle-green)",
+      boxShadow: "0 0 0 3px rgba(106, 170, 100, 0.1)",
+      background: "#fff",
+    },
+    '&:hover': {
+      borderColor: "var(--wordle-light-gray)",
+    },
+    '&::placeholder': {
+      color: "var(--text-muted)",
     },
   },
+  
   overlay: {
     position: "fixed",
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
-    background: "rgba(252,87,94,0.18)",
-    color: "#fc575e",
+    background: "rgba(106, 170, 100, 0.15)",
+    backdropFilter: "blur(8px)",
+    color: "var(--wordle-green)",
     display: "flex",
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
     opacity: 1,
-    transition: "opacity 1s ease",
+    transition: "opacity 0.5s ease",
   },
+  
+  overlayContent: {
+    background: "var(--card-bg)",
+    padding: "var(--space-8)",
+    borderRadius: "var(--radius-2xl)",
+    boxShadow: "var(--shadow-large)",
+    textAlign: "center",
+    maxWidth: "400px",
+    margin: "0 var(--space-4)",
+  },
+  
   spinner: {
-    border: "6px solid #f3f3f3",
-    borderTop: "6px solid #fc575e",
+    border: "4px solid var(--border-light)",
+    borderTop: "4px solid var(--wordle-green)",
     borderRadius: "50%",
-    width: 60,
-    height: 60,
+    width: "48px",
+    height: "48px",
     animation: "$spin 1s linear infinite",
-    margin: "0 auto 1.5rem auto",
+    margin: "0 auto var(--space-4) auto",
   },
+  
   '@keyframes spin': {
     '0%': { transform: 'rotate(0deg)' },
     '100%': { transform: 'rotate(360deg)' },
   },
+  
   hidden: {
     opacity: 0,
   },
+  
   confetti: {
     position: 'fixed',
     top: 0,
@@ -250,11 +372,11 @@ const useStyles = createUseStyles({
     zIndex: 9999,
     '& .confetti-piece': {
       position: 'absolute',
-      width: '14px',
-      height: '14px',
+      width: '12px',
+      height: '12px',
       borderRadius: '50%',
-      backgroundColor: '#FFD700',
-      animation: '$confettiBurst 2.8s cubic-bezier(.4,0,.2,1) forwards',
+      backgroundColor: 'var(--wordle-yellow)',
+      animation: '$confettiBurst 3s cubic-bezier(.4,0,.2,1) forwards',
       opacity: 0.85,
       boxShadow: '0 2px 8px #0002',
     }
@@ -777,31 +899,79 @@ const InputForm = () => {
     <>
       {showOverlay && (
         <div className={`${classes.overlay} ${loading ? "" : classes.hidden}`}>
-          <div style={{textAlign: 'center'}}>
+          <div className={classes.overlayContent}>
             <div className={classes.spinner}></div>
-            <h2 style={{fontWeight:700, letterSpacing:1, color:'#fc575e'}}>Submitting Result...</h2>
+            <h3 style={{fontWeight: 600, color: 'var(--text-primary)', margin: 0}}>
+              Submitting your score...
+            </h3>
+            <p style={{color: 'var(--text-secondary)', margin: 'var(--space-2) 0 0', fontSize: '0.9rem'}}>
+              Just a moment while we save your result
+            </p>
           </div>
         </div>
       )}
+      
       {showConfetti && (
         <div className={classes.confetti}>
           {createConfetti()}
         </div>
       )}
 
-
+      {/* Modern Toggle Section */}
       <div className={classes.toggleContainer}>
-        <div style={{width:'100%',display:'flex',justifyContent:'center',alignItems:'center',marginBottom:8}}>
-          <span style={{fontWeight:600,fontSize:18,color:'#6aaa64',marginRight:12}}>Submit a Score</span>
-          <label style={{display:'flex',alignItems:'center',cursor:'pointer',userSelect:'none'}}>
+        <div style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 'var(--space-6)',
+          gap: 'var(--space-4)'
+        }}>
+          <span style={{
+            fontWeight: 600,
+            fontSize: '1.1rem',
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.01em'
+          }}>
+            Submit a Score
+          </span>
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            userSelect: 'none',
+            padding: 'var(--space-2)',
+            borderRadius: 'var(--radius-lg)',
+            transition: 'background 0.2s ease'
+          }}>
             <input
               type="checkbox"
               checked={isFormExpanded}
               onChange={() => setIsFormExpanded(v => !v)}
-              style={{width:0,height:0,opacity:0,position:'absolute'}}
+              style={{width: 0, height: 0, opacity: 0, position: 'absolute'}}
             />
-            <span style={{width:38,height:22,background:isFormExpanded?'#6aaa64':'#f8fafc',border:'2px solid #6aaa64',borderRadius:999,display:'inline-block',position:'relative',transition:'background 0.2s'}}>
-              <span style={{position:'absolute',top:1,left:isFormExpanded?18:2,width:18,height:18,borderRadius:999,background:isFormExpanded?'#6aaa64':'#bbb',transition:'left 0.2s,background 0.2s',display:'block'}}></span>
+            <span style={{
+              width: '48px',
+              height: '26px',
+              background: isFormExpanded ? 'var(--wordle-green)' : 'var(--border-light)',
+              border: `2px solid ${isFormExpanded ? 'var(--wordle-green)' : 'var(--border-light)'}`,
+              borderRadius: '50px',
+              display: 'inline-block',
+              position: 'relative',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
+              <span style={{
+                position: 'absolute',
+                top: '2px',
+                left: isFormExpanded ? '22px' : '2px',
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'block',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+              }}></span>
             </span>
           </label>
         </div>
@@ -809,11 +979,13 @@ const InputForm = () => {
 
       <div className={`${classes.formContainer} ${isFormExpanded ? 'expanded' : 'collapsed'}`}>
         <div className={classes.formHeader}>
-          Submit Your Wordle Score
+          <div className={classes.headerTitle}>Submit Your Wordle Score</div>
+          <div className={classes.headerSubtitle}>Track your daily progress and compete with friends</div>
         </div>
+        
         <form onSubmit={handleSubmit} className={classes.form}>
           <div className={classes.formGroup}>
-            <label htmlFor="name" className={classes.label}>Name:</label>
+            <label htmlFor="name" className={classes.label}>Choose Your Name</label>
             <select
               id="name"
               value={name}
@@ -836,16 +1008,16 @@ const InputForm = () => {
 
           {isCustomName && (
             <div className={classes.formGroup}>
-              <label htmlFor="customName" className={classes.label}>Enter your name:</label>
+              <label htmlFor="customName" className={classes.label}>Enter Your Name</label>
               <input
                 type="text"
                 id="customName"
                 value={customName}
                 onChange={handleCustomNameChange}
                 required={!didNotFinish && isCustomName}
-                className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`}
+                className={`${classes.input} ${didNotFinish ? 'disabled' : ""}`}
                 disabled={didNotFinish}
-                placeholder="Type your name (3-12 characters)"
+                placeholder="Your name (3-12 characters)"
                 pattern="[a-zA-Z ]{3,12}"
                 title="Name must be 3-12 characters, letters and spaces only"
                 minLength={3}
@@ -855,7 +1027,7 @@ const InputForm = () => {
           )}
 
           <div className={classes.formGroup}>
-            <label htmlFor="guesses" className={classes.label}>Number of Guesses:</label>
+            <label htmlFor="guesses" className={classes.label}>Number of Guesses</label>
             <input
               type="number"
               id="guesses"
@@ -864,14 +1036,14 @@ const InputForm = () => {
               min={1}
               max={6}
               required={!didNotFinish && !pasteWordle}
-              className={`${classes.input} ${didNotFinish || pasteWordle ? classes.disabled : ""}`}
+              className={`${classes.input} ${didNotFinish || pasteWordle ? 'disabled' : ""}`}
               disabled={didNotFinish || pasteWordle}
-              placeholder="Enter 1-6"
+              placeholder="Enter 1-6 guesses"
             />
           </div>
 
           <div className={classes.checkboxGroup}>
-            <div className={classes.checkboxWrapper}>
+            <div className={`${classes.checkboxWrapper} ${didNotFinish ? 'checked' : ''}`}>
               <input
                 type="checkbox"
                 id="didNotFinish"
@@ -885,12 +1057,14 @@ const InputForm = () => {
                   }
                 }}
                 className={classes.checkbox}
-                // allow DNF to be ticked even if pasteWordle is true
               />
               <span className={classes.customCheckbox}></span>
-              <label htmlFor="didNotFinish" className={classes.checkboxLabel}>Did Not Finish</label>
+              <label htmlFor="didNotFinish" className={classes.checkboxLabel}>
+                Did Not Finish 🚫
+              </label>
             </div>
-            <div className={classes.checkboxWrapper}>
+            
+            <div className={`${classes.checkboxWrapper} ${pasteWordle ? 'checked' : ''}`}>
               <input
                 type="checkbox"
                 id="pasteWordle"
@@ -903,36 +1077,43 @@ const InputForm = () => {
                   } else {
                     setWordleResult("");
                   }
-                  setIsFormExpanded(true);
                 }}
                 className={classes.checkbox}
-                disabled={didNotFinish}
               />
               <span className={classes.customCheckbox}></span>
-              <label htmlFor="pasteWordle" className={classes.checkboxLabel}>Paste Wordle Output</label>
+              <label htmlFor="pasteWordle" className={classes.checkboxLabel}>
+                Paste Wordle Result
+              </label>
             </div>
           </div>
 
           {pasteWordle && (
             <div className={classes.formGroup}>
-              <label htmlFor="wordleResult" className={classes.label}>Paste your Wordle result:</label>
+              <label htmlFor="wordleResult" className={classes.label}>
+                Paste Your Wordle Result
+              </label>
               <textarea
                 id="wordleResult"
                 value={wordleResult}
                 onChange={(e) => setWordleResult(e.target.value)}
+                required={pasteWordle}
                 className={classes.textarea}
-                placeholder="Paste your Wordle result here..."
+                placeholder="Paste your Wordle result here...&#10;&#10;Wordle 1,234 4/6&#10;&#10;⬛🟨⬛⬛⬛&#10;⬛⬛🟩🟨⬛&#10;⬛🟩🟩🟩🟩&#10;🟩🟩🟩🟩🟩"
+                rows={6}
               />
             </div>
           )}
 
           <button
             type="submit"
-            className={`${classes.button} ${(!isFormValid() || loading) ? classes.disabled : ""}`}
-            disabled={!isFormValid() || loading}
+            className={`${classes.button} ${!isFormValid() ? 'disabled' : ''}`}
+            disabled={!isFormValid()}
           >
-            {loading ? "Submitting..." : "Submit Score"}
+            {loading ? 'Submitting...' : 'Submit Score'}
           </button>
+
+          {/* Test Confetti - Hidden in production */}
+         
         </form>
       </div>
     </>

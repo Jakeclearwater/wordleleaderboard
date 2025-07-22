@@ -6,71 +6,139 @@ import { firestore } from './firebase';
 
 const useStyles = createUseStyles({
   chartContainer: {
-    padding: '1.5rem',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    marginTop: '1rem',
-    marginBottom: '1rem',
-    maxWidth: 'calc(100vw - 2rem)',
+    background: 'var(--card-bg)',
+    borderRadius: 'var(--radius-2xl)',
+    boxShadow: 'var(--shadow-medium)',
+    border: '1px solid var(--border-light)',
+    margin: '0 auto',
+    maxWidth: '1200px',
     width: '100%',
     boxSizing: 'border-box',
-    border: '1px solid #e0e0e0',
-    '@media (min-width: 768px)': {
-      maxWidth: '1400px',
-    },
-    '@media (min-width: 1200px)': {
-      maxWidth: '1600px',
-    },
+    overflow: 'hidden',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '4px',
+      background: 'var(--gradient-hero)',
+    }
   },
+  
+  header: {
+    padding: 'var(--space-8) var(--space-8) var(--space-6)',
+    borderBottom: '1px solid var(--border-light)',
+    background: 'linear-gradient(135deg, rgba(106, 170, 100, 0.03) 0%, rgba(201, 180, 88, 0.03) 100%)',
+  },
+  
   title: {
-    fontSize: '20px',
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: '1rem',
-    textAlign: 'center',
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    color: 'var(--text-primary)',
+    margin: '0 0 var(--space-2) 0',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
+    gap: 'var(--space-2)',
+    letterSpacing: '-0.01em',
   },
+  
+  subtitle: {
+    fontSize: '1rem',
+    color: 'var(--text-secondary)',
+    margin: 0,
+  },
+  
   controls: {
-    marginBottom: '1rem',
+    padding: 'var(--space-6) var(--space-8)',
+    borderBottom: '1px solid var(--border-light)',
+    background: 'var(--secondary-bg)',
+  },
+  
+  controlGroup: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '0.5rem',
+    gap: 'var(--space-4)',
     alignItems: 'center',
+    marginBottom: 'var(--space-4)',
+    '&:last-child': {
+      marginBottom: 0,
+    },
   },
+  
+  controlLabel: {
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    color: 'var(--text-primary)',
+    marginRight: 'var(--space-2)',
+  },
+  
+  select: {
+    padding: 'var(--space-2) var(--space-3)',
+    borderRadius: 'var(--radius-md)',
+    border: '2px solid var(--border-light)',
+    fontSize: '0.9rem',
+    background: 'var(--card-bg)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer',
+    transition: 'border-color 0.2s ease',
+    '&:focus': {
+      outline: 'none',
+      borderColor: 'var(--wordle-green)',
+    },
+  },
+  
   userSelector: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '0.5rem',
-    marginTop: '0.5rem',
+    gap: 'var(--space-2)',
   },
+  
   userCheckbox: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    padding: '8px 12px',
-    border: '1px solid #e0e0e0',
-    borderRadius: '8px',
-    backgroundColor: '#ffffff',
+    gap: 'var(--space-2)',
+    padding: 'var(--space-2) var(--space-3)',
+    borderRadius: 'var(--radius-md)',
+    border: '2px solid var(--border-light)',
+    background: 'var(--card-bg)',
     cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '400',
     transition: 'all 0.2s ease',
     '&:hover': {
-      backgroundColor: '#f5f5f5',
-      borderColor: '#d0d0d0',
+      borderColor: 'var(--wordle-green)',
+      background: 'rgba(106, 170, 100, 0.05)',
+    },
+    '&.checked': {
+      borderColor: 'var(--wordle-green)',
+      background: 'rgba(106, 170, 100, 0.1)',
     },
   },
-  selectedUser: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#007bff',
-    fontWeight: '500',
+  
+  checkbox: {
+    accentColor: 'var(--wordle-green)',
   },
+  
+  checkboxLabel: {
+    fontSize: '0.9rem',
+    color: 'var(--text-primary)',
+    fontWeight: '500',
+    cursor: 'pointer',
+    userSelect: 'none',
+  },
+  
+  chartArea: {
+    padding: 'var(--space-8)',
+    minHeight: '400px',
+  },
+  
+  noDataMessage: {
+    textAlign: 'center',
+    color: 'var(--text-muted)',
+    fontSize: '1.1rem',
+    padding: 'var(--space-16)',
+  },
+  
   loading: {
     textAlign: 'center',
     padding: '3rem 2rem',
@@ -612,228 +680,90 @@ const BayesianChart = () => {
 
   return (
     <div className={classes.chartContainer}>
-      <h2 className={classes.title}>
-        Player Score XY Scatter
-      </h2>
+      <div className={classes.header}>
+        <h2 className={classes.title}>
+          📊 Bayesian Performance Analysis
+        </h2>
+        <p className={classes.subtitle}>
+          Track player performance evolution with Bayesian scoring methodology
+        </p>
+      </div>
       
-      {/* Control Row */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '15px',
-        padding: '12px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-        border: '1px solid #e9ecef'
-      }}>
-        {/* Quick Select Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ 
-            fontSize: '14px', 
-            color: '#495057',
-            fontWeight: '500',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            👥 Quick Select:
+      <div className={classes.controls}>
+        <div className={classes.controlGroup}>
+          <span className={classes.controlLabel}>Time Range:</span>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className={classes.select}
+          >
+            <option value="1week">Past Week</option>
+            <option value="2weeks">Past 2 Weeks</option>
+            <option value="1month">Past Month</option>
+            <option value="3months">Past 3 Months</option>
+            <option value="6months">Past 6 Months</option>
+            <option value="1year">Past Year</option>
+            <option value="all">All Time</option>
+          </select>
+          
+          <span className={classes.controlLabel} style={{ marginLeft: 'var(--space-4)' }}>
+            Chart Style:
           </span>
+          <label className={classes.userCheckbox}>
+            <input
+              type="checkbox"
+              className={classes.checkbox}
+              checked={connectLines}
+              onChange={(e) => setConnectLines(e.target.checked)}
+            />
+            <span className={classes.checkboxLabel}>Contiguous Lines</span>
+          </label>
+        </div>
+        
+        <div className={classes.controlGroup}>
+          <span className={classes.controlLabel}>Quick Select:</span>
           <button 
             onClick={() => selectTopUsers(3)} 
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
+            className={classes.select}
           >
             Top 3
           </button>
           <button 
             onClick={() => selectTopUsers(5)} 
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
+            className={classes.select}
           >
             Top 5
           </button>
           <button 
-            onClick={() => selectTopUsers(10)} 
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
+            onClick={() => setSelectedUsers([])} 
+            className={classes.select}
+            style={{ background: 'var(--wordle-yellow)', color: 'var(--text-primary)' }}
           >
-            Top 10
-          </button>
-          <button 
-            onClick={() => setSelectedUsers([])}
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dc3545',
-              borderRadius: '4px',
-              backgroundColor: '#fff5f5',
-              color: '#dc3545',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#f8d7da';
-              e.target.style.borderColor = '#b02a37';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#fff5f5';
-              e.target.style.borderColor = '#dc3545';
-            }}
-          >
-            🗑️ Clear
+            Clear All
           </button>
         </div>
-
-        {/* Data Options */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Time Range Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ 
-              fontSize: '13px',
-              color: '#495057',
-              fontWeight: '500',
-              whiteSpace: 'nowrap',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              📅 Time:
-            </label>
-            <select 
-              value={timeRange} 
-              onChange={(e) => setTimeRange(e.target.value)}
-              style={{ 
-                padding: '4px 6px', 
-                fontSize: '13px', 
-                borderRadius: '4px', 
-                border: '1px solid #dee2e6',
-                backgroundColor: 'white',
-                fontWeight: '400',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="1week">Last Week</option>
-              <option value="2weeks">Last 2 Weeks</option>
-              <option value="1month">Last Month</option>
-              <option value="3months">Last 3 Months</option>
-              <option value="6months">Last 6 Months</option>
-              <option value="1year">Last Year</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
-
-          {/* Connect Lines Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label style={{ 
-              fontSize: '13px',
-              color: '#495057',
-              fontWeight: '500',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <input
-                type="checkbox"
-                checked={connectLines}
-                onChange={(e) => setConnectLines(e.target.checked)}
-                style={{ marginRight: '4px' }}
-              />
-              🔗 Contiguous
-            </label>
-          </div>
-        </div>
-      </div>
-      
-      <div className={classes.controls}>
-        <div style={{ 
-          marginBottom: '8px',
-          fontSize: '14px',
-          color: '#495057',
-          fontWeight: '500',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}>
-          🎯 Select Players:
-        </div>
+        
         <div className={classes.userSelector}>
-          {allUsers
-            .sort((a, b) => b.attempts - a.attempts)
-            .map((user, index) => (
+          {allUsers.map((user, index) => (
             <label
               key={user.name}
-              className={`${classes.userCheckbox} ${
-                selectedUsers.includes(user.name) ? classes.selectedUser : ''
-              }`}
+              className={`${classes.userCheckbox} ${selectedUsers.includes(user.name) ? 'checked' : ''}`}
             >
               <input
                 type="checkbox"
+                className={classes.checkbox}
                 checked={selectedUsers.includes(user.name)}
                 onChange={() => toggleUser(user.name)}
                 style={{ 
-                  margin: 0,
                   accentColor: userColors[index % userColors.length]
                 }}
               />
-              <span style={{ 
-                color: userColors[index % userColors.length],
-                fontWeight: selectedUsers.includes(user.name) ? '500' : '400',
-                fontSize: '13px'
-              }}>
+              <span 
+                className={classes.checkboxLabel}
+                style={{ 
+                  color: selectedUsers.includes(user.name) ? userColors[index % userColors.length] : 'var(--text-primary)'
+                }}
+              >
                 {user.name} ({user.attempts})
               </span>
             </label>
@@ -841,86 +771,104 @@ const BayesianChart = () => {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="date" 
-            tickFormatter={formatDate}
-            interval="preserveStartEnd"
-            minTickGap={30}
-            angle={-45}
-            textAnchor="end"
-            height={60}
-          />
-          <YAxis 
-            domain={[3, 7]}
-            label={{ value: 'Bayesian Score', angle: -90, position: 'insideLeft' }}
-            tickFormatter={(value) => value.toFixed(1)}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ position: 'relative', zIndex: 1 }} />
-          
-          {/* Bayesian Global Average Line - dashed */}
-          <Line
-            type="monotone"
-            dataKey="globalAverage"
-            stroke="#666666"
-            strokeWidth={2}
-            strokeDasharray="5 5"
-            dot={false}
-            name="Bayesian Global Average"
-          />
-          
-          {/* Individual User Lines */}
-          {selectedUsers.map((userName, index) => (
-            <Line
-              key={userName}
-              type="monotone"
-              dataKey={userName}
-              stroke={userColors[allUsers.findIndex(u => u.name === userName) % userColors.length]}
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              connectNulls={false}
-              name={userName}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-      
-      <div style={{ 
-        marginTop: '20px', 
-        marginBottom: '0', // Remove bottom margin for cleaner spacing
-        padding: '16px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-        border: '1px solid #e9ecef'
-      }}>
-        <div style={{ 
-          fontSize: '14px', 
-          color: '#495057',
-          fontWeight: '500',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}>
-          ℹ️ About this chart:
-        </div>
-        <ul style={{ 
-          fontSize: '13px', 
-          color: '#6c757d',
-          margin: '0',
-          paddingLeft: '16px',
-          lineHeight: '1.5'
-        }}>
-          <li>📈 Shows how each player's Bayesian score evolves over time</li>
-          <li>🎯 Lower scores are better (representing fewer average guesses)</li>
-          <li>🧮 All lines use Bayesian scoring with recency penalty and attempts bonus</li>
-          <li>🌍 Dashed line: Average of all players' Bayesian scores for each date</li>
-          <li>🔗 Toggle "Contiguous" to connect/break lines on missing days</li>
-          <li>⏰ Use time range selector to focus on specific periods</li>
-        </ul>
+      <div className={classes.chartArea}>
+        {chartData.length === 0 ? (
+          <div className={classes.noDataMessage}>
+            📈 No data available for the selected time range
+          </div>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+                <XAxis 
+                  dataKey="date" 
+                  tickFormatter={formatDate}
+                  interval="preserveStartEnd"
+                  minTickGap={30}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                  stroke="var(--text-secondary)"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  domain={[3, 7]}
+                  label={{ 
+                    value: 'Bayesian Score', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { textAnchor: 'middle', fill: 'var(--text-secondary)' }
+                  }}
+                  tickFormatter={(value) => value.toFixed(1)}
+                  stroke="var(--text-secondary)"
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend wrapperStyle={{ position: 'relative', zIndex: 1 }} />
+                
+                {/* Bayesian Global Average Line - dashed */}
+                <Line
+                  type="monotone"
+                  dataKey="globalAverage"
+                  stroke="var(--text-muted)"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  name="Global Average"
+                />
+                
+                {/* Individual User Lines */}
+                {selectedUsers.map((userName, index) => (
+                  <Line
+                    key={userName}
+                    type="monotone"
+                    dataKey={userName}
+                    stroke={userColors[allUsers.findIndex(u => u.name === userName) % userColors.length]}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    connectNulls={false}
+                    name={userName}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+            
+            <div style={{ 
+              marginTop: 'var(--space-6)', 
+              padding: 'var(--space-4)',
+              background: 'var(--secondary-bg)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-light)'
+            }}>
+              <div style={{ 
+                fontSize: '0.9rem', 
+                color: 'var(--text-primary)',
+                fontWeight: '600',
+                marginBottom: 'var(--space-2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-2)'
+              }}>
+                ℹ️ About this chart:
+              </div>
+              <ul style={{ 
+                fontSize: '0.8rem', 
+                color: 'var(--text-secondary)',
+                margin: '0',
+                paddingLeft: 'var(--space-4)',
+                lineHeight: '1.5'
+              }}>
+                <li>📈 Shows how each player's Bayesian score evolves over time</li>
+                <li>🎯 Lower scores are better (representing fewer average guesses)</li>
+                <li>🧮 Uses Bayesian scoring with recency penalty and attempts bonus</li>
+                <li>🌍 Dashed line shows the global average for reference</li>
+                <li>🔗 Toggle "Contiguous" to connect/break lines on missing days</li>
+                <li>⏰ Use time range selector to focus on specific periods</li>
+              </ul>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
