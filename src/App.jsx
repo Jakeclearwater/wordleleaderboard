@@ -1,7 +1,5 @@
 import React from 'react';
 import InputForm from './InputForm';
-import Leaderboard from './Leaderboard';
-import BayesianChart from './BayesianChart';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
 
@@ -20,7 +18,8 @@ const getBuildDateVersion = () => {
 
 const App = () => {
   const gradientStyle = {
-    background: 'linear-gradient(to bottom, #e3e3e1, #d0d0c0)',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    
     minHeight: '100vh',
     width: '100%',
     margin: 0,
@@ -48,22 +47,32 @@ const App = () => {
   };
 
   return (
-    <div className={classes.App}  style={gradientStyle}>
+    <div className={classes.App} style={gradientStyle}>
       <div id="backgroundOverlay" className={classes.overlay}></div>
-      <p><span className={classes.versionInfo}>Build: {appVersion}</span></p>
-      <h1>{wordleSpans}</h1>
-      <InputForm />
-      <Leaderboard />
-      <BayesianChart />
-      <p>Please don't <span className={classes.spanicon} onClick={hack}>break</span> this app. It is an ongoing, currently a 2.4 hour hack.</p>
+      <div className={classes.container}>
+        <p><span className={classes.versionInfo}>Build: {appVersion}</span></p>
+        <h1 className={classes.title}>{wordleSpans}</h1>
+        <InputForm />
+        <footer className={classes.footer}>
+          <p>Made with 💚 for Wordle enthusiasts · <span className={classes.spanicon} onClick={hack}>Don't break this!</span></p>
+        </footer>
+      </div>
     </div>
   );
 };
 
 const useStyles = createUseStyles({
   App: {
-    position: 'relative', // Ensure children are positioned relative to this container
-    backgroundColor: '#e3e3e1',
+    position: 'relative',
+    minHeight: '100vh',
+    width: '100%',
+    maxWidth: '100%',
+    margin: 0,
+    padding: 0,
+    boxSizing: 'border-box',
+  },
+  container: {
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -74,7 +83,7 @@ const useStyles = createUseStyles({
     padding: '0 1rem',
     boxSizing: 'border-box',
     '& p': {
-      color: 'black !important'
+      color: 'white !important'
     },
   },
   overlay: {
@@ -83,63 +92,95 @@ const useStyles = createUseStyles({
     left: 0,
     width: '100vw',
     height: '100vh',
-    zIndex: 999, // Ensure it's above other content
-    pointerEvents: 'none', // Allows interaction with underlying elements
+    zIndex: 999,
+    pointerEvents: 'none',
   },
   versionInfo: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    color: 'rgba(83, 73, 73, 0.87);',
+    top: '10px',
+    left: '10px',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontSize: '0.8rem',
-    textAlign: 'left',
-    display: 'block',
-    marginLeft: '10px',
+    fontFamily: 'monospace',
   },
-  spanicon: {
-    color: 'red !important',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    '&:hover': {
-      color: 'darkred',
-      textDecoration: 'underline',
-    },
-  },
-  h1: {
-    color: '#333',
-    fontSize: '2.6rem',
-    margin: '1.2rem 0 1.2rem 0',
-    padding: '0.5rem 0.5rem',
+  title: {
+    color: 'white',
+    fontSize: '3.5rem',
+    fontWeight: '900',
+    letterSpacing: '-0.02em',
+    margin: '1.5rem 0 0 0',
+    padding: '0.5rem',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     flexWrap: 'wrap',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    '@media (max-width: 768px)': {
+      fontSize: '2.8rem',
+      margin: '1rem 0 0.5rem 0',
+    },
+  },
+  footer: {
+    marginTop: 'auto',
+    padding: '2rem 0',
+    textAlign: 'center',
+    '& p': {
+      color: 'rgba(255, 255, 255, 0.8) !important',
+      fontSize: '0.9rem',
+      margin: 0,
+    },
+  },
+  spanicon: {
+    color: '#ff6b6b !important',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    fontWeight: 'bold',
+    '&:hover': {
+      color: '#ff5252 !important',
+      textDecoration: 'underline',
+    },
   },
   char: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '0.7rem 1.1rem',
-    margin: '0.3rem',
-    minWidth: '3.8rem',
+    padding: '0.75rem 1rem',
+    margin: '0.15rem',
+    minWidth: '3.5rem',
     width: 'auto',
-    height: '3.8rem',
+    height: '3.5rem',
     textAlign: 'center',
     borderRadius: '6px',
-    backgroundColor: 'none',
-    background: 'none',
     color: 'white !important',
-    fontWeight: 'bold',
+    fontWeight: '700',
+    fontSize: '1.4rem',
     boxSizing: 'border-box',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+    transition: 'all 0.2s ease',
+    border: 'none',
+    '&:hover': {
+      transform: 'translateY(-1px)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+    },
+    '@media (max-width: 768px)': {
+      padding: '0.6rem 0.8rem',
+      minWidth: '2.8rem',
+      height: '2.8rem',
+      fontSize: '1.1rem',
+      margin: '0.1rem',
+    },
   },
   color_green: {
-    backgroundColor: '#538d4e',
+    backgroundColor: '#6aaa64',
+    border: '2px solid #5a8a54',
   },
   color_yellow: {
-    backgroundColor: '#b59f3b',
+    backgroundColor: '#c9b458',
+    border: '2px solid #b9a448',
   },
   color_gray: {
-    backgroundColor: '#3a3a3c',
+    backgroundColor: '#787c7e',
+    border: '2px solid #686c6e',
   }
 });
 

@@ -6,98 +6,135 @@ import { BounceLoader } from 'react-spinners';
 
 const useStyles = createUseStyles({
   leaderboardContainer: {
-    padding: '1rem',
+    padding: '0',
     textAlign: 'center',
     width: '100%',
-    maxWidth: 'calc(100vw - 2rem)',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    marginTop: '1rem',
-    marginBottom: '1rem',
+    maxWidth: '100%',
+    margin: '0',
     boxSizing: 'border-box',
-    '@media (min-width: 768px)': {
-      maxWidth: '1400px',
-      padding: '1.5rem',
-    },
-    '@media (min-width: 1200px)': {
-      maxWidth: '1600px',
-    },
   },
   title: {
-    fontSize: '20px',
+    fontSize: '18px',
     textAlign: 'center',
     color: '#333',
-    marginBottom: '1rem',
+    marginBottom: '1.5rem',
     marginTop: '0',
-    fontWeight: '500',
-    height: '3rem',
-    margin: '0 auto 1rem auto',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontWeight: '700',
     lineHeight: '1.2',
   },
   list: {
     listStyleType: 'none',
     padding: '0',
-    margin: '0 auto 0 auto',
+    margin: '0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
   },
   listItem: {
-    padding: '10px',
-    borderBottom: '1px solid #ccc',
-    color: '#555',
-    marginLeft: '10px',
+    padding: '1rem 1.25rem',
+    background: 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
+    color: '#333',
+    fontSize: '15px',
+    fontWeight: '500',
+    transition: 'all 0.3s ease',
+    cursor: 'help',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.12)',
+      background: 'rgba(255, 255, 255, 0.9)',
+    },
   },
   listItemLast: {
-    borderBottom: 'none',
+    // No special styling needed anymore since we removed borders
   },
   col: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    width: '40%',
+    alignItems: 'stretch',
+    flex: 1,
+    minWidth: '280px',
+    maxWidth: '400px',
     padding: '1.5rem',
-    backgroundColor: '#fff',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    borderRadius: '8px',
-    margin: '0.5rem',
-    textAlign: 'left',
-    border: '1px solid #e0e0e0',
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(10px)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+    borderRadius: '16px',
+    margin: '0.75rem',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      transform: 'translateY(-4px)',
+      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+    },
   },
   columns: {
-    display: 'flex',
-    justifyContent: 'space-between',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: '1.5rem',
     width: '100%',
-    '@media (max-width: 1000px)': {
-      flexDirection: 'column',
-      alignItems: 'center',
+    maxWidth: '1400px',
+    margin: '0 auto',
+    '@media (max-width: 768px)': {
+      gridTemplateColumns: '1fr',
+      gap: '1rem',
     },
   },
   resultsHeader: {
     color: '#333',
-    fontSize: '2.5em',
+    fontSize: '2rem',
     marginTop: '0',
-    marginBottom: '1rem',
-    fontWeight: '500',
+    marginBottom: '2rem',
+    fontWeight: '700',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
   },
   loading: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100vh',
-    fontSize: '1.5em',
-    color: '#555',
+    height: '60vh',
+    fontSize: '1.2em',
+    color: '#666',
   },
   icon: {
-    marginLeft: '-24px',
-    paddingRight: '5px',
+    marginRight: '8px',
+    fontSize: '16px',
   },
   spoon: {
-    marginLeft: '-24px',
-    paddingRight: '5px',
-    filter: 'invert(0.6) sepia(1) saturate(3) hue-rotate(-15deg)',
+    marginRight: '8px',
+    fontSize: '16px',
+    filter: 'sepia(1) saturate(2) hue-rotate(15deg)',
     transform: 'rotate(-8deg)',
+  },
+  rankNumber: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    fontSize: '12px',
+    fontWeight: '700',
+    marginRight: '12px',
+    color: 'white',
+    flexShrink: 0,
+  },
+  playerName: {
+    fontWeight: '600',
+    marginRight: '8px',
+    color: '#333',
+  },
+  playerScore: {
+    marginLeft: 'auto',
+    fontWeight: '700',
+    fontSize: '16px',
   }
 });
 
@@ -438,47 +475,69 @@ const Leaderboard = () => {
           <div className={classes.columns}>
 
             <section className={classes.col}>
-              <h1 className={classes.title}>Daily Leaderboard</h1>
+              <h1 className={classes.title}>🏆 Daily Leaderboard</h1>
               <ul className={classes.list}>
-                {dailyLeaderboard && dailyLeaderboard.slice(0, 12).map((entry, index) => (
-                  <li key={index}
-                    className={`${classes.listItem} ${index === Math.min(dailyLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
-                    style={{
-                      fontWeight: index < 3 ? 'bold' : 'normal',
-                      color: index === 0 ? '#F9A602'
-                        : index === 1 ? '#848482'
-                          : index === 2 ? '#CD7F32'
-                            : index > 2 && index < grayShades.length ? grayShades[index]
-                              : 'white',
-                    }}
-                  >
-                    {index === 0 && <span className={classes.icon}>👑</span>}
-                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
-                  </li>
-                ))}
+                {dailyLeaderboard && dailyLeaderboard.slice(0, 12).map((entry, index) => {
+                  const getRankColor = (position) => {
+                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
+                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
+                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
+                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
+                  };
+                  
+                  return (
+                    <li key={index} className={classes.listItem}>
+                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <span 
+                          className={classes.rankNumber}
+                          style={{ background: getRankColor(index) }}
+                        >
+                          {index + 1}
+                        </span>
+                        {index === 0 && <span className={classes.icon}>👑</span>}
+                        <span className={classes.playerName}>{entry.name}</span>
+                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
+                          {entry.average.toFixed(2)}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
 
             <section className={classes.col}>
-              <h1 className={classes.title}>Weekly Average Leaderboard</h1>
+              <h1 className={classes.title}>📅 Weekly Average</h1>
               <ul className={classes.list}>
-                {weeklyLeaderboard && weeklyLeaderboard.slice(0, 12).map((entry, index) => (
-                  <li key={index}
-                    className={`${classes.listItem} ${index === Math.min(weeklyLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
-                    style={{
-                      fontWeight: index < 3 ? 'bold' : 'normal',
-                      color: index === 0 ? '#F9A602'
-                        : index === 1 ? '#848482'
-                          : index === 2 ? '#CD7F32'
-                            : index > 2 && index < grayShades.length ? grayShades[index]
-                              : 'white',
-                    }}
-                    title={`Played ${entry.playedDays} out of ${entry.totalWeekdays} weekdays. Missed weekdays count as DNF (7 points).`}
-                  >
-                    {index === 0 && <span className={classes.icon}>👑</span>}
-                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
-                  </li>
-                ))}
+                {weeklyLeaderboard && weeklyLeaderboard.slice(0, 12).map((entry, index) => {
+                  const getRankColor = (position) => {
+                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
+                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
+                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
+                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
+                  };
+                  
+                  return (
+                    <li key={index} 
+                        className={classes.listItem}
+                        title={`Played ${entry.playedDays} out of ${entry.totalWeekdays} weekdays. Missed weekdays count as DNF (7 points).`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <span 
+                          className={classes.rankNumber}
+                          style={{ background: getRankColor(index) }}
+                        >
+                          {index + 1}
+                        </span>
+                        {index === 0 && <span className={classes.icon}>👑</span>}
+                        <span className={classes.playerName}>{entry.name}</span>
+                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
+                          {entry.average.toFixed(2)}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
             <section className={classes.col}>
@@ -514,23 +573,22 @@ const Leaderboard = () => {
       - C: A scaling factor for the penalty.
       `}
                 >
-                Bayesian Average Leaderboard
+                🧮 Bayesian Average
                 </span>
               </h1>
               <ul className={classes.list}>
-                {allTimeLeaderboard && allTimeLeaderboard.slice(0, 12).map((entry, index) => (
-                  <li
-                    key={index}
-                    className={`${classes.listItem} ${index === Math.min(allTimeLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
-                    style={{
-                      fontWeight: index < 3 ? 'bold' : 'normal',
-                      color: index === 0 ? '#F9A602'
-                        : index === 1 ? '#848482'
-                          : index === 2 ? '#CD7F32'
-                            : index > 2 && index < grayShades.length ? grayShades[index]
-                              : 'white',
-                    }}
-                    title={`FinalScore = (BayesAvg x RecencyFactor) - AttemptsBonus
+                {allTimeLeaderboard && allTimeLeaderboard.slice(0, 12).map((entry, index) => {
+                  const getRankColor = (position) => {
+                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
+                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
+                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
+                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
+                  };
+                  
+                  return (
+                    <li key={index}
+                        className={classes.listItem}
+                        title={`FinalScore = (BayesAvg x RecencyFactor) - AttemptsBonus
         
         Your Actual Average: ${entry.actualAverage.toFixed(2)}
         
@@ -542,59 +600,93 @@ const Leaderboard = () => {
         - BayesAvg (${entry.BayesAvg.toFixed(2)}): Your average guesses adjusted with a global prior for fairness.
         - RecencyFactor (${entry.RecencyFactor.toFixed(2)}): Rewards recent activity, penalizes inactivity over time.
         - AttemptsBonus (${entry.AttemptsBonus.toFixed(2)}): A slight penalty for more attempts, balancing frequent guesses.`}
-                  >
-                    {index === 0 && <span className={classes.icon}>👑</span>}
-                    #{index + 1} {entry.name}: {entry.finalScore.toFixed(2)}
-                  </li>
-                ))}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <span 
+                          className={classes.rankNumber}
+                          style={{ background: getRankColor(index) }}
+                        >
+                          {index + 1}
+                        </span>
+                        {index === 0 && <span className={classes.icon}>👑</span>}
+                        <span className={classes.playerName}>{entry.name}</span>
+                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
+                          {entry.finalScore.toFixed(2)}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
 
 
             <section className={classes.col}>
-              <h1 className={classes.title}>Attempts Leaderboard</h1>
+              <h1 className={classes.title}>📊 Attempts Leaderboard</h1>
               <ul className={classes.list}>
-                {allAttemptsLeaderboard && allAttemptsLeaderboard.slice(0, 12).map((entry, index) => (
-                  <li key={index}
-                    className={`${classes.listItem} ${index === Math.min(allAttemptsLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
-                    style={{
-                      fontWeight: index < 3 ? 'bold' : 'normal',
-                      color: index === 0 ? '#F9A602'
-                        : index === 1 ? '#848482'
-                          : index === 2 ? '#CD7F32'
-                            : index > 2 && index < grayShades.length ? grayShades[index]
-                              : 'white',
-                    }}
-                  >
-                    {index === 0 && <span className={classes.icon}>👑</span>}
-                    #{index + 1} {entry.name}: {entry.attempts}
-                  </li>
-                ))}
+                {allAttemptsLeaderboard && allAttemptsLeaderboard.slice(0, 12).map((entry, index) => {
+                  const getRankColor = (position) => {
+                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
+                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
+                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
+                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
+                  };
+                  
+                  return (
+                    <li key={index} className={classes.listItem}>
+                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <span 
+                          className={classes.rankNumber}
+                          style={{ background: getRankColor(index) }}
+                        >
+                          {index + 1}
+                        </span>
+                        {index === 0 && <span className={classes.icon}>👑</span>}
+                        <span className={classes.playerName}>{entry.name}</span>
+                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
+                          {entry.attempts}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
 
             <section className={classes.col}>
-              <h1 className={classes.title}>Wooden Spoon Leaderboard</h1>
+              <h1 className={classes.title}>🥄 Wooden Spoon</h1>
               <ul className={classes.list}>
-                {woodspoonLeaderboard && woodspoonLeaderboard.slice(0, 12).map((entry, index) => (
-                  <li key={index}
-                    className={`${classes.listItem} ${index === Math.min(woodspoonLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
-                    style={{
-                      fontWeight: index < 3 ? 'bold' : 'normal',
-                      color: index === 0 ? '#F9A602'
-                        : index === 1 ? '#848482'
-                          : index === 2 ? '#CD7F32'
-                            : index > 2 && index < grayShades.length ? grayShades[index]
-                              : 'white',
-                    }}
-                    title={`Recent DNFs:\n${entry.entries.slice(0, 5).map(e => 
-                      `${e.date}${e.wordleNumber ? ` - Wordle #${e.wordleNumber}` : ''} - DNF`
-                    ).join('\n')}${entry.entries.length > 5 ? `\n... and ${entry.entries.length - 5} more` : ''}`}
-                  >
-                    {index === 0 && <span className={classes.spoon}>🥄</span>}
-                    #{index + 1} {entry.name}: {entry.count}
-                  </li>
-                ))}
+                {woodspoonLeaderboard && woodspoonLeaderboard.slice(0, 12).map((entry, index) => {
+                  const getRankColor = (position) => {
+                    if (position === 0) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze for worst performance
+                    if (position === 1) return 'linear-gradient(135deg, #A0A0A0, #888888)'; // Dark silver
+                    if (position === 2) return 'linear-gradient(135deg, #808080, #696969)'; // Gray
+                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
+                  };
+                  
+                  return (
+                    <li key={index}
+                        className={classes.listItem}
+                        title={`Recent DNFs:\n${entry.entries.slice(0, 5).map(e => 
+                          `${e.date}${e.wordleNumber ? ` - Wordle #${e.wordleNumber}` : ''} - DNF`
+                        ).join('\n')}${entry.entries.length > 5 ? `\n... and ${entry.entries.length - 5} more` : ''}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <span 
+                          className={classes.rankNumber}
+                          style={{ background: getRankColor(index) }}
+                        >
+                          {index + 1}
+                        </span>
+                        {index === 0 && <span className={classes.spoon}>🥄</span>}
+                        <span className={classes.playerName}>{entry.name}</span>
+                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('CD7F32') ? '#8B4513' : '#667eea' }}>
+                          {entry.count}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
 

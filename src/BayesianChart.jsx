@@ -6,80 +6,135 @@ import { firestore } from './firebase';
 
 const useStyles = createUseStyles({
   chartContainer: {
-    padding: '1.5rem',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    marginTop: '1rem',
-    marginBottom: '1rem',
-    maxWidth: 'calc(100vw - 2rem)',
+    padding: '2rem',
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '16px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    margin: '0',
+    maxWidth: '100%',
     width: '100%',
     boxSizing: 'border-box',
-    border: '1px solid #e0e0e0',
-    '@media (min-width: 768px)': {
-      maxWidth: '1400px',
-    },
-    '@media (min-width: 1200px)': {
-      maxWidth: '1600px',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
     },
   },
   title: {
-    fontSize: '20px',
-    fontWeight: '500',
+    fontSize: '24px',
+    fontWeight: '700',
     color: '#333',
-    marginBottom: '1rem',
+    marginBottom: '2rem',
     textAlign: 'center',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '8px',
+    gap: '12px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
   },
   controls: {
-    marginBottom: '1rem',
+    marginBottom: '1.5rem',
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '0.5rem',
+    gap: '1rem',
     alignItems: 'center',
+    padding: '1rem',
+    background: 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
   },
   userSelector: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '0.5rem',
-    marginTop: '0.5rem',
+    gap: '0.75rem',
+    marginTop: '1rem',
   },
   userCheckbox: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '8px',
     padding: '8px 12px',
-    border: '1px solid #e0e0e0',
+    border: '1px solid #e0e4e7',
     borderRadius: '8px',
-    backgroundColor: '#ffffff',
+    background: 'rgba(255, 255, 255, 0.9)',
+    backdropFilter: 'blur(10px)',
     cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '400',
+    fontSize: '14px',
+    fontWeight: '500',
     transition: 'all 0.2s ease',
     '&:hover': {
-      backgroundColor: '#f5f5f5',
-      borderColor: '#d0d0d0',
+      background: 'rgba(255, 255, 255, 0.95)',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     },
   },
   selectedUser: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#007bff',
-    fontWeight: '500',
+    background: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
+    '&:hover': {
+      background: 'rgba(255, 255, 255, 0.98)',
+    },
   },
   loading: {
     textAlign: 'center',
-    padding: '3rem 2rem',
-    fontSize: '16px',
-    color: '#666',
+    padding: '4rem 2rem',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '0.75rem',
+    gap: '1.5rem',
+    minHeight: '60vh',
+    justifyContent: 'center',
+  },
+  loadingSpinner: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    animation: '$spin 1.5s linear infinite',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: '6px',
+      left: '6px',
+      right: '6px',
+      bottom: '6px',
+      borderRadius: '50%',
+      background: 'rgba(255, 255, 255, 0.95)',
+    },
+    '&::after': {
+      content: '"📊"',
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      fontSize: '20px',
+      zIndex: 1,
+    },
+  },
+  loadingText: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#333',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  },
+  loadingSubtext: {
+    fontSize: '14px',
+    color: '#666',
+    fontWeight: '400',
+  },
+  '@keyframes spin': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' },
   },
 });
 
@@ -602,9 +657,11 @@ const BayesianChart = () => {
   if (loading) {
     return (
       <div className={classes.chartContainer}>
+        <h2 className={classes.title}>Bayesian Chart</h2>
         <div className={classes.loading}>
-          <div style={{ fontSize: '24px' }}>📊</div>
-          <div>Loading Bayesian chart data...</div>
+          <div className={classes.loadingSpinner}></div>
+          <div className={classes.loadingText}>Loading chart data...</div>
+          <div className={classes.loadingSubtext}>Analyzing player performance</div>
         </div>
       </div>
     );
@@ -613,7 +670,7 @@ const BayesianChart = () => {
   return (
     <div className={classes.chartContainer}>
       <h2 className={classes.title}>
-        Player Score XY Scatter
+        Bayesian Performance Analysis
       </h2>
       
       {/* Control Row */}
@@ -813,31 +870,37 @@ const BayesianChart = () => {
         <div className={classes.userSelector}>
           {allUsers
             .sort((a, b) => b.attempts - a.attempts)
-            .map((user, index) => (
-            <label
-              key={user.name}
-              className={`${classes.userCheckbox} ${
-                selectedUsers.includes(user.name) ? classes.selectedUser : ''
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selectedUsers.includes(user.name)}
-                onChange={() => toggleUser(user.name)}
-                style={{ 
-                  margin: 0,
-                  accentColor: userColors[index % userColors.length]
-                }}
-              />
-              <span style={{ 
-                color: userColors[index % userColors.length],
-                fontWeight: selectedUsers.includes(user.name) ? '500' : '400',
-                fontSize: '13px'
-              }}>
-                {user.name} ({user.attempts})
-              </span>
-            </label>
-          ))}
+            .map((user, index) => {
+              const userColor = userColors[index % userColors.length];
+              const isSelected = selectedUsers.includes(user.name);
+              return (
+                <label
+                  key={user.name}
+                  className={`${classes.userCheckbox} ${isSelected ? classes.selectedUser : ''}`}
+                  style={{
+                    borderColor: isSelected ? userColor : '#e0e4e7',
+                    borderWidth: isSelected ? '2px' : '1px',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleUser(user.name)}
+                    style={{ 
+                      margin: 0,
+                      accentColor: userColor
+                    }}
+                  />
+                  <span style={{ 
+                    color: isSelected ? userColor : '#374151',
+                    fontWeight: isSelected ? '600' : '500',
+                    fontSize: '13px'
+                  }}>
+                    {user.name} ({user.attempts})
+                  </span>
+                </label>
+              );
+            })}
         </div>
       </div>
 
