@@ -20,7 +20,7 @@ const getBuildDateVersion = () => {
 
 const App = () => {
   const classes = useStyles();
-  const wordle = "WORDLE";
+  const wordle = "ITWORDLE";
   const appVersion = getBuildDateVersion();
   const classNames = ["green", "yellow", "gray"];
 
