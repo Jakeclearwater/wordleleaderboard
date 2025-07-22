@@ -21,8 +21,10 @@ const getBuildDateVersion = () => {
 const App = () => {
   const gradientStyle = {
     background: 'linear-gradient(to bottom, #e3e3e1, #d0d0c0)',
-    height: '100%', // Ensure the gradient covers the full viewport height
-    margin: 0
+    minHeight: '100vh',
+    width: '100%',
+    margin: 0,
+    padding: 0
   };
   const classes = useStyles();
   const wordle = "ITWORDLE";
@@ -65,11 +67,12 @@ const useStyles = createUseStyles({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    height: '100%',
-    justifyContent: 'center !important',
-    width: '100vw',
-    marginTop: 'auto !important',
-    marginBottom: 'auto !important',
+    minHeight: '100vh',
+    justifyContent: 'flex-start',
+    width: '100%',
+    maxWidth: '100%',
+    padding: '0 1rem',
+    boxSizing: 'border-box',
     '& p': {
       color: 'black !important'
     },

@@ -10,8 +10,20 @@ const useStyles = createUseStyles({
     backgroundColor: '#fff',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    margin: '1rem',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginTop: '1rem',
+    marginBottom: '1rem',
+    maxWidth: 'calc(100vw - 2rem)',
+    width: '100%',
+    boxSizing: 'border-box',
     border: '1px solid #e0e0e0',
+    '@media (min-width: 768px)': {
+      maxWidth: '1400px',
+    },
+    '@media (min-width: 1200px)': {
+      maxWidth: '1600px',
+    },
   },
   title: {
     fontSize: '20px',
@@ -601,7 +613,7 @@ const BayesianChart = () => {
   return (
     <div className={classes.chartContainer}>
       <h2 className={classes.title}>
-        Player Score Charts
+        Player Score XY Scatter
       </h2>
       
       {/* Control Row */}

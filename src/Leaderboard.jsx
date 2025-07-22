@@ -6,9 +6,22 @@ import { BounceLoader } from 'react-spinners';
 
 const useStyles = createUseStyles({
   leaderboardContainer: {
-    padding: '20px',
+    padding: '1rem',
     textAlign: 'center',
-    margin: '20px 0',
+    width: '100%',
+    maxWidth: 'calc(100vw - 2rem)',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginTop: '1rem',
+    marginBottom: '1rem',
+    boxSizing: 'border-box',
+    '@media (min-width: 768px)': {
+      maxWidth: '1400px',
+      padding: '1.5rem',
+    },
+    '@media (min-width: 1200px)': {
+      maxWidth: '1600px',
+    },
   },
   title: {
     fontSize: '20px',
@@ -48,7 +61,7 @@ const useStyles = createUseStyles({
     backgroundColor: '#fff',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
     borderRadius: '8px',
-    margin: '1rem',
+    margin: '0.5rem',
     textAlign: 'left',
     border: '1px solid #e0e0e0',
   },
@@ -427,9 +440,9 @@ const Leaderboard = () => {
             <section className={classes.col}>
               <h1 className={classes.title}>Daily Leaderboard</h1>
               <ul className={classes.list}>
-                {dailyLeaderboard && dailyLeaderboard.map((entry, index) => (
+                {dailyLeaderboard && dailyLeaderboard.slice(0, 12).map((entry, index) => (
                   <li key={index}
-                    className={`${classes.listItem} ${index === dailyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    className={`${classes.listItem} ${index === Math.min(dailyLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
                     style={{
                       fontWeight: index < 3 ? 'bold' : 'normal',
                       color: index === 0 ? '#F9A602'
@@ -449,9 +462,9 @@ const Leaderboard = () => {
             <section className={classes.col}>
               <h1 className={classes.title}>Weekly Average Leaderboard</h1>
               <ul className={classes.list}>
-                {weeklyLeaderboard && weeklyLeaderboard.map((entry, index) => (
+                {weeklyLeaderboard && weeklyLeaderboard.slice(0, 12).map((entry, index) => (
                   <li key={index}
-                    className={`${classes.listItem} ${index === weeklyLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    className={`${classes.listItem} ${index === Math.min(weeklyLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
                     style={{
                       fontWeight: index < 3 ? 'bold' : 'normal',
                       color: index === 0 ? '#F9A602'
@@ -505,10 +518,10 @@ const Leaderboard = () => {
                 </span>
               </h1>
               <ul className={classes.list}>
-                {allTimeLeaderboard && allTimeLeaderboard.map((entry, index) => (
+                {allTimeLeaderboard && allTimeLeaderboard.slice(0, 12).map((entry, index) => (
                   <li
                     key={index}
-                    className={`${classes.listItem} ${index === allTimeLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    className={`${classes.listItem} ${index === Math.min(allTimeLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
                     style={{
                       fontWeight: index < 3 ? 'bold' : 'normal',
                       color: index === 0 ? '#F9A602'
@@ -541,9 +554,9 @@ const Leaderboard = () => {
             <section className={classes.col}>
               <h1 className={classes.title}>Attempts Leaderboard</h1>
               <ul className={classes.list}>
-                {allAttemptsLeaderboard && allAttemptsLeaderboard.map((entry, index) => (
+                {allAttemptsLeaderboard && allAttemptsLeaderboard.slice(0, 12).map((entry, index) => (
                   <li key={index}
-                    className={`${classes.listItem} ${index === allAttemptsLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    className={`${classes.listItem} ${index === Math.min(allAttemptsLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
                     style={{
                       fontWeight: index < 3 ? 'bold' : 'normal',
                       color: index === 0 ? '#F9A602'
@@ -554,7 +567,7 @@ const Leaderboard = () => {
                     }}
                   >
                     {index === 0 && <span className={classes.icon}>👑</span>}
-                    #{index + 1} {entry.name}: {entry.attempts} attempts
+                    #{index + 1} {entry.name}: {entry.attempts}
                   </li>
                 ))}
               </ul>
@@ -563,9 +576,9 @@ const Leaderboard = () => {
             <section className={classes.col}>
               <h1 className={classes.title}>Wooden Spoon Leaderboard</h1>
               <ul className={classes.list}>
-                {woodspoonLeaderboard && woodspoonLeaderboard.map((entry, index) => (
+                {woodspoonLeaderboard && woodspoonLeaderboard.slice(0, 12).map((entry, index) => (
                   <li key={index}
-                    className={`${classes.listItem} ${index === woodspoonLeaderboard.length - 1 ? classes.listItemLast : ''}`}
+                    className={`${classes.listItem} ${index === Math.min(woodspoonLeaderboard.length - 1, 11) ? classes.listItemLast : ''}`}
                     style={{
                       fontWeight: index < 3 ? 'bold' : 'normal',
                       color: index === 0 ? '#F9A602'
@@ -579,7 +592,7 @@ const Leaderboard = () => {
                     ).join('\n')}${entry.entries.length > 5 ? `\n... and ${entry.entries.length - 5} more` : ''}`}
                   >
                     {index === 0 && <span className={classes.spoon}>🥄</span>}
-                    #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}
+                    #{index + 1} {entry.name}: {entry.count}
                   </li>
                 ))}
               </ul>
