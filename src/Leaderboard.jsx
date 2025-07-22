@@ -100,55 +100,80 @@ const Leaderboard = () => {
     const fetchLeaderboards = async () => {
       setLoading(true);
       try {
-        const today1 = new Date();
-        today1.setHours(0, 0, 0, 0);
-        const today = today1.toISOString().split('T')[0];
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        const weekAgoDate = weekAgo.toISOString().split('T')[0];
+        // Get current date in NZ timezone for accurate comparisons
+        const now = new Date();
+        const nzTime = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Pacific/Auckland',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(now);
+        const todayNZ = nzTime; // YYYY-MM-DD format in NZ timezone
 
-        // Fetch daily scores
-        const dailyScoresQuery = query(
-          collection(firestore, 'scores'),
-          where('date', '==', today)
-        );
-        const dailySnapshot = await getDocs(dailyScoresQuery);
+        // Calculate NZ timezone boundaries for weekly data
+        const weekAgoNZ = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const weekAgoNZStr = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Pacific/Auckland',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(weekAgoNZ);
 
-        // Fetch weekly scores
-        const weeklyScoresQuery = query(
-          collection(firestore, 'scores'),
-          where('date', '>=', weekAgoDate)
-        );
-        const weeklySnapshot = await getDocs(weeklyScoresQuery);
-
-        // Fetch all time scores
-        const allTimeScoresQuery = collection(firestore, 'scores');
-        const allTimeSnapshot = await getDocs(allTimeScoresQuery);
-
-        // Fetch all scores for client-side filtering
+        // Fetch all scores for client-side filtering (more flexible than server-side queries)
         const allScoresQuery = collection(firestore, 'scores');
         const allScoresSnapshot = await getDocs(allScoresQuery);
         const allScores = allScoresSnapshot.docs.map(doc => doc.data());
 
-        // Fetch woodspoon leaderboard with guesses=7
-        const woodspoonScoresQuery = query(
-          collection(firestore, 'scores'),
-          where('guesses', '==', 7)
-        );
-        const woodspoonSnapshot = await getDocs(woodspoonScoresQuery);
-        const woodspoonScores = woodspoonSnapshot.docs.map(doc => doc.data());
+        // Helper function to get the effective date from a score record
+        const getEffectiveDate = (score) => {
+          // Only use isoDate - ignore records without it
+          if (score.isoDate) {
+            // Convert ISO datetime to NZ date
+            const isoDate = new Date(score.isoDate);
+            return new Intl.DateTimeFormat('en-CA', {
+              timeZone: 'Pacific/Auckland',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).format(isoDate);
+          } else {
+            // No isoDate - ignore this record
+            return null;
+          }
+        };
 
-        // Also find scores that are 0 or null/undefined to include them as DNFs
-        const additionalDNFs = allScores.filter(score => 
+        // Filter out records without isoDate first, then filter by date range
+        const validScores = allScores.filter(score => score.isoDate);
+
+        const dailyScores = validScores.filter(score => {
+          const effectiveDate = getEffectiveDate(score);
+          return effectiveDate === todayNZ;
+        });
+
+        const weeklyScores = validScores.filter(score => {
+          const effectiveDate = getEffectiveDate(score);
+          return effectiveDate >= weekAgoNZStr;
+        });
+
+        // Use only valid scores for all-time leaderboard
+        const allTimeScores = validScores;
+
+        // Fetch woodspoon leaderboard with guesses=7 (only from valid scores)
+        const woodspoonScores = validScores.filter(score => score.guesses === 7);
+
+        // Also find scores that are 0 or null/undefined to include them as DNFs (only from valid scores)
+        const additionalDNFs = validScores.filter(score => 
           score.guesses === 0 || score.guesses === null || score.guesses === undefined
         );
 
         // Combine both types of DNFs
         const allDNFScores = [...woodspoonScores, ...additionalDNFs];
 
-        const dailyScores = dailySnapshot.docs.map(doc => doc.data());
-        const weeklyScores = weeklySnapshot.docs.map(doc => doc.data());
-        const allTimeScores = allTimeSnapshot.docs.map(doc => doc.data());
+        console.log('Total scores fetched:', allScores.length);
+        console.log('Valid scores (with isoDate):', validScores.length);
+        console.log('Daily scores found:', dailyScores.length, dailyScores);
+        console.log('Weekly scores found:', weeklyScores.length);
+        console.log('All time scores found:', allTimeScores.length);
 
         // For daily: simple averages - treating 0, null, undefined as 7 (DNF)
         const groupScoresSimple = (scores) => {
@@ -180,26 +205,37 @@ const Leaderboard = () => {
 
         // For weekly: consider missed weekdays as DNFs (score of 7), excluding weekends
         const groupWeeklyScores = (scores) => {
-          // Get all weekdays (Monday-Friday) in the past 7 days
+          // Get all weekdays (Monday-Friday) in the past 7 days using NZ timezone
           const weekdays = [];
+          const currentNZTime = new Date();
+          
           for (let i = 0; i < 7; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+            const checkDate = new Date(currentNZTime.getTime() - i * 24 * 60 * 60 * 1000);
+            const nzDateStr = new Intl.DateTimeFormat('en-CA', {
+              timeZone: 'Pacific/Auckland',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).format(checkDate);
             
-            // Only include weekdays (Monday=1 through Friday=5)
+            const dayOfWeek = checkDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            
+            // Only include weekdays (Monday=1 to Friday=5)
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-              weekdays.push(date.toISOString().split('T')[0]);
+              weekdays.push(nzDateStr);
             }
           }
 
           const grouped = scores.reduce((acc, s) => {
-            // Only process scores from weekdays
-            const scoreDate = new Date(s.date);
-            const scoreDayOfWeek = scoreDate.getDay();
+            // Get effective date using the helper function
+            const effectiveDate = getEffectiveDate(s);
             
-            // Skip weekend scores
-            if (scoreDayOfWeek === 0 || scoreDayOfWeek === 6) {
+            // Check if score date is a weekday using the effective date
+            const scoreDate = new Date(effectiveDate + 'T00:00:00');
+            const dayOfWeek = scoreDate.getDay();
+            
+            // Skip weekend scores (Sunday=0, Saturday=6)
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
               return acc;
             }
             
@@ -219,8 +255,8 @@ const Leaderboard = () => {
               };
             }
             acc[s.name].totalGuesses += g;
-            acc[s.name].playedDays.add(s.date);
-            acc[s.name].scores[s.date] = g;
+            acc[s.name].playedDays.add(effectiveDate);
+            acc[s.name].scores[effectiveDate] = g;
             return acc;
           }, {});
           
@@ -268,7 +304,7 @@ const Leaderboard = () => {
         const R = 40;       // Recency scaling factor
         const C = 0.2;      // Attempts bonus scaling factor
         const parseDate = (d) => new Date(d);
-        const now = new Date();
+        const currentTime = new Date();
 
         // Group for Bayesian leaderboard - now properly handles DNFs
         const groupedAllTime = allTimeScores.reduce((acc, s) => {
@@ -280,16 +316,18 @@ const Leaderboard = () => {
             g = 7;  // Treat as DNF
           }
           
-          if (!s.date) return acc;
+          // Use effective date for consistency
+          const effectiveDate = getEffectiveDate(s);
+          if (!effectiveDate) return acc;
           
           if (!acc[s.name]) {
-            acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: parseDate(s.date) };
+            acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: parseDate(effectiveDate) };
           }
           
           acc[s.name].totalGuesses += g;
           acc[s.name].attempts += 1;
           
-          const attemptDate = parseDate(s.date);
+          const attemptDate = parseDate(effectiveDate);
           if (attemptDate > acc[s.name].lastAttempt) {
             acc[s.name].lastAttempt = attemptDate;
           }
@@ -300,7 +338,7 @@ const Leaderboard = () => {
         const computeBayesianFinalScore = (playerData) => {
           const { totalGuesses, attempts, lastAttempt } = playerData;
           const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
-          const daysSinceLast = Math.floor((now - lastAttempt) / (24 * 60 * 60 * 1000));
+          const daysSinceLast = Math.floor((currentTime - lastAttempt) / (24 * 60 * 60 * 1000));
           const RecencyFactor = 1 + (daysSinceLast / R);
           const AttemptsBonus = C * Math.log(attempts + 1);
           const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
@@ -311,7 +349,7 @@ const Leaderboard = () => {
           const { totalGuesses, attempts, lastAttempt } = groupedAllTime[name];
           const actualAverage = totalGuesses / attempts; // Calculate actual average
           const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
-          const daysSinceLast = Math.floor((now - lastAttempt) / (24 * 60 * 60 * 1000));
+          const daysSinceLast = Math.floor((currentTime - lastAttempt) / (24 * 60 * 60 * 1000));
           const RecencyFactor = 1 + (daysSinceLast / R);
           const AttemptsBonus = C * Math.log(attempts + 1);
           const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
@@ -335,15 +373,21 @@ const Leaderboard = () => {
         // Woodspoon leaderboard - use the combined DNFs
         const groupedWoodspoonScores = allDNFScores.reduce((acc, score) => {
           if (!acc[score.name]) {
-            acc[score.name] = { count: 0 };
+            acc[score.name] = { count: 0, entries: [] };
           }
           acc[score.name].count += 1;
+          acc[score.name].entries.push({
+            date: getEffectiveDate(score),
+            wordleNumber: score.wordleNumber,
+            guesses: score.guesses
+          });
           return acc;
         }, {});
         
         const woodspoonLeaderboardArray = Object.keys(groupedWoodspoonScores).map(name => ({
           name,
-          count: groupedWoodspoonScores[name].count
+          count: groupedWoodspoonScores[name].count,
+          entries: groupedWoodspoonScores[name].entries.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date descending
         })).sort((a, b) => b.count - a.count);
 
         setDailyLeaderboard(dailyLeaderboardArray);
@@ -411,7 +455,7 @@ const Leaderboard = () => {
                     title={`Played ${entry.playedDays} out of ${entry.totalWeekdays} weekdays. Missed weekdays count as DNF (7 points).`}
                   >
                     {index === 0 && <span className={classes.icon}>👑</span>}
-                    #{index + 1} {entry.name}: {entry.average.toFixed(2)} ({entry.playedDays}/{entry.totalWeekdays} weekdays)
+                    #{index + 1} {entry.name}: {entry.average.toFixed(2)}
                   </li>
                 ))}
               </ul>
@@ -522,6 +566,9 @@ const Leaderboard = () => {
                             : index > 2 && index < grayShades.length ? grayShades[index]
                               : 'white',
                     }}
+                    title={`Recent DNFs:\n${entry.entries.slice(0, 5).map(e => 
+                      `${e.date}${e.wordleNumber ? ` - Wordle #${e.wordleNumber}` : ''} - DNF`
+                    ).join('\n')}${entry.entries.length > 5 ? `\n... and ${entry.entries.length - 5} more` : ''}`}
                   >
                     {index === 0 && <span className={classes.spoon}>🥄</span>}
                     #{index + 1} {entry.name}: {entry.count} {entry.count === 1 ? 'dnf' : 'dnfs'}

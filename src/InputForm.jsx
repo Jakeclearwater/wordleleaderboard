@@ -158,6 +158,18 @@ const InputForm = () => {
     // If invalid, don't update the state (effectively blocking the input)
   };
 
+  const handlePasteWordleChange = (e) => {
+    const isChecked = e.target.checked;
+    setPasteWordle(isChecked);
+    
+    // Clear DNF checkbox and guesses when Paste Wordle Output is checked
+    // The DNF status and score will be determined automatically from the pasted content
+    if (isChecked) {
+      setDidNotFinish(false);
+      setGuesses("");
+    }
+  };
+
   const names = [
     "Shay",
     "Damien",
@@ -256,15 +268,12 @@ const InputForm = () => {
       "Splendid",
       "Great",
       "Phew",
+      "Spoon!",
     ];
     const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
 
-    // Format the message based on whether the player finished or not
-    const messageText = didNotFinish
-      ? `${name} did not finish - spoon!`
-      : `${name} scored ${numGuesses} in Wordle #${wordleNumber} - ${
-          grats[numGuesses - 1]
-        }`;
+    // Format the message consistently for all scores (1-6 guesses + DNF as 7)
+    const messageText = `${name} scored ${numGuesses} in Wordle #${wordleNumber} - ${grats[numGuesses - 1]}`;
 
     // Map the result blocks to TextBlocks with compact styling
     const textBlocks = resultBlocks.map((line) => ({
@@ -349,7 +358,7 @@ const InputForm = () => {
         // User checked DNF but pasted a successful result - show confirmation
         const confirmOverride = window.confirm(
           `Conflict detected: You checked "Did Not Finish" but your pasted result shows you completed it in ${parsedWordleGuesses} guesses.\n\n` +
-          `Click OK to use your actual score (${parsedWordleGuesses}) or Cancel to submit as DNF (7).`
+          `Click OK to use your actual score (${parsedWordleGuesses}) or Cancel to cancel submission.`
         );
         
         if (confirmOverride) {
@@ -358,9 +367,10 @@ const InputForm = () => {
           setDidNotFinish(false);
           finalGuesses = parsedWordleGuesses;
         } else {
-          // Keep DNF status
-          isDNF = true;
-          finalGuesses = 7;
+          // Cancel the submission entirely
+          setLoading(false);
+          setShowOverlay(false);
+          return;
         }
       } else {
         // No conflict - use parsed result or update DNF status if detected
@@ -374,6 +384,13 @@ const InputForm = () => {
     } else {
       // Manual entry - if DNF, set to 7, otherwise use the entered guesses
       finalGuesses = isDNF ? 7 : parseInt(guesses, 10) || 0;
+      
+      // Estimate current Wordle number for manual entries
+      // Wordle started on June 19, 2021 (Wordle #1 was June 19, 2021)
+      const startDate = new Date('2021-06-19');
+      const today = new Date();
+      const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+      wordleNumber = (daysDiff + 1).toString();
     }
     
     // Additional validation
@@ -385,6 +402,26 @@ const InputForm = () => {
       setLoading(false);
       setShowOverlay(false);
       return;
+    }
+
+    // Check for conflict between manual score entry and DNF checkbox
+    if (!pasteWordle && didNotFinish && isNumGuessesProvided && parseInt(guesses, 10) >= 1 && parseInt(guesses, 10) <= 6) {
+      const confirmDNF = window.confirm(
+        `Conflict detected: You checked "Did Not Finish" but entered a valid score of ${guesses} guesses.\n\n` +
+        `Click OK to use your actual score (${guesses}) or Cancel to cancel submission.`
+      );
+      
+      if (confirmDNF) {
+        // Use the entered score and uncheck DNF
+        isDNF = false;
+        setDidNotFinish(false);
+        finalGuesses = parseInt(guesses, 10);
+      } else {
+        // Cancel the submission entirely
+        setLoading(false);
+        setShowOverlay(false);
+        return;
+      }
     }
 
     if (pasteWordle) {
@@ -399,9 +436,9 @@ const InputForm = () => {
           // Automatically check the DNF box when detected from pasted result
           setDidNotFinish(true);
         }
-      } else if (isNumGuessesProvided && numGuesses !== parsedWordleGuesses) {
+      } else if (isNumGuessesProvided && parseInt(guesses, 10) !== parsedWordleGuesses) {
         alert(
-          `Mismatch detected: Number of guesses (${numGuesses}) does not match the pasted result (${parsedWordleGuesses}).`
+          `Mismatch detected: Number of guesses (${parseInt(guesses, 10)}) does not match the pasted result (${parsedWordleGuesses}).`
         );
         setLoading(false);
         setShowOverlay(false);
@@ -427,11 +464,26 @@ const InputForm = () => {
       return;
     }
 
-    const utcDate = new Date();
-    const nzDate = new Date(
-      utcDate.toLocaleString("en-US", { timeZone: "Pacific/Auckland" })
-    );
-    const formattedNZDate = nzDate.toISOString().split("T")[0];
+    // Get current date in New Zealand timezone
+    const now = new Date();
+    const nzTime = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Pacific/Auckland',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now);
+    const formattedNZDate = nzTime; // Already in YYYY-MM-DD format
+    
+    // Create ISO datetime that will convert to the current NZ date
+    // We need a UTC time that when converted to NZ timezone gives us today's NZ date
+    // Use midnight UTC on the NZ date (which will be 12pm or 1pm NZ time depending on DST)
+    const [year, month, day] = formattedNZDate.split('-');
+    const isoDateTime = new Date(Date.UTC(
+      parseInt(year), 
+      parseInt(month) - 1, // Month is 0-indexed
+      parseInt(day), 
+      0, 0, 0, 0 // Midnight UTC on the NZ date
+    )).toISOString();
 
     try {
       // Store in Firestore - ensure guesses is 7 for DNF and include dnf flag
@@ -439,7 +491,9 @@ const InputForm = () => {
         name: finalName,
         guesses: isDNF ? 7 : finalGuesses, // Explicitly set 7 for DNF
         date: formattedNZDate,
+        isoDate: isoDateTime, // Add ISO datetime field
         dnf: isDNF, // Add DNF flag to database
+        wordleNumber: wordleNumber || null, // Store Wordle number if available
       });
 
       // Reset form
@@ -463,7 +517,8 @@ const InputForm = () => {
           isDNF,        // Use the calculated isDNF
           resultBlocks
         );
-      } else if (!pasteWordle && isNumGuessesProvided) {
+      } else if (!pasteWordle && (isNumGuessesProvided || isDNF)) {
+        // Send webhook for manual entries (both scored and DNF)
         await sendResultToTeams(
           finalGuesses,  
           wordleNumber || "Unknown", 
@@ -571,7 +626,8 @@ const InputForm = () => {
               type="checkbox"
               checked={didNotFinish}
               onChange={(e) => setDidNotFinish(e.target.checked)}
-              className={classes.checkbox}
+              className={`${classes.checkbox} ${pasteWordle ? classes.disabled : ""}`}
+              disabled={pasteWordle} // Disable DNF checkbox when Paste Wordle Output is checked
             />
             Did Not Finish
           </label>
@@ -581,7 +637,7 @@ const InputForm = () => {
             <input
               type="checkbox"
               checked={pasteWordle}
-              onChange={(e) => setPasteWordle(e.target.checked)}
+              onChange={handlePasteWordleChange}
               className={classes.checkbox}
             />
             Paste Wordle Output
