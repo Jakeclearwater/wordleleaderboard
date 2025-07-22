@@ -529,7 +529,6 @@ const Leaderboard = () => {
                         >
                           {index + 1}
                         </span>
-                        {/* {index === 0 && <span className={classes.icon}>👑</span>} */}
                         <span className={classes.playerName}>{entry.name}</span>
                         <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
                           {entry.average.toFixed(2)}
@@ -608,7 +607,6 @@ const Leaderboard = () => {
                         >
                           {index + 1}
                         </span>
-                        {/* {index === 0 && <span className={classes.icon}>👑</span>} */}
                         <span className={classes.playerName}>{entry.name}</span>
                         <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
                           {entry.finalScore.toFixed(2)}
@@ -641,7 +639,6 @@ const Leaderboard = () => {
                         >
                           {index + 1}
                         </span>
-                        {/* {index === 0 && <span className={classes.icon}>👑</span>} */}
                         <span className={classes.playerName}>{entry.name}</span>
                         <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
                           {entry.attempts}

@@ -619,17 +619,36 @@ const BayesianChart = () => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className={classes.customTooltip}>
-          <p className={classes.tooltipTitle}>
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '12px', 
+          border: '1px solid #ccc',
+          borderRadius: '6px',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+          fontSize: '13px',
+          minWidth: '200px',
+          zIndex: 9999,
+          position: 'relative',
+        }}>
+          <p style={{ 
+            margin: '0 0 8px 0', 
+            fontWeight: 'bold', 
+            fontSize: '14px', 
+            color: '#333 !important' 
+          }}>
             📅 {formatDate(label)}
           </p>
           {payload.map((entry, index) => {
             if (entry.dataKey === 'globalAverage') {
               return (
-                <p key={index} className={classes.tooltipGlobal}>
+                <p key={index} style={{ 
+                  margin: '2px 0', 
+                  color: '#333 !important',
+                  fontSize: '13px'
+                }}>
                   🌍 Bayesian Global Avg: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
                   <br />
-                  <span style={{ fontSize: '11px' }}>
+                  <span style={{ fontSize: '11px', color: '#666 !important' }}>
                     (Average of all players' Bayesian scores)
                   </span>
                 </p>
@@ -647,30 +666,40 @@ const BayesianChart = () => {
               const recencyFactor = dateInfo ? dateInfo.recencyFactor : null;
               
               return (
-                <div key={index} className={classes.tooltipUserContainer}>
-                  <p className={classes.tooltipUserName}>
+                <div key={index} style={{ 
+                  margin: '4px 0', 
+                  padding: '4px', 
+                  backgroundColor: '#f8f9fa', 
+                  borderRadius: '4px' 
+                }}>
+                  <p style={{ 
+                    margin: '0', 
+                    color: '#333 !important',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                  }}>
                     👤 {userName}
                   </p>
-                  <p className={classes.tooltipUserData}>
+                  <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
                     📊 Bayesian: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
                   </p>
                   {actualAvg && (
-                    <p className={classes.tooltipUserData}>
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
                       📈 Actual Avg: {actualAvg.toFixed(2)}
                     </p>
                   )}
                   {attempts && (
-                    <p className={classes.tooltipUserData}>
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
                       🎯 Attempts: {attempts}
                     </p>
                   )}
                   {daysSincePlay !== null && (
-                    <p className={classes.tooltipUserData}>
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
                       ⏱️ Days since last: {daysSincePlay}
                     </p>
                   )}
                   {recencyFactor && (
-                    <p className={classes.tooltipUserData}>
+                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
                       📉 Recency factor: {recencyFactor.toFixed(2)}
                     </p>
                   )}
