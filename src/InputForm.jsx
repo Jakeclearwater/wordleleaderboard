@@ -9,51 +9,124 @@ const useStyles = createUseStyles({
   form: {
     display: "flex",
     flexDirection: "column",
-    padding: "1rem",
+    padding: "2rem",
+    maxWidth: "400px",
+    margin: "0 auto",
+    gap: "1rem",
     "& label": {
       color: "black !important",
+      fontWeight: "400",
+      fontSize: "14px",
+      marginBottom: "0.3rem",
+      display: "block",
     },
   },
+  formGroup: {
+    display: "flex",
+    flexDirection: "column",
+  },
   input: {
-    padding: "8px",
-    margin: "0.5rem",
-    borderRadius: "4px",
+    padding: "12px",
+    borderRadius: "6px",
     border: "1px solid #ccc",
+    fontSize: "16px",
+    width: "100%",
+    boxSizing: "border-box",
+    transition: "border-color 0.2s ease",
+    "&:focus": {
+      outline: "none",
+      borderColor: "#28a745",
+      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
+    },
     "&.disabled": {
-      backgroundColor: "#f0f0f0",
+      backgroundColor: "#f8f9fa",
       cursor: "not-allowed",
+      color: "#6c757d",
     },
   },
   select: {
-    padding: "8px",
-    margin: "0.5rem",
-    borderRadius: "4px",
+    padding: "12px",
+    borderRadius: "6px",
     border: "1px solid #ccc",
     backgroundColor: "white",
     color: "black",
-    appearance: "none"
+    fontSize: "16px",
+    width: "100%",
+    boxSizing: "border-box",
+    appearance: "none",
+    backgroundImage: "url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 4 5\"><path fill=\"%23666\" d=\"M2 0L0 2h4zm0 5L0 3h4z\"/></svg>')",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 12px center",
+    backgroundSize: "12px",
+    "&:focus": {
+      outline: "none",
+      borderColor: "#28a745",
+      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
+    },
   },
   button: {
-    padding: "10px",
+    padding: "10px 24px",
     border: "none",
-    borderRadius: "4px",
+    borderRadius: "6px",
     backgroundColor: "#007bff",
     color: "white",
     cursor: "pointer",
+    fontSize: "16px",
+    fontWeight: "600",
+    width: "100%",
+    boxSizing: "border-box",
+    marginTop: "0.3rem",
+    transition: "all 0.2s ease",
     "&:hover": {
       backgroundColor: "#0056b3",
+      transform: "translateY(-1px)",
+      boxShadow: "0 4px 8px rgba(0, 123, 255, 0.3)",
+    },
+    "&:active": {
+      transform: "translateY(0)",
+    },
+    "&.disabled": {
+      backgroundColor: "#6c757d",
+      cursor: "not-allowed",
+      transform: "none",
+      boxShadow: "none",
+      "&:hover": {
+        backgroundColor: "#6c757d",
+        transform: "none",
+        boxShadow: "none",
+      },
     },
   },
+  checkboxGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+  },
+  checkboxWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+  },
   checkbox: {
-    margin: "0.5rem",
+    width: "18px",
+    height: "18px",
+    accentColor: "#28a745",
   },
   textarea: {
-    padding: "8px",
-    margin: "0.5rem",
-    borderRadius: "4px",
+    padding: "12px",
+    borderRadius: "6px",
     border: "1px solid #ccc",
-    minHeight: "100px",
-    minWidth: "195px",
+    minHeight: "120px",
+    width: "100%",
+    boxSizing: "border-box",
+    fontSize: "14px",
+    fontFamily: "monospace",
+    resize: "vertical",
+    "&:focus": {
+      outline: "none",
+      borderColor: "#28a745",
+      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
+    },
   },
   overlay: {
     position: "fixed",
@@ -102,6 +175,54 @@ const useStyles = createUseStyles({
       transform: 'translate(calc(-50% + var(--end-x, 0px)), calc(-50% + var(--end-y, 0px))) scale(0.5) rotateZ(720deg)',
       opacity: 0,
     }
+  },
+  toggleButton: {
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "50%",
+    width: "50px",
+    height: "50px",
+    minWidth: "50px",
+    minHeight: "50px",
+    fontSize: "24px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s ease",
+    margin: "0 auto 1rem auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    flexShrink: 0,
+    aspectRatio: "1",
+    lineHeight: "1",
+    "&:hover": {
+      backgroundColor: "#0056b3",
+    },
+    "&:active": {
+      transform: "translateY(0)",
+    },
+  },
+  toggleContainer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    marginTop: "0.5rem",
+    marginBottom: "1rem",
+  },
+  formContainer: {
+    overflow: "hidden",
+    transition: "max-height 0.3s ease-out, opacity 0.3s ease-out",
+    "&.collapsed": {
+      maxHeight: "0",
+      opacity: "0",
+    },
+    "&.expanded": {
+      maxHeight: "1000px",
+      opacity: "1",
+    },
   }
 });
 
@@ -118,6 +239,7 @@ const InputForm = () => {
   const [pasteWordle, setPasteWordle] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [testConfetti, setTestConfetti] = useState(false);
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   useEffect(() => {
     const lastChosenName = localStorage.getItem("lastChosenName");
@@ -494,6 +616,9 @@ const InputForm = () => {
       setDidNotFinish(false);
       setWordleResult("");
       setPasteWordle(false);
+      
+      // Auto-hide the form after successful submission
+      setIsFormExpanded(false);
 
       // Show confetti for excellent scores (1 to 3 guesses)
       if (!isDNF && finalGuesses <= 3) {
@@ -542,6 +667,24 @@ const InputForm = () => {
     }
   };
 
+  // Check if form is valid for submit button state
+  const isFormValid = () => {
+    const finalName = isCustomName ? customName.trim() : name;
+    
+    // Must have a name
+    if (!finalName) return false;
+    
+    // Custom name must be 3-12 characters
+    if (isCustomName && (finalName.length < 3 || finalName.length > 12)) return false;
+    
+    // Must have either guesses, DNF, or paste wordle with content
+    if (pasteWordle) {
+      return wordleResult.trim().length > 0;
+    } else {
+      return didNotFinish || (guesses && parseInt(guesses, 10) >= 1 && parseInt(guesses, 10) <= 6);
+    }
+  };
+
   return (
     <>
       {showOverlay && (
@@ -556,8 +699,21 @@ const InputForm = () => {
           {createConfetti()}
         </div>
       )}
-      <form onSubmit={handleSubmit} className={classes.form}>
-        <div>
+      
+      <div className={classes.toggleContainer}>
+        <button 
+          className={classes.toggleButton}
+          onClick={() => setIsFormExpanded(!isFormExpanded)}
+          type="button"
+          title={isFormExpanded ? "Hide Score Submission" : "Submit New Score"}
+        >
+          {isFormExpanded ? "▲" : "▼"}
+        </button>
+      </div>
+      
+      <div className={`${classes.formContainer} ${isFormExpanded ? 'expanded' : 'collapsed'}`}>
+        <form onSubmit={handleSubmit} className={classes.form}>
+        <div className={classes.formGroup}>
           <label htmlFor="name">Name:</label>
           <select
             id="name"
@@ -578,16 +734,17 @@ const InputForm = () => {
             <option value="__new__">Add New Name</option>
           </select>
         </div>
+
         {isCustomName && (
-          <div>
-            <label htmlFor="customName">Enter your name: </label>
+          <div className={classes.formGroup}>
+            <label htmlFor="customName">Enter your name:</label>
             <input
               type="text"
               id="customName"
               value={customName}
               onChange={handleCustomNameChange}
               required={!didNotFinish && isCustomName}
-              className={classes.input}
+              className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`}
               disabled={didNotFinish}
               placeholder="Type your name (3-12 characters)"
               pattern="[a-zA-Z ]{3,12}"
@@ -597,7 +754,8 @@ const InputForm = () => {
             />
           </div>
         )}
-        <div>
+
+        <div className={classes.formGroup}>
           <label htmlFor="guesses">Number of Guesses:</label>
           <input
             type="number"
@@ -606,55 +764,62 @@ const InputForm = () => {
             onChange={(e) => setGuesses(e.target.value)}
             min={1}
             max={6}
-            required={!didNotFinish && !pasteWordle} // Only required if DNF is not checked and Wordle output is not pasted
+            required={!didNotFinish && !pasteWordle}
             className={`${classes.input} ${
               didNotFinish || pasteWordle ? classes.disabled : ""
-            }`} // Disable if DNF or Paste Wordle Output is checked
-            disabled={didNotFinish || pasteWordle} // Disable if DNF or Paste Wordle Output is checked
+            }`}
+            disabled={didNotFinish || pasteWordle}
+            placeholder="Enter 1-6"
           />
         </div>
-        <div>
-          <label>
+
+        <div className={classes.checkboxGroup}>
+          <div className={classes.checkboxWrapper}>
             <input
               type="checkbox"
+              id="didNotFinish"
               checked={didNotFinish}
               onChange={(e) => setDidNotFinish(e.target.checked)}
-              className={`${classes.checkbox} ${pasteWordle ? classes.disabled : ""}`}
-              disabled={pasteWordle} // Disable DNF checkbox when Paste Wordle Output is checked
+              className={classes.checkbox}
+              disabled={pasteWordle}
             />
-            Did Not Finish
-          </label>
-        </div>
-        <div>
-          <label>
+            <label htmlFor="didNotFinish">Did Not Finish</label>
+          </div>
+
+          <div className={classes.checkboxWrapper}>
             <input
               type="checkbox"
+              id="pasteWordle"
               checked={pasteWordle}
               onChange={handlePasteWordleChange}
               className={classes.checkbox}
             />
-            Paste Wordle Output
-          </label>
+            <label htmlFor="pasteWordle">Paste Wordle Output</label>
+          </div>
         </div>
+
         {pasteWordle && (
-          <div>
+          <div className={classes.formGroup}>
+            <label htmlFor="wordleResult">Paste your Wordle result:</label>
             <textarea
               id="wordleResult"
               value={wordleResult}
               onChange={(e) => setWordleResult(e.target.value)}
               className={classes.textarea}
+              placeholder="Paste your Wordle result here..."
             />
           </div>
         )}
 
         <button
           type="submit"
-          className={`${classes.button} ${loading ? classes.disabled : ""}`}
-          disabled={loading}
+          className={`${classes.button} ${(!isFormValid() || loading) ? classes.disabled : ""}`}
+          disabled={!isFormValid() || loading}
         >
-          Submit
+          {loading ? "Submitting..." : "Submit Score"}
         </button>
-      </form>
+        </form>
+      </div>
     </>
   );
 };

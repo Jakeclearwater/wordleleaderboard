@@ -6,18 +6,18 @@ import { firestore } from './firebase';
 
 const useStyles = createUseStyles({
   chartContainer: {
-    padding: '1rem',
+    padding: '1.5rem',
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-    margin: '0px 30px 0px 30px',
-    border: '1px solid #f1f3f4',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    margin: '1rem',
+    border: '1px solid #e0e0e0',
   },
   title: {
-    fontSize: '22px',
-    fontWeight: '600',
-    color: '#212529',
-    marginBottom: '20px',
+    fontSize: '20px',
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: '1rem',
     textAlign: 'center',
     display: 'flex',
     alignItems: 'center',
@@ -25,49 +25,49 @@ const useStyles = createUseStyles({
     gap: '8px',
   },
   controls: {
-    marginBottom: '20px',
+    marginBottom: '1rem',
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '10px',
+    gap: '0.5rem',
     alignItems: 'center',
   },
   userSelector: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '10px',
-    marginTop: '10px',
+    gap: '0.5rem',
+    marginTop: '0.5rem',
   },
   userCheckbox: {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
-    padding: '6px 10px',
-    border: '1px solid #e9ecef',
-    borderRadius: '6px',
+    padding: '8px 12px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
     backgroundColor: '#ffffff',
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: '400',
     transition: 'all 0.2s ease',
     '&:hover': {
-      backgroundColor: '#f8f9fa',
-      borderColor: '#dee2e6',
+      backgroundColor: '#f5f5f5',
+      borderColor: '#d0d0d0',
     },
   },
   selectedUser: {
-    backgroundColor: '#e7f3ff',
-    borderColor: '#2196f3',
+    backgroundColor: '#e3f2fd',
+    borderColor: '#007bff',
     fontWeight: '500',
   },
   loading: {
     textAlign: 'center',
-    padding: '60px 40px',
+    padding: '3rem 2rem',
     fontSize: '16px',
-    color: '#6c757d',
+    color: '#666',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '12px',
+    gap: '0.75rem',
   },
 });
 
@@ -601,7 +601,7 @@ const BayesianChart = () => {
   return (
     <div className={classes.chartContainer}>
       <h2 className={classes.title}>
-        📊 Bayesian Scores
+        Player Score Charts
       </h2>
       
       {/* Control Row */}
