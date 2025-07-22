@@ -135,8 +135,8 @@ const BayesianChart = () => {
   const fetchAllDataAndProcess = async () => {
     setLoading(true);
     try {
-      // Fetch all scores ordered by date
-      const scoresQuery = query(collection(firestore, 'scores'), orderBy('date', 'asc'));
+      // Fetch all scores (we'll sort and filter on client side for better timezone handling)
+      const scoresQuery = collection(firestore, 'scores');
       const snapshot = await getDocs(scoresQuery);
       const allScores = snapshot.docs.map(doc => doc.data());
 
@@ -156,6 +156,27 @@ const BayesianChart = () => {
   };
 
   const getFilteredScoresByTimeRange = (scores) => {
+    // Helper function to get the effective date from a score record
+    const getEffectiveDate = (score) => {
+      // Only use isoDate - ignore records without it
+      if (score.isoDate) {
+        // Convert ISO datetime to NZ date
+        const isoDate = new Date(score.isoDate);
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Pacific/Auckland',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(isoDate);
+      } else {
+        // No isoDate - ignore this record
+        return null;
+      }
+    };
+
+    // Filter out scores without isoDate first
+    const validScores = scores.filter(score => score.isoDate);
+
     const now = new Date();
     let startDate;
 
@@ -186,11 +207,24 @@ const BayesianChart = () => {
         break;
       case 'all':
       default:
-        return scores; // Return all scores
+        return validScores.sort((a, b) => {
+          const dateA = getEffectiveDate(a);
+          const dateB = getEffectiveDate(b);
+          return dateA.localeCompare(dateB);
+        }); // Return all valid scores sorted by effective date
     }
 
     const startDateStr = startDate.toISOString().split('T')[0];
-    return scores.filter(score => score.date >= startDateStr);
+    return validScores
+      .filter(score => {
+        const effectiveDate = getEffectiveDate(score);
+        return effectiveDate >= startDateStr;
+      })
+      .sort((a, b) => {
+        const dateA = getEffectiveDate(a);
+        const dateB = getEffectiveDate(b);
+        return dateA.localeCompare(dateB);
+      });
   };
 
   const processDataWithScores = (allScores) => {
@@ -222,14 +256,35 @@ const BayesianChart = () => {
   };
 
   const calculateBayesianOverTime = (scores, shouldConnectLines = false) => {
-    // Sort scores by date
-    const sortedScores = scores.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Helper function to get the effective date (same as in getFilteredScoresByTimeRange)
+    const getEffectiveDate = (score) => {
+      if (score.isoDate) {
+        // Convert ISO datetime to NZ date
+        const isoDate = new Date(score.isoDate);
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Pacific/Auckland',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(isoDate);
+      } else {
+        // Fallback - this shouldn't happen since we filter out non-isoDate records
+        return score.date;
+      }
+    };
+
+    // Sort scores by effective date
+    const sortedScores = scores.sort((a, b) => {
+      const dateA = getEffectiveDate(a);
+      const dateB = getEffectiveDate(b);
+      return new Date(dateA) - new Date(dateB);
+    });
     
     if (sortedScores.length === 0) return { chartData: [], users: [] };
     
-    // Get date range
-    const firstDate = new Date(sortedScores[0].date);
-    const lastDate = new Date(sortedScores[sortedScores.length - 1].date);
+    // Get date range using effective dates
+    const firstDate = new Date(getEffectiveDate(sortedScores[0]));
+    const lastDate = new Date(getEffectiveDate(sortedScores[sortedScores.length - 1]));
     
     // Create complete date range
     const allDates = [];
@@ -273,7 +328,7 @@ const BayesianChart = () => {
 
     // First pass: collect all user attempts and update cumulative global average
     sortedScores.forEach(score => {
-      const date = score.date;
+      const date = getEffectiveDate(score); // Use effective date instead of score.date
       const name = score.name;
       let guesses = parseFloat(score.guesses);
       
@@ -546,7 +601,7 @@ const BayesianChart = () => {
   return (
     <div className={classes.chartContainer}>
       <h2 className={classes.title}>
-        📊 Bayesian Score Evolution
+        📊 Bayesian Scores
       </h2>
       
       {/* Control Row */}

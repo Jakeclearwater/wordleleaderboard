@@ -179,14 +179,16 @@ The `scores` collection contains documents with the following structure:
   "name": "Player Name",
   "guesses": 3,
   "date": "2025-07-09",
-  "dnf": false
+  "dnf": false,
+  "wordleNumber": "1234"
 }
 ```
 
 - `name` (string): Player's name
 - `guesses` (number): Number of guesses taken (1-6, or 7+ for DNF)
-- `date` (string): Date in YYYY-MM-DD format
+- `date` (string): Date in YYYY-MM-DD format (New Zealand timezone)
 - `dnf` (boolean): True if player did not finish (DNF)
+- `wordleNumber` (string|null): Wordle puzzle number (extracted from pasted results or estimated for manual entries)
 
 ### Teams Integration
 
@@ -195,6 +197,7 @@ When scores are submitted, the application automatically posts to Microsoft Team
 - Hostname/computer information
 - DNF status (automatically detected for scores > 6)
 - No hostname data is stored in the database for privacy
+- All dates are calculated using New Zealand (Pacific/Auckland) timezone
 
 ### Security Notes
 
