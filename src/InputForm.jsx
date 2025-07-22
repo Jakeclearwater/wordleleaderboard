@@ -10,9 +10,18 @@ const useStyles = createUseStyles({
     display: "flex",
     flexDirection: "column",
     padding: "2rem",
+    width: "400px",
     maxWidth: "400px",
+    minWidth: "400px",
     margin: "0 auto",
     gap: "1rem",
+    boxSizing: "border-box",
+    "@media (max-width: 480px)": {
+      width: "calc(100vw - 2rem)",
+      maxWidth: "calc(100vw - 2rem)",
+      minWidth: "calc(100vw - 2rem)",
+      padding: "1rem",
+    },
     "& label": {
       color: "black !important",
       fontWeight: "400",
@@ -24,6 +33,7 @@ const useStyles = createUseStyles({
   formGroup: {
     display: "flex",
     flexDirection: "column",
+    transition: "all 0.2s ease-out",
   },
   input: {
     padding: "12px",
@@ -122,6 +132,7 @@ const useStyles = createUseStyles({
     fontSize: "14px",
     fontFamily: "monospace",
     resize: "vertical",
+    transition: "all 0.2s ease-out",
     "&:focus": {
       outline: "none",
       borderColor: "#28a745",
@@ -215,6 +226,16 @@ const useStyles = createUseStyles({
   formContainer: {
     overflow: "hidden",
     transition: "max-height 0.3s ease-out, opacity 0.3s ease-out",
+    width: "400px",
+    maxWidth: "400px",
+    minWidth: "400px",
+    margin: "0 auto",
+    boxSizing: "border-box",
+    "@media (max-width: 480px)": {
+      width: "calc(100vw - 2rem)",
+      maxWidth: "calc(100vw - 2rem)",
+      minWidth: "calc(100vw - 2rem)",
+    },
     "&.collapsed": {
       maxHeight: "0",
       opacity: "0",

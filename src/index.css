@@ -13,6 +13,41 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Global box-sizing reset for consistent spacing across browsers */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Reset margins and padding for consistent spacing */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Root element styling for consistent layout */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Specific fixes for Microsoft Edge and Windows */
+@supports (-ms-ime-align: auto) {
+  /* Edge-specific styles */
+  #root {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -24,10 +59,12 @@ a:hover {
 
 body {
   margin: 0;
+  padding: 0;
   display: flex;
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  width: 100%;
 }
 
 h1 {
