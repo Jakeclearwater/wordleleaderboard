@@ -6,153 +6,236 @@ import axios from "axios"; // For sending HTTP requests
 
 // Define your styles
 const useStyles = createUseStyles({
+  formContainer: {
+    overflow: "hidden",
+    transition: "max-height 0.3s ease-out, opacity 0.3s ease-out",
+    width: "100%",
+    maxWidth: 440,
+    margin: "0 auto",
+    boxSizing: "border-box",
+    background: "rgba(255,255,255,0.95)",
+    borderRadius: 24,
+    boxShadow: "0 8px 32px rgba(60,60,120,0.12)",
+    padding: 0,
+    position: "relative",
+    "@media (max-width: 480px)": {
+      maxWidth: "calc(100vw - 1rem)",
+    },
+    "&.collapsed": {
+      maxHeight: "0",
+      opacity: "0",
+    },
+    "&.expanded": {
+      maxHeight: "1200px",
+      opacity: "1",
+    },
+  },
+  formHeader: {
+    background: "#6aaa64", // Wordle green
+    color: "#fff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: "1.2rem 2rem 0.7rem 2rem",
+    fontWeight: 700,
+    fontSize: 22,
+    letterSpacing: 1,
+    textAlign: "center",
+    boxShadow: "0 2px 8px #0001",
+  },
   form: {
     display: "flex",
     flexDirection: "column",
-    padding: "2rem",
-    width: "400px",
-    maxWidth: "400px",
-    minWidth: "400px",
-    margin: "0 auto",
-    gap: "1rem",
+    gap: "1.2rem",
+    padding: "2rem 2rem 2rem 2rem",
     boxSizing: "border-box",
-    "@media (max-width: 480px)": {
-      width: "calc(100vw - 2rem)",
-      maxWidth: "calc(100vw - 2rem)",
-      minWidth: "calc(100vw - 2rem)",
+    '@media (max-width: 480px)': {
       padding: "1rem",
-    },
-    "& label": {
-      color: "black !important",
-      fontWeight: "400",
-      fontSize: "14px",
-      marginBottom: "0.3rem",
-      display: "block",
     },
   },
   formGroup: {
     display: "flex",
     flexDirection: "column",
-    transition: "all 0.2s ease-out",
+    gap: "0.3rem",
+    marginBottom: 0,
+  },
+  label: {
+    color: "#2d2d2d",
+    fontWeight: 500,
+    fontSize: 15,
+    marginBottom: 2,
+    letterSpacing: 0.2,
   },
   input: {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "16px",
+    padding: "14px 16px",
+    borderRadius: 12,
+    border: "1.5px solid #e0e0e0",
+    fontSize: 17,
+    background: "#f8fafc",
+    color: "#222",
     width: "100%",
     boxSizing: "border-box",
-    transition: "border-color 0.2s ease",
-    "&:focus": {
+    transition: "border-color 0.2s, box-shadow 0.2s",
+    marginBottom: 0,
+    '&:focus': {
       outline: "none",
-      borderColor: "#28a745",
-      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
+      borderColor: "#fc575e",
+      boxShadow: "0 0 0 2px #fc575e33",
     },
-    "&.disabled": {
-      backgroundColor: "#f8f9fa",
+    '&.disabled': {
+      backgroundColor: "#f3f3f3",
       cursor: "not-allowed",
-      color: "#6c757d",
+      color: "#b0b0b0",
     },
   },
   select: {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    backgroundColor: "white",
-    color: "black",
-    fontSize: "16px",
-    width: "100%",
-    boxSizing: "border-box",
+    composes: '$input',
     appearance: "none",
-    backgroundImage: "url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 4 5\"><path fill=\"%23666\" d=\"M2 0L0 2h4zm0 5L0 3h4z\"/></svg>')",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 12px center",
-    backgroundSize: "12px",
-    "&:focus": {
-      outline: "none",
-      borderColor: "#28a745",
-      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
-    },
+    background: "#f8fafc url('data:image/svg+xml;utf8,<svg fill=\'gray\' height=\'20\' viewBox=\'0 0 20 20\' width=\'20\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z\'/></svg>') no-repeat right 1rem center/1.2em auto",
+    paddingRight: "2.5em",
   },
   button: {
-    padding: "10px 24px",
+    padding: "13px 0",
     border: "none",
-    borderRadius: "6px",
-    backgroundColor: "#007bff",
-    color: "white",
+    borderRadius: 12,
+    background: "#c9b458", // Wordle yellow
+    color: "#222",
     cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: 700,
     width: "100%",
-    boxSizing: "border-box",
-    marginTop: "0.3rem",
-    transition: "all 0.2s ease",
-    "&:hover": {
-      backgroundColor: "#0056b3",
-      transform: "translateY(-1px)",
-      boxShadow: "0 4px 8px rgba(0, 123, 255, 0.3)",
+    marginTop: "0.5rem",
+    boxShadow: "0 2px 8px #0001",
+    transition: "all 0.2s cubic-bezier(.4,0,.2,1)",
+    '&:hover': {
+      background: "#b59f3b",
+      color: "#fff",
+      transform: "translateY(-2px) scale(1.03)",
+      boxShadow: "0 6px 16px #0002",
     },
-    "&:active": {
+    '&:active': {
       transform: "translateY(0)",
     },
-    "&.disabled": {
-      backgroundColor: "#6c757d",
+    '&.disabled': {
+      background: "#e0e0e0",
+      color: "#b0b0b0",
       cursor: "not-allowed",
-      transform: "none",
       boxShadow: "none",
-      "&:hover": {
-        backgroundColor: "#6c757d",
-        transform: "none",
-        boxShadow: "none",
-      },
+      transform: "none",
     },
   },
   checkboxGroup: {
     display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
+    flexDirection: "row",
+    gap: "1.5rem",
+    margin: "0.5rem 0 0.5rem 0",
+    justifyContent: "center",
   },
   checkboxWrapper: {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
+    position: "relative",
   },
   checkbox: {
-    width: "18px",
-    height: "18px",
-    accentColor: "#28a745",
+    width: 0,
+    height: 0,
+    opacity: 0,
+    position: "absolute",
+    '& + $customCheckbox': {
+      border: "2px solid #6aaa64",
+      borderRadius: 999,
+      width: 38,
+      height: 22,
+      background: "#f8fafc",
+      display: "inline-block",
+      position: "relative",
+      transition: "background 0.2s",
+      cursor: "pointer",
+    },
+    '&:checked + $customCheckbox': {
+      background: "#6aaa64",
+    },
+    '&:checked + $customCheckbox:after': {
+      left: 18,
+      background: "#fff",
+    },
+  },
+  customCheckbox: {
+    border: "2px solid #6aaa64",
+    borderRadius: 999,
+    width: 38,
+    height: 22,
+    background: "#f8fafc",
+    display: "inline-block",
+    position: "relative",
+    transition: "background 0.2s",
+    cursor: "pointer",
+    '&:after': {
+      content: '""',
+      position: "absolute",
+      top: 1,
+      left: 2,
+      width: 18,
+      height: 18,
+      borderRadius: 999,
+      background: "#6aaa64",
+      transition: "left 0.2s, background 0.2s",
+      display: 'block',
+    },
+  },
+  checkboxLabel: {
+    marginLeft: 10,
+    fontSize: 15,
+    color: "#2d2d2d",
+    fontWeight: 500,
+    cursor: "pointer",
+    userSelect: "none",
   },
   textarea: {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    minHeight: "120px",
+    padding: "14px 16px",
+    borderRadius: 12,
+    border: "1.5px solid #e0e0e0",
+    minHeight: 120,
     width: "100%",
     boxSizing: "border-box",
-    fontSize: "14px",
+    fontSize: 15,
     fontFamily: "monospace",
+    background: "#f8fafc",
     resize: "vertical",
-    transition: "all 0.2s ease-out",
-    "&:focus": {
+    transition: "border-color 0.2s, box-shadow 0.2s",
+    '&:focus': {
       outline: "none",
-      borderColor: "#28a745",
-      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
+      borderColor: "#fc575e",
+      boxShadow: "0 0 0 2px #fc575e33",
     },
   },
   overlay: {
     position: "fixed",
     top: 0,
     left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    color: "white",
+    width: "100vw",
+    height: "100vh",
+    background: "rgba(252,87,94,0.18)",
+    color: "#fc575e",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 1000,
     opacity: 1,
     transition: "opacity 1s ease",
+  },
+  spinner: {
+    border: "6px solid #f3f3f3",
+    borderTop: "6px solid #fc575e",
+    borderRadius: "50%",
+    width: 60,
+    height: 60,
+    animation: "$spin 1s linear infinite",
+    margin: "0 auto 1.5rem auto",
+  },
+  '@keyframes spin': {
+    '0%': { transform: 'rotate(0deg)' },
+    '100%': { transform: 'rotate(360deg)' },
   },
   hidden: {
     opacity: 0,
@@ -161,16 +244,19 @@ const useStyles = createUseStyles({
     position: 'fixed',
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
+    width: '100vw',
+    height: '100vh',
     pointerEvents: 'none',
     zIndex: 9999,
     '& .confetti-piece': {
       position: 'absolute',
-      width: '10px',
-      height: '10px',
+      width: '14px',
+      height: '14px',
+      borderRadius: '50%',
       backgroundColor: '#FFD700',
-      animation: '$confettiBurst 3s ease-out forwards',
+      animation: '$confettiBurst 2.8s cubic-bezier(.4,0,.2,1) forwards',
+      opacity: 0.85,
+      boxShadow: '0 2px 8px #0002',
     }
   },
   '@keyframes confettiBurst': {
@@ -188,19 +274,19 @@ const useStyles = createUseStyles({
     }
   },
   toggleButton: {
-    backgroundColor: "#007bff",
-    color: "white",
+    background: "linear-gradient(90deg, #fc575e 0%, #f7b42c 100%)",
+    color: "#fff",
     border: "none",
     borderRadius: "50%",
-    width: "50px",
-    height: "50px",
-    minWidth: "50px",
-    minHeight: "50px",
-    fontSize: "24px",
-    fontWeight: "600",
+    width: 54,
+    height: 54,
+    minWidth: 54,
+    minHeight: 54,
+    fontSize: 28,
+    fontWeight: 700,
     cursor: "pointer",
-    transition: "transform 0.2s ease",
-    margin: "0 auto 1rem auto",
+    transition: "transform 0.2s cubic-bezier(.4,0,.2,1)",
+    margin: "0 auto 1.2rem auto",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -208,11 +294,14 @@ const useStyles = createUseStyles({
     flexShrink: 0,
     aspectRatio: "1",
     lineHeight: "1",
-    "&:hover": {
-      backgroundColor: "#0056b3",
+    boxShadow: "0 2px 8px #fc575e22",
+    '&:hover': {
+      background: "linear-gradient(90deg, #f7b42c 0%, #fc575e 100%)",
+      transform: "scale(1.08)",
+      boxShadow: "0 6px 16px #fc575e33",
     },
-    "&:active": {
-      transform: "translateY(0)",
+    '&:active': {
+      transform: "scale(1)",
     },
   },
   toggleContainer: {
@@ -221,30 +310,8 @@ const useStyles = createUseStyles({
     justifyContent: "center",
     width: "100%",
     marginTop: "0.5rem",
-    marginBottom: "1rem",
+    marginBottom: "1.2rem",
   },
-  formContainer: {
-    overflow: "hidden",
-    transition: "max-height 0.3s ease-out, opacity 0.3s ease-out",
-    width: "400px",
-    maxWidth: "400px",
-    minWidth: "400px",
-    margin: "0 auto",
-    boxSizing: "border-box",
-    "@media (max-width: 480px)": {
-      width: "calc(100vw - 2rem)",
-      maxWidth: "calc(100vw - 2rem)",
-      minWidth: "calc(100vw - 2rem)",
-    },
-    "&.collapsed": {
-      maxHeight: "0",
-      opacity: "0",
-    },
-    "&.expanded": {
-      maxHeight: "1000px",
-      opacity: "1",
-    },
-  }
 });
 
 const InputForm = () => {
@@ -710,8 +777,9 @@ const InputForm = () => {
     <>
       {showOverlay && (
         <div className={`${classes.overlay} ${loading ? "" : classes.hidden}`}>
-          <div>
-            <h2>Submitting Result...</h2>
+          <div style={{textAlign: 'center'}}>
+            <div className={classes.spinner}></div>
+            <h2 style={{fontWeight:700, letterSpacing:1, color:'#fc575e'}}>Submitting Result...</h2>
           </div>
         </div>
       )}
@@ -720,125 +788,151 @@ const InputForm = () => {
           {createConfetti()}
         </div>
       )}
-      
+
+
       <div className={classes.toggleContainer}>
-        <button 
-          className={classes.toggleButton}
-          onClick={() => setIsFormExpanded(!isFormExpanded)}
-          type="button"
-          title={isFormExpanded ? "Hide Score Submission" : "Submit New Score"}
-        >
-          {isFormExpanded ? "▲" : "▼"}
-        </button>
+        <div style={{width:'100%',display:'flex',justifyContent:'center',alignItems:'center',marginBottom:8}}>
+          <span style={{fontWeight:600,fontSize:18,color:'#6aaa64',marginRight:12}}>Submit a Score</span>
+          <label style={{display:'flex',alignItems:'center',cursor:'pointer',userSelect:'none'}}>
+            <input
+              type="checkbox"
+              checked={isFormExpanded}
+              onChange={() => setIsFormExpanded(v => !v)}
+              style={{width:0,height:0,opacity:0,position:'absolute'}}
+            />
+            <span style={{width:38,height:22,background:isFormExpanded?'#6aaa64':'#f8fafc',border:'2px solid #6aaa64',borderRadius:999,display:'inline-block',position:'relative',transition:'background 0.2s'}}>
+              <span style={{position:'absolute',top:1,left:isFormExpanded?18:2,width:18,height:18,borderRadius:999,background:isFormExpanded?'#6aaa64':'#bbb',transition:'left 0.2s,background 0.2s',display:'block'}}></span>
+            </span>
+          </label>
+        </div>
       </div>
-      
+
       <div className={`${classes.formContainer} ${isFormExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className={classes.formHeader}>
+          Submit Your Wordle Score
+        </div>
         <form onSubmit={handleSubmit} className={classes.form}>
-        <div className={classes.formGroup}>
-          <label htmlFor="name">Name:</label>
-          <select
-            id="name"
-            value={name}
-            onChange={handleNameChange}
-            required={!didNotFinish && !isCustomName}
-            className={classes.select}
-            disabled={didNotFinish}
-          >
-            <option value="" disabled>
-              Select your name
-            </option>
-            {names.map((name, index) => (
-              <option key={index} value={name}>
-                {name}
-              </option>
-            ))}
-            <option value="__new__">Add New Name</option>
-          </select>
-        </div>
-
-        {isCustomName && (
           <div className={classes.formGroup}>
-            <label htmlFor="customName">Enter your name:</label>
-            <input
-              type="text"
-              id="customName"
-              value={customName}
-              onChange={handleCustomNameChange}
-              required={!didNotFinish && isCustomName}
-              className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`}
+            <label htmlFor="name" className={classes.label}>Name:</label>
+            <select
+              id="name"
+              value={name}
+              onChange={handleNameChange}
+              required={!didNotFinish && !isCustomName}
+              className={classes.select}
               disabled={didNotFinish}
-              placeholder="Type your name (3-12 characters)"
-              pattern="[a-zA-Z ]{3,12}"
-              title="Name must be 3-12 characters, letters and spaces only"
-              minLength={3}
-              maxLength={12}
-            />
-          </div>
-        )}
-
-        <div className={classes.formGroup}>
-          <label htmlFor="guesses">Number of Guesses:</label>
-          <input
-            type="number"
-            id="guesses"
-            value={didNotFinish ? "" : guesses}
-            onChange={(e) => setGuesses(e.target.value)}
-            min={1}
-            max={6}
-            required={!didNotFinish && !pasteWordle}
-            className={`${classes.input} ${
-              didNotFinish || pasteWordle ? classes.disabled : ""
-            }`}
-            disabled={didNotFinish || pasteWordle}
-            placeholder="Enter 1-6"
-          />
-        </div>
-
-        <div className={classes.checkboxGroup}>
-          <div className={classes.checkboxWrapper}>
-            <input
-              type="checkbox"
-              id="didNotFinish"
-              checked={didNotFinish}
-              onChange={(e) => setDidNotFinish(e.target.checked)}
-              className={classes.checkbox}
-              disabled={pasteWordle}
-            />
-            <label htmlFor="didNotFinish">Did Not Finish</label>
+            >
+              <option value="" disabled>
+                Select your name
+              </option>
+              {names.map((name, index) => (
+                <option key={index} value={name}>
+                  {name}
+                </option>
+              ))}
+              <option value="__new__">Add New Name</option>
+            </select>
           </div>
 
-          <div className={classes.checkboxWrapper}>
-            <input
-              type="checkbox"
-              id="pasteWordle"
-              checked={pasteWordle}
-              onChange={handlePasteWordleChange}
-              className={classes.checkbox}
-            />
-            <label htmlFor="pasteWordle">Paste Wordle Output</label>
-          </div>
-        </div>
+          {isCustomName && (
+            <div className={classes.formGroup}>
+              <label htmlFor="customName" className={classes.label}>Enter your name:</label>
+              <input
+                type="text"
+                id="customName"
+                value={customName}
+                onChange={handleCustomNameChange}
+                required={!didNotFinish && isCustomName}
+                className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`}
+                disabled={didNotFinish}
+                placeholder="Type your name (3-12 characters)"
+                pattern="[a-zA-Z ]{3,12}"
+                title="Name must be 3-12 characters, letters and spaces only"
+                minLength={3}
+                maxLength={12}
+              />
+            </div>
+          )}
 
-        {pasteWordle && (
           <div className={classes.formGroup}>
-            <label htmlFor="wordleResult">Paste your Wordle result:</label>
-            <textarea
-              id="wordleResult"
-              value={wordleResult}
-              onChange={(e) => setWordleResult(e.target.value)}
-              className={classes.textarea}
-              placeholder="Paste your Wordle result here..."
+            <label htmlFor="guesses" className={classes.label}>Number of Guesses:</label>
+            <input
+              type="number"
+              id="guesses"
+              value={didNotFinish ? "" : guesses}
+              onChange={(e) => setGuesses(e.target.value)}
+              min={1}
+              max={6}
+              required={!didNotFinish && !pasteWordle}
+              className={`${classes.input} ${didNotFinish || pasteWordle ? classes.disabled : ""}`}
+              disabled={didNotFinish || pasteWordle}
+              placeholder="Enter 1-6"
             />
           </div>
-        )}
 
-        <button
-          type="submit"
-          className={`${classes.button} ${(!isFormValid() || loading) ? classes.disabled : ""}`}
-          disabled={!isFormValid() || loading}
-        >
-          {loading ? "Submitting..." : "Submit Score"}
-        </button>
+          <div className={classes.checkboxGroup}>
+            <div className={classes.checkboxWrapper}>
+              <input
+                type="checkbox"
+                id="didNotFinish"
+                checked={didNotFinish}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDidNotFinish(checked);
+                  if (checked) {
+                    setPasteWordle(false);
+                    setWordleResult("");
+                  }
+                }}
+                className={classes.checkbox}
+                // allow DNF to be ticked even if pasteWordle is true
+              />
+              <span className={classes.customCheckbox}></span>
+              <label htmlFor="didNotFinish" className={classes.checkboxLabel}>Did Not Finish</label>
+            </div>
+            <div className={classes.checkboxWrapper}>
+              <input
+                type="checkbox"
+                id="pasteWordle"
+                checked={pasteWordle}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setPasteWordle(checked);
+                  if (checked) {
+                    setDidNotFinish(false);
+                  } else {
+                    setWordleResult("");
+                  }
+                  setIsFormExpanded(true);
+                }}
+                className={classes.checkbox}
+                disabled={didNotFinish}
+              />
+              <span className={classes.customCheckbox}></span>
+              <label htmlFor="pasteWordle" className={classes.checkboxLabel}>Paste Wordle Output</label>
+            </div>
+          </div>
+
+          {pasteWordle && (
+            <div className={classes.formGroup}>
+              <label htmlFor="wordleResult" className={classes.label}>Paste your Wordle result:</label>
+              <textarea
+                id="wordleResult"
+                value={wordleResult}
+                onChange={(e) => setWordleResult(e.target.value)}
+                className={classes.textarea}
+                placeholder="Paste your Wordle result here..."
+              />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className={`${classes.button} ${(!isFormValid() || loading) ? classes.disabled : ""}`}
+            disabled={!isFormValid() || loading}
+          >
+            {loading ? "Submitting..." : "Submit Score"}
+          </button>
         </form>
       </div>
     </>
