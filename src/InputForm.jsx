@@ -474,16 +474,9 @@ const InputForm = () => {
     }).format(now);
     const formattedNZDate = nzTime; // Already in YYYY-MM-DD format
     
-    // Create ISO datetime that will convert to the current NZ date
-    // We need a UTC time that when converted to NZ timezone gives us today's NZ date
-    // Use midnight UTC on the NZ date (which will be 12pm or 1pm NZ time depending on DST)
-    const [year, month, day] = formattedNZDate.split('-');
-    const isoDateTime = new Date(Date.UTC(
-      parseInt(year), 
-      parseInt(month) - 1, // Month is 0-indexed
-      parseInt(day), 
-      0, 0, 0, 0 // Midnight UTC on the NZ date
-    )).toISOString();
+    // Create ISO datetime with the current actual time
+    // Save the exact time when the score was submitted
+    const isoDateTime = new Date().toISOString();
 
     try {
       // Store in Firestore - ensure guesses is 7 for DNF and include dnf flag

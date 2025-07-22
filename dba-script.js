@@ -199,14 +199,52 @@ class WordleLeaderboardDBA {
 
   // Show most recent documents by date field
   async showRecent(collectionName, limitCount = 10, dateField = 'date') {
-    console.log(`\n=== Most Recent ${collectionName} (by ${dateField}, limited to ${limitCount}) ===`);
+    // Prefer isoDate for modern records with timestamps, fall back to specified dateField for legacy
+    const preferredField = dateField === 'date' ? 'isoDate' : dateField;
+    console.log(`\n=== Most Recent ${collectionName} (by ${preferredField}, limited to ${limitCount}) ===`);
+    
     try {
-      const q = query(
-        collection(this.db, collectionName), 
-        orderBy(dateField, 'desc'),
-        limit(limitCount)
-      );
-      const snapshot = await getDocs(q);
+      let q, snapshot;
+      
+      // Try to query by isoDate first (for modern records with actual timestamps)
+      if (dateField === 'date') {
+        try {
+          q = query(
+            collection(this.db, collectionName), 
+            orderBy('isoDate', 'desc'),
+            limit(limitCount)
+          );
+          snapshot = await getDocs(q);
+          
+          if (snapshot.empty) {
+            console.log('No documents with isoDate found, trying legacy date field...');
+            // Fall back to legacy date field
+            q = query(
+              collection(this.db, collectionName), 
+              orderBy('date', 'desc'),
+              limit(limitCount)
+            );
+            snapshot = await getDocs(q);
+          }
+        } catch (error) {
+          console.log(`Could not query by isoDate (${error.message}), using ${dateField}...`);
+          // Fall back to specified field
+          q = query(
+            collection(this.db, collectionName), 
+            orderBy(dateField, 'desc'),
+            limit(limitCount)
+          );
+          snapshot = await getDocs(q);
+        }
+      } else {
+        // Use the specified field directly
+        q = query(
+          collection(this.db, collectionName), 
+          orderBy(dateField, 'desc'),
+          limit(limitCount)
+        );
+        snapshot = await getDocs(q);
+      }
       
       if (snapshot.empty) {
         console.log('No documents found in this collection.');
@@ -216,8 +254,13 @@ class WordleLeaderboardDBA {
       console.log(`Found ${snapshot.size} most recent documents:`);
       snapshot.forEach((doc, index) => {
         const data = doc.data();
+        const actualField = data.isoDate ? 'isoDate' : dateField;
+        const displayDate = data.isoDate ? 
+          `${data.isoDate} (${new Date(data.isoDate).toLocaleString('en-NZ', { timeZone: 'Pacific/Auckland' })})` :
+          data[dateField];
+          
         console.log(`${index + 1}. Document ID: ${doc.id}`);
-        console.log(`   Date: ${data[dateField]}`);
+        console.log(`   ${actualField}: ${displayDate}`);
         console.log(`   Data:`, JSON.stringify(data, null, 2));
         console.log('---');
       });
@@ -241,7 +284,7 @@ class WordleLeaderboardDBA {
   
   // Convert existing date strings to ISO datetime strings
   async convertDatesToISO(collectionName = 'scores', dryRun = true) {
-    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Converting dates to ISO format in ${collectionName} ===`);
+    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Converting legacy dates to ISO format in ${collectionName} ===`);
     
     try {
       const snapshot = await getDocs(collection(this.db, collectionName));
@@ -263,7 +306,9 @@ class WordleLeaderboardDBA {
           
           if (dateParts.length === 3) {
             // Create ISO datetime that will convert to the original NZ date
-            // Use midnight UTC on the original date (which will be 12pm or 1pm NZ time depending on DST)
+            // For legacy data conversion: use midnight UTC on the original date 
+            // (which will be 12pm or 1pm NZ time depending on DST)
+            // New submissions save actual current time, but legacy data gets consistent midnight UTC
             const year = parseInt(dateParts[0]);
             const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
             const day = parseInt(dateParts[2]);
@@ -579,16 +624,36 @@ class WordleLeaderboardDBA {
   }
 
   async showToday(collectionName, dateField = 'date') {
+    // For modern records with isoDate, search using UTC time ranges for today
+    // For legacy records, fall back to date field
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const todayStart = `${today}T00:00:00.000Z`; // Start of today UTC
+    const todayEnd = `${today}T23:59:59.999Z`; // End of today UTC
+    
     console.log(`\n=== Today's ${collectionName} (${today}) ===`);
+    console.log(`Searching for records between ${todayStart} and ${todayEnd} (UTC)`);
     
     try {
-      const q = query(
-        collection(this.db, collectionName),
-        where(dateField, '==', today),
-        orderBy('__name__') // Secondary sort by document ID for consistent ordering
-      );
-      const snapshot = await getDocs(q);
+      // First try to get records using isoDate field (modern records)
+      let snapshot;
+      try {
+        const qISO = query(
+          collection(this.db, collectionName),
+          where('isoDate', '>=', todayStart),
+          where('isoDate', '<=', todayEnd),
+          orderBy('isoDate', 'asc') // Order by submission time
+        );
+        snapshot = await getDocs(qISO);
+      } catch (error) {
+        console.log(`Note: Could not query by isoDate (${error.message}), falling back to date field`);
+        // Fall back to legacy date field search
+        const qLegacy = query(
+          collection(this.db, collectionName),
+          where(dateField, '==', today),
+          orderBy('__name__') // Secondary sort by document ID for consistent ordering
+        );
+        snapshot = await getDocs(qLegacy);
+      }
       
       if (snapshot.empty) {
         console.log(`No documents found for today (${today}).`);
@@ -598,7 +663,18 @@ class WordleLeaderboardDBA {
       console.log(`Found ${snapshot.size} documents for today:`);
       snapshot.forEach((doc, index) => {
         const data = doc.data();
+        const submissionTime = data.isoDate ? new Date(data.isoDate).toLocaleString('en-NZ', {
+          timeZone: 'Pacific/Auckland',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }) : 'Legacy record (no timestamp)';
+        
         console.log(`${index + 1}. Document ID: ${doc.id}`);
+        console.log(`   Submission time (NZ): ${submissionTime}`);
         console.log(`   Data:`, JSON.stringify(data, null, 2));
         console.log('---');
       });
@@ -770,7 +846,7 @@ Commands:
   conditional-update <collection> <field> <op> <value> <jsonData> [--execute] - Update all docs matching condition
   delete <collection> <docId>          - Delete a document
   count <collection>                   - Count documents in a collection
-  convert-dates [collection] [--execute] - Convert date strings to ISO format (midnight UTC)
+  convert-dates [collection] [--execute] - Convert legacy date strings to ISO format (midnight UTC for legacy records)
   find-date-errors [collection] [--export] - Find potential date errors and optionally export to files
   fix-names [collection] [--execute]   - Fix problematic names (dry run by default)
   help                                 - Show this help
