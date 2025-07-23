@@ -4,6 +4,20 @@ import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "./firebase"; // Adjust the import path as necessary
 import axios from "axios"; // For sending HTTP requests
 
+// Cookie helper functions
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const setCookie = (name, value, days = 365) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
 // Define your styles
 const useStyles = createUseStyles({
   formContainer: {
@@ -190,6 +204,54 @@ const useStyles = createUseStyles({
       cursor: "not-allowed",
       boxShadow: "none",
       transform: "none",
+    },
+  },
+  
+  submitScoreButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "var(--space-3)",
+    padding: "var(--space-5) var(--space-8)",
+    border: "none",
+    borderRadius: "var(--radius-xl)",
+    background: "linear-gradient(135deg, var(--wordle-green) 0%, #4a8a44 100%)",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: "1.2rem",
+    fontWeight: "700",
+    width: "100%",
+    maxWidth: "320px",
+    margin: "0 auto var(--space-6)",
+    boxShadow: "0 4px 16px rgba(106, 170, 100, 0.3)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    letterSpacing: "-0.01em",
+    fontFamily: "inherit",
+    position: "relative",
+    overflow: "hidden",
+    '&::before': {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: "-100%",
+      width: "100%",
+      height: "100%",
+      background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)",
+      transition: "left 0.5s ease",
+    },
+    '&:hover': {
+      transform: "translateY(-2px) scale(1.02)",
+      boxShadow: "0 8px 25px rgba(106, 170, 100, 0.4)",
+      '&::before': {
+        left: "100%",
+      },
+    },
+    '&:active': {
+      transform: "translateY(0) scale(1)",
+    },
+    '&.active': {
+      background: "linear-gradient(135deg, #4a8a44 0%, var(--wordle-green) 100%)",
+      boxShadow: "0 2px 8px rgba(106, 170, 100, 0.5)",
     },
   },
   
@@ -400,6 +462,7 @@ const useStyles = createUseStyles({
     color: "#fff",
     border: "none",
     borderRadius: "50%",
+    padding: "2rem !important",
     width: 54,
     height: 54,
     minWidth: 54,
@@ -433,14 +496,12 @@ const useStyles = createUseStyles({
     width: "100%",
     marginTop: "0.5rem",
     marginBottom: "1.2rem",
+    
   },
 });
 
-const InputForm = () => {
+const InputForm = ({ playerName }) => {
   const classes = useStyles();
-  const [name, setName] = useState("");
-  const [customName, setCustomName] = useState("");
-  const [isCustomName, setIsCustomName] = useState(false);
   const [guesses, setGuesses] = useState("");
   const [didNotFinish, setDidNotFinish] = useState(false);
   const [wordleResult, setWordleResult] = useState("");
@@ -450,45 +511,6 @@ const InputForm = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [testConfetti, setTestConfetti] = useState(false);
   const [isFormExpanded, setIsFormExpanded] = useState(false);
-
-  useEffect(() => {
-    const lastChosenName = localStorage.getItem("lastChosenName");
-    if (lastChosenName) {
-      if (names.includes(lastChosenName)) {
-        setName(lastChosenName);
-      } else {
-        setCustomName(lastChosenName);
-        setName("__new__");
-        setIsCustomName(true);
-      }
-    }
-  }, []);
-
-  const handleNameChange = (event) => {
-    const newName = event.target.value;
-    setName(newName);
-    if (newName === "__new__") {
-      setIsCustomName(true);
-    } else {
-      setIsCustomName(false);
-      localStorage.setItem("lastChosenName", newName);
-    }
-  };
-
-  const handleCustomNameChange = (event) => {
-    const newCustomName = event.target.value;
-    // Only allow letters (a-z, A-Z) and spaces, up to 12 characters max
-    // Allow 0+ characters during typing, but we'll validate 3+ on submission
-    const isValid = /^[a-zA-Z ]{0,12}$/.test(newCustomName);
-    
-    if (isValid) {
-      setCustomName(newCustomName);
-      if (newCustomName && newCustomName.length >= 3) {
-        localStorage.setItem("lastChosenName", newCustomName);
-      }
-    }
-    // If invalid, don't update the state (effectively blocking the input)
-  };
 
   const handlePasteWordleChange = (e) => {
     const isChecked = e.target.checked;
@@ -502,28 +524,39 @@ const InputForm = () => {
     }
   };
 
-  const names = [
-    "Shay",
-    "Damien",
-    "Jake",
-    "Michael",
-    "Nick T",
-    "Nick M",
-    "Andy",
-    "Brett",
-    "Jordan",
-    "Jeff",
-    "Katie",
-    "Ryan D",
-    "James",
-    "Ryan",
-    "Ronan",
-    "Sean",
-    "Don",
-    "Simon",
-    "Cam",
-    "Callum"
-  ];
+  const handleDidNotFinishChange = (event) => {
+    const isChecked = event.target.checked;
+    setDidNotFinish(isChecked);
+    // If DNF is checked, also check for clearance behavior
+    if (isChecked) {
+      setGuesses("");
+      setPasteWordle(false);
+      setWordleResult("");
+    }
+  };
+
+  const handleGuessesChange = (event) => {
+    const newGuesses = event.target.value;
+    
+    // Only allow digits 1-6
+    if (newGuesses === "" || /^[1-6]$/.test(newGuesses)) {
+      setGuesses(newGuesses);
+      
+      // If user enters a number, uncheck DNF
+      if (newGuesses && newGuesses !== "") {
+        setDidNotFinish(false);
+      }
+    }
+  };
+
+  const toggleTestConfetti = () => {
+    if (!testConfetti) {
+      setTestConfetti(true);
+      setTimeout(() => {
+        setTestConfetti(false);
+      }, 4000); // Hide after 4 seconds and uncheck
+    }
+  };
 
   // Create confetti pieces
   const createConfetti = () => {
@@ -656,23 +689,8 @@ const InputForm = () => {
     setLoading(true);
     setShowOverlay(true);
 
-    // Get the final name to use
-    const finalName = isCustomName ? customName.trim() : name;
-
-    if (!finalName) {
-      alert("Please provide your name.");
-      setLoading(false);
-      setShowOverlay(false);
-      return;
-    }
-
-    // Validate custom name length (3-12 characters)
-    if (isCustomName && (finalName.length < 3 || finalName.length > 12)) {
-      alert("Name must be between 3 and 12 characters long.");
-      setLoading(false);
-      setShowOverlay(false);
-      return;
-    }
+    // Use the player name passed as prop (already validated)
+    const finalName = playerName.trim();
 
     // This is the problematic part - we need to ensure DNF is always 7
     let finalGuesses = 0;
@@ -879,14 +897,7 @@ const InputForm = () => {
 
   // Check if form is valid for submit button state
   const isFormValid = () => {
-    const finalName = isCustomName ? customName.trim() : name;
-    
-    // Must have a name
-    if (!finalName) return false;
-    
-    // Custom name must be 3-12 characters
-    if (isCustomName && (finalName.length < 3 || finalName.length > 12)) return false;
-    
+    // Player name is guaranteed to be valid since it's set in the gate
     // Must have either guesses, DNF, or paste wordle with content
     if (pasteWordle) {
       return wordleResult.trim().length > 0;
@@ -917,64 +928,23 @@ const InputForm = () => {
         </div>
       )}
 
-      {/* Modern Toggle Section */}
+      {/* Modern Submit Button Section */}
       <div className={classes.toggleContainer}>
-        <div style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginBottom: 'var(--space-6)',
-          gap: 'var(--space-4)'
-        }}>
-          <span style={{
-            fontWeight: 600,
-            fontSize: '1.1rem',
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.01em'
+        <button 
+          className={`${classes.submitScoreButton} ${isFormExpanded ? 'active' : ''}`}
+          onClick={() => setIsFormExpanded(v => !v)}
+          type="button"
+        >
+          <span style={{ fontSize: '1.5rem' }}>🎯</span>
+          <span>{isFormExpanded ? 'Close Form' : 'Submit a Score'}</span>
+          <span style={{ 
+            fontSize: '1rem',
+            transform: isFormExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.3s ease'
           }}>
-            Submit a Score
+            ⬇️
           </span>
-          <label style={{
-            display: 'flex',
-            alignItems: 'center',
-            cursor: 'pointer',
-            userSelect: 'none',
-            padding: 'var(--space-2)',
-            borderRadius: 'var(--radius-lg)',
-            transition: 'background 0.2s ease'
-          }}>
-            <input
-              type="checkbox"
-              checked={isFormExpanded}
-              onChange={() => setIsFormExpanded(v => !v)}
-              style={{width: 0, height: 0, opacity: 0, position: 'absolute'}}
-            />
-            <span style={{
-              width: '48px',
-              height: '26px',
-              background: isFormExpanded ? 'var(--wordle-green)' : 'var(--border-light)',
-              border: `2px solid ${isFormExpanded ? 'var(--wordle-green)' : 'var(--border-light)'}`,
-              borderRadius: '50px',
-              display: 'inline-block',
-              position: 'relative',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}>
-              <span style={{
-                position: 'absolute',
-                top: '2px',
-                left: isFormExpanded ? '22px' : '2px',
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                background: '#fff',
-                transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                display: 'block',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
-              }}></span>
-            </span>
-          </label>
-        </div>
+        </button>
       </div>
 
       <div className={`${classes.formContainer} ${isFormExpanded ? 'expanded' : 'collapsed'}`}>
@@ -985,46 +955,10 @@ const InputForm = () => {
         
         <form onSubmit={handleSubmit} className={classes.form}>
           <div className={classes.formGroup}>
-            <label htmlFor="name" className={classes.label}>Choose Your Name</label>
-            <select
-              id="name"
-              value={name}
-              onChange={handleNameChange}
-              required={!didNotFinish && !isCustomName}
-              className={classes.select}
-              disabled={didNotFinish}
-            >
-              <option value="" disabled>
-                Select your name
-              </option>
-              {names.map((name, index) => (
-                <option key={index} value={name}>
-                  {name}
-                </option>
-              ))}
-              <option value="__new__">Add New Name</option>
-            </select>
+            <label className={classes.label}>
+              Playing as: <strong>{playerName}</strong>
+            </label>
           </div>
-
-          {isCustomName && (
-            <div className={classes.formGroup}>
-              <label htmlFor="customName" className={classes.label}>Enter Your Name</label>
-              <input
-                type="text"
-                id="customName"
-                value={customName}
-                onChange={handleCustomNameChange}
-                required={!didNotFinish && isCustomName}
-                className={`${classes.input} ${didNotFinish ? 'disabled' : ""}`}
-                disabled={didNotFinish}
-                placeholder="Your name (3-12 characters)"
-                pattern="[a-zA-Z ]{3,12}"
-                title="Name must be 3-12 characters, letters and spaces only"
-                minLength={3}
-                maxLength={12}
-              />
-            </div>
-          )}
 
           <div className={classes.formGroup}>
             <label htmlFor="guesses" className={classes.label}>Number of Guesses</label>
@@ -1109,7 +1043,7 @@ const InputForm = () => {
             className={`${classes.button} ${!isFormValid() ? 'disabled' : ''}`}
             disabled={!isFormValid()}
           >
-            {loading ? 'Submitting...' : 'Submit Score'}
+            {loading ? 'Submitting...' : 'Submit Score 🚀'}
           </button>
 
           {/* Test Confetti - Hidden in production */}
