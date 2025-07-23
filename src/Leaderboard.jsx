@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
-import { BounceLoader } from 'react-spinners';
+// import { BounceLoader } from 'react-spinners';
 
 const useStyles = createUseStyles({
   leaderboardContainer: {
@@ -52,6 +52,24 @@ const useStyles = createUseStyles({
       gridTemplateColumns: '1fr',
       gap: 'var(--space-4)',
     },
+  },
+  
+  dancingCat: {
+    fontSize: '5rem',
+    lineHeight: '1',
+    marginBottom: '1rem',
+    display: 'inline-block',
+    animation: '$catDance 1.2s infinite linear',
+    transformOrigin: '50% 60%',
+  },
+  
+  '@keyframes catDance': {
+    '0%': { transform: 'rotate(-20deg) scale(1)' },
+    '20%': { transform: 'rotate(20deg) scale(1.1)' },
+    '40%': { transform: 'rotate(-20deg) scale(1.05)' },
+    '60%': { transform: 'rotate(20deg) scale(1.1)' },
+    '80%': { transform: 'rotate(-20deg) scale(1)' },
+    '100%': { transform: 'rotate(-20deg) scale(1)' },
   },
   
   statCard: {
@@ -566,7 +584,7 @@ const Leaderboard = () => {
     <div className={classes.leaderboardContainer}>
       {loading ? (
         <div className={classes.loading}>
-          <BounceLoader color="var(--wordle-green)" size={40} />
+          <div className={classes.dancingCat} style={{ fontSize: '5rem', lineHeight: '1', marginBottom: '1rem' }}>🐱</div>
           <div className={classes.loadingText}>Loading leaderboards...</div>
         </div>
       ) : (
