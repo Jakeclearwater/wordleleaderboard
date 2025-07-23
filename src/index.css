@@ -170,3 +170,16 @@ button:focus-visible {
     background-color: #374151;
   }
 }
+
+:root {
+  color: #213547;
+  background-color: #ffffff;
+
+  /* Light mode color overrides */
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --card-bg: #ffffff;
+  --secondary-bg: #f9fafb;
+  --border-light: #e5e7eb;
+}
