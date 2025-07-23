@@ -1278,26 +1278,96 @@ const InputForm = ({
             </div>
           )}
           {activeTab === "Wordle Game" && (
-            <div style={{padding: "1rem", width: "100%", minHeight: "80vh"}}>
+            <div style={{
+              padding: "2rem", 
+              width: "100%", 
+              minHeight: "60vh",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: "2rem"
+            }}>
               <div style={{
-                width: "100%",
-                height: "80vh",
-                border: "none",
-                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "16px",
+                padding: "3rem 2rem",
                 boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                overflow: "hidden"
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                maxWidth: "500px",
+                width: "100%"
               }}>
-                <iframe
-                  src="https://www.nytimes.com/games/wordle"
-                  width="100%"
-                  height="100%"
+                <div style={{
+                  fontSize: "3rem",
+                  marginBottom: "1rem"
+                }}>
+                  🎯
+                </div>
+                <h2 style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "700",
+                  color: "#1a1a1a",
+                  margin: "0 0 1rem 0",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }}>
+                  Play Today's Wordle
+                </h2>
+                <p style={{
+                  fontSize: "1rem",
+                  color: "#6b7280",
+                  margin: "0 0 2rem 0",
+                  lineHeight: "1.5",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }}>
+                  Due to security restrictions, the New York Times Wordle game cannot be embedded directly. Click the button below to open Wordle in a new tab.
+                </p>
+                <button
+                  onClick={() => window.open('https://www.nytimes.com/games/wordle', '_blank', 'noopener,noreferrer')}
                   style={{
+                    padding: "16px 32px",
+                    borderRadius: "12px",
                     border: "none",
-                    borderRadius: "12px"
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    margin: "0 auto"
                   }}
-                  title="New York Times Wordle Game"
-                  allowFullScreen
-                />
+                  onMouseOver={(e) => {
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+                  }}
+                  onMouseDown={(e) => {
+                    e.target.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseUp={(e) => {
+                    e.target.style.transform = "translateY(-2px)";
+                  }}
+                >
+                  <span>🔗</span>
+                  Open Wordle Game
+                </button>
+                <div style={{
+                  marginTop: "1.5rem",
+                  fontSize: "0.875rem",
+                  color: "#9ca3af",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }}>
+                  After playing, come back here to submit your score!
+                </div>
               </div>
             </div>
           )}
