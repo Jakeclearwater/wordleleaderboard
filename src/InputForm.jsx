@@ -179,30 +179,40 @@ const useStyles = createUseStyles({
     position: 'fixed',
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
+    width: '100vw',
+    height: '100vh',
     pointerEvents: 'none',
     zIndex: 9999,
+    overflow: 'hidden',
     '& .confetti-piece': {
       position: 'absolute',
-      width: '10px',
-      height: '10px',
+      width: '22px',
+      height: '22px',
+      borderRadius: '50%',
       backgroundColor: '#FFD700',
-      animation: '$confettiBurst 3s ease-out forwards',
+      boxShadow: '0 0 24px 8px rgba(0,0,0,0.12)',
+      animation: '$confettiBurst 2.5s cubic-bezier(0.23, 1, 0.32, 1) forwards',
+      willChange: 'transform, opacity',
     }
   },
   '@keyframes confettiBurst': {
     '0%': {
-      transform: 'translate(-50%, -50%) scale(0) rotateZ(0deg)',
+      transform: 'translate(-50%, -50%) scale(0.2) rotateZ(0deg)',
       opacity: 1,
+      filter: 'blur(0px)',
     },
     '10%': {
-      transform: 'translate(-50%, -50%) scale(1) rotateZ(90deg)',
+      transform: 'translate(-50%, -50%) scale(1.2) rotateZ(90deg)',
       opacity: 1,
+      filter: 'blur(0px)',
+    },
+    '80%': {
+      filter: 'blur(0px)',
     },
     '100%': {
-      transform: 'translate(calc(-50% + var(--end-x, 0px)), calc(-50% + var(--end-y, 0px))) scale(0.5) rotateZ(720deg)',
+      transform: 'translate(calc(-50% + var(--end-x, 0px)), calc(-50% + var(--end-y, 0px))) scale(2.2) rotateZ(1080deg)',
       opacity: 0,
+      filter: 'blur(2px)',
     }
   },
   toggleButton: {
@@ -318,6 +328,8 @@ const InputForm = ({
   const [showSettings, setShowSettings] = useState(false);
   const [testConfetti, setTestConfetti] = useState(false);
   const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [alreadySubmittedToday, setAlreadySubmittedToday] = useState(false);
+  const [todaysScore, setTodaysScore] = useState(null);
 
   useEffect(() => {
     const cookieUser = getCookie("wordle-username");
@@ -327,10 +339,61 @@ const InputForm = ({
     }
   }, []);
 
+  // Check if already submitted for today (NZT)
+  useEffect(() => {
+    const checkAlreadySubmitted = async () => {
+      if (!username) {
+        setAlreadySubmittedToday(false);
+        setTodaysScore(null);
+        return;
+      }
+      // Get current date in NZT
+      const now = new Date();
+      const nzTime = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Pacific/Auckland',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(now);
+      const formattedNZDate = nzTime;
+      // Query Firestore for scores by this user for today
+      try {
+        const { getDocs, query, where, collection } = await import('firebase/firestore');
+        const q = query(collection(firestore, "scores"), where("name", "==", username.trim()), where("date", "==", formattedNZDate));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          setAlreadySubmittedToday(true);
+          // Get the best score for today (lowest guesses)
+          let bestScore = null;
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (!bestScore || data.guesses < bestScore.guesses) {
+              bestScore = data;
+            }
+          });
+          setTodaysScore(bestScore);
+        } else {
+          setAlreadySubmittedToday(false);
+          setTodaysScore(null);
+        }
+      } catch (err) {
+        setAlreadySubmittedToday(false);
+        setTodaysScore(null);
+      }
+    };
+    checkAlreadySubmitted();
+  }, [username, activeTab]);
+
   const handleLogin = (e) => {
     e.preventDefault();
-    if (username.trim().length < 3) return;
-    setCookie("wordle-username", username.trim());
+    const trimmed = username.trim();
+    // Only allow a-z, A-Z, and spaces, 3-20 chars
+    const valid = /^[a-zA-Z ]{3,20}$/.test(trimmed);
+    if (!valid) {
+      alert("Name must be 3-20 letters or spaces (a-z, A-Z, space) only.");
+      return;
+    }
+    setCookie("wordle-username", trimmed);
     setIsLoggedIn(true);
   };
 
@@ -691,16 +754,18 @@ const InputForm = ({
 
   // Create confetti pieces
   const createConfetti = () => {
-    const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+    const colors = [
+      '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+      '#FFB347', '#B39DDB', '#F06292', '#81C784', '#FF8A65', '#90CAF9'
+    ];
     const pieces = [];
-    
-    for (let i = 0; i < 50; i++) {
+    const confettiCount = 120;
+    for (let i = 0; i < confettiCount; i++) {
       // Generate random angle and distance for burst effect
-      const angle = (Math.PI * 2 * i) / 50 + Math.random() * 0.5; // Distribute around circle with some randomness
-      const distance = 50 + Math.random() * 300; // Random distance from center
+      const angle = (Math.PI * 2 * i) / confettiCount + Math.random() * 0.5;
+      const distance = 180 + Math.random() * 600;
       const endX = Math.cos(angle) * distance;
       const endY = Math.sin(angle) * distance;
-      
       pieces.push(
         <div
           key={i}
@@ -709,10 +774,11 @@ const InputForm = ({
             left: '50%',
             top: '50%',
             backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-            animationDelay: `${Math.random() * 0.5}s`,
-            animationDuration: `${2 + Math.random() * 1}s`,
+            animationDelay: `${Math.random() * 0.7}s`,
+            animationDuration: `${2 + Math.random() * 1.5}s`,
             '--end-x': `${endX}px`,
             '--end-y': `${endY}px`,
+            boxShadow: `0 0 32px 8px ${colors[Math.floor(Math.random() * colors.length)]}55`,
           }}
         />
       );
@@ -1181,7 +1247,6 @@ const InputForm = ({
           marginBottom: "1rem",
           width: "100%"
         }}>
-         
         </div>
         <TabBar />
         <div style={{
@@ -1198,67 +1263,109 @@ const InputForm = ({
         }}>
           {activeTab === "Score Entry" && (
             <div style={{padding: "2rem", display: "flex", justifyContent: "center", width: "100%"}}>
-              <form onSubmit={handleSubmit} className={classes.form}>
-                {/* Mode Selector - moved to the top */}
-                <div className={classes.toggleContainer}>
-                  <div className={classes.modeSelector}>
-                    <button
-                      type="button"
-                      onClick={() => setPasteWordle(false)}
-                      className={`${classes.modeOption} ${!pasteWordle ? classes.activeMode : ''}`}
-                    >
-                      ✏️ Manual Entry
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPasteWordle(true)}
-                      className={`${classes.modeOption} ${pasteWordle ? classes.activeMode : ''}`}
-                    >
-                      📋 Paste Result
-                    </button>
-                  </div>
+              {alreadySubmittedToday ? (
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  padding: "2rem 1rem",
+                  background: "rgba(255,255,255,0.98)",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  fontSize: "1.25rem",
+                  color: "#374151",
+                  fontWeight: "500"
+                }}>
+                  <span
+                    style={{fontSize: "3rem", marginBottom: "1rem", cursor: "pointer", userSelect: "none"}}
+                    title="Celebrate!"
+                    onClick={() => {
+                      setShowConfetti(true);
+                      setTimeout(() => setShowConfetti(false), 4000);
+                    }}
+                  >🎉</span>
+                  <div>Oops - You've already submitted your Wordle score for today.<br />Come back tomorrow for another chance!</div>
+                  {todaysScore && (
+                    <div style={{
+                      marginTop: "1.5rem",
+                      fontSize: "1.1rem",
+                      color: "#2563eb",
+                      background: "#f3f4f6",
+                      borderRadius: "8px",
+                      padding: "1rem 1.5rem",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                      fontWeight: "600"
+                    }}>
+                      <span style={{fontSize: "2rem", marginRight: "0.5rem"}}>{todaysScore.dnf ? "🛑" : "⭐"}</span>
+                      Your score: <span style={{fontWeight: "700", color: "#374151"}}>{todaysScore.guesses}</span>
+                      {todaysScore.dnf && <span style={{marginLeft: "0.5rem", color: "#dc2626"}}>(DNF)</span>}
+                      {todaysScore.hardMode && <span style={{marginLeft: "0.5rem", color: "#374151"}}>🦾 Hard Mode</span>}
+                    </div>
+                  )}
                 </div>
-                
-                {/* Conditionally render fields based on mode */}
-                {!pasteWordle && (
-                  <>
-                    <div className={classes.formGroup}>
-                      <label htmlFor="guesses">Enter your guesses (1-6):</label>
-                      <input
-                        id="guesses"
-                        type="number"
-                        value={guesses}
-                        onChange={e => setGuesses(e.target.value)}
-                        min="1"
-                        max="6"
-                        required={!didNotFinish}
-                        className={classes.input}
-                      />
+              ) : (
+                <form onSubmit={handleSubmit} className={classes.form}>
+                  {/* Mode Selector - moved to the top */}
+                  <div className={classes.toggleContainer}>
+                    <div className={classes.modeSelector}>
+                      <button
+                        type="button"
+                        onClick={() => setPasteWordle(false)}
+                        className={`${classes.modeOption} ${!pasteWordle ? classes.activeMode : ''}`}
+                      >
+                        ✏️ Manual Entry
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPasteWordle(true)}
+                        className={`${classes.modeOption} ${pasteWordle ? classes.activeMode : ''}`}
+                      >
+                        📋 Paste Result
+                      </button>
                     </div>
-                    <div className={classes.checkboxGroup}>
-                      <label className={classes.checkboxWrapper}>
+                  </div>
+                  {/* ...existing code for form fields and submit button... */}
+                  {!pasteWordle && (
+                    <>
+                      <div className={classes.formGroup}>
+                        <label htmlFor="guesses">Enter your guesses (1-6):</label>
                         <input
-                          type="checkbox"
-                          checked={didNotFinish}
-                          onChange={e => setDidNotFinish(e.target.checked)}
-                          className={classes.checkbox}
+                          id="guesses"
+                          type="number"
+                          value={guesses}
+                          onChange={e => setGuesses(e.target.value)}
+                          min="1"
+                          max="6"
+                          required={!didNotFinish}
+                          className={classes.input}
                         />
-                        <span style={{marginLeft: "8px"}}>Did Not Finish (DNF)</span>
-                      </label>
-                    </div>
-                  </>
-                )}
-                
-                {pasteWordle && (
-                  <>
-                    <div className={classes.formGroup}>
-                      <label htmlFor="wordleResult">Paste your Wordle result:</label>
-                      <textarea
-                        id="wordleResult"
-                        value={wordleResult}
-                        onChange={e => setWordleResult(e.target.value)}
-                        className={classes.textarea}
-                        placeholder={`Paste your Wordle result here, for example:
+                      </div>
+                      <div className={classes.checkboxGroup}>
+                        <label className={classes.checkboxWrapper}>
+                          <input
+                            type="checkbox"
+                            checked={didNotFinish}
+                            onChange={e => setDidNotFinish(e.target.checked)}
+                            className={classes.checkbox}
+                          />
+                          <span style={{marginLeft: "8px"}}>Did Not Finish (DNF)</span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+                  {pasteWordle && (
+                    <>
+                      <div className={classes.formGroup}>
+                        <label htmlFor="wordleResult">Paste your Wordle result:</label>
+                        <textarea
+                          id="wordleResult"
+                          value={wordleResult}
+                          onChange={e => setWordleResult(e.target.value)}
+                          className={classes.textarea}
+                          placeholder={`Paste your Wordle result here, for example:
 
 Wordle 1,495 6/6
 
@@ -1268,23 +1375,23 @@ Wordle 1,495 6/6
 ⬛🟩🟩🟩🟩
 ⬛🟩🟩🟩🟩
 🟩🟩🟩🟩🟩`}
-                        style={{
-                          backgroundColor: "white",
-                          cursor: "text"
-                        }}
-                      />
-                    </div>
-                  </>
-                )}
-                
-                <button
-                  type="submit"
-                  className={classes.button}
-                  disabled={loading || !isFormValid()}
-                >
-                  {loading ? "Submitting..." : "Submit Score"}
-                </button>
-              </form>
+                          style={{
+                            backgroundColor: "white",
+                            cursor: "text"
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <button
+                    type="submit"
+                    className={classes.button}
+                    disabled={loading || !isFormValid()}
+                  >
+                    {loading ? "Submitting..." : "Submit Score"}
+                  </button>
+                </form>
+              )}
             </div>
           )}
           {activeTab === "Leaderboard" && (

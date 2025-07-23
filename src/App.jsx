@@ -111,7 +111,7 @@ const App = () => {
   const classes = useStyles();
   const wordle = "ITWORDLE";
   const appVersion = getBuildDateVersion();
-  const classNames = ["green", "yellow", "gray"];
+  const classNames = ["green", "yellow"];
 
   const wordleSpans = wordle.split('').map((char, index) => (
     <span key={index}
@@ -194,7 +194,7 @@ const useStyles = createUseStyles({
   },
   title: {
     color: 'white',
-    fontSize: '3.5rem',
+    fontSize: '3.8rem',
     fontWeight: '900',
     letterSpacing: '-0.02em',
     margin: '1.5rem 0 0 0',
@@ -233,6 +233,7 @@ const useStyles = createUseStyles({
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     padding: '0.75rem 1rem',
     margin: '0.15rem',
     minWidth: '3.5rem',
@@ -241,15 +242,32 @@ const useStyles = createUseStyles({
     textAlign: 'center',
     borderRadius: '6px',
     color: 'white !important',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: '1.4rem',
     boxSizing: 'border-box',
     boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-    transition: 'all 0.2s ease',
+    transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)',
     border: 'none',
+    perspective: '600px',
+    position: 'relative',
+    overflow: 'hidden',
     '&:hover': {
-      transform: 'translateY(-1px)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+      transform: 'rotateY(180deg) scale(1.08)',
+      boxShadow: '0 4px 18px rgba(0,0,0,0.25)',
+      backgroundColor: '#787c7e',
+      color: 'transparent !important',
+    },
+    '&:hover::after': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#787c7e',
+      borderRadius: '6px',
+      zIndex: 2,
+      display: 'block',
     },
     '@media (max-width: 768px)': {
       padding: '0.6rem 0.8rem',
