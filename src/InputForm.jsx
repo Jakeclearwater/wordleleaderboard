@@ -3,6 +3,23 @@ import React, { useState, useEffect } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "./firebase"; // Adjust the import path as necessary
 import axios from "axios"; // For sending HTTP requests
+import Leaderboard from "./Leaderboard";
+import BayesianChart from "./BayesianChart";
+
+// Cookie helpers
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+const setCookie = (name, value, days = 365) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+const TABS = ["Wordle Game", "Score Entry", "Leaderboard", "Chart"];
 
 // Define your styles
 const useStyles = createUseStyles({
@@ -14,7 +31,7 @@ const useStyles = createUseStyles({
     maxWidth: "400px",
     minWidth: "400px",
     margin: "0 auto",
-    gap: "1rem",
+    gap: "1.5rem",
     boxSizing: "border-box",
     "@media (max-width: 480px)": {
       width: "calc(100vw - 2rem)",
@@ -23,35 +40,40 @@ const useStyles = createUseStyles({
       padding: "1rem",
     },
     "& label": {
-      color: "black !important",
-      fontWeight: "400",
+      color: "#374151 !important",
+      fontWeight: "500",
       fontSize: "14px",
-      marginBottom: "0.3rem",
+      marginBottom: "0.5rem",
       display: "block",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     },
   },
   formGroup: {
     display: "flex",
     flexDirection: "column",
     transition: "all 0.2s ease-out",
+    gap: "0.25rem",
   },
   input: {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    fontSize: "16px",
+    padding: "12px 16px",
+    borderRadius: "8px",
+    border: "1px solid #e0e4e7",
+    fontSize: "15px",
     width: "100%",
     boxSizing: "border-box",
-    transition: "border-color 0.2s ease",
+    transition: "all 0.2s ease",
+    background: "white",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     "&:focus": {
       outline: "none",
-      borderColor: "#28a745",
-      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
+      borderColor: "#3b82f6",
+      boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
     },
     "&.disabled": {
       backgroundColor: "#f8f9fa",
       cursor: "not-allowed",
       color: "#6c757d",
+      borderColor: "#dee2e6",
     },
   },
   select: {
@@ -75,35 +97,30 @@ const useStyles = createUseStyles({
     },
   },
   button: {
-    padding: "10px 24px",
+    padding: "12px 24px",
     border: "none",
-    borderRadius: "6px",
-    backgroundColor: "#007bff",
+    borderRadius: "8px",
+    background: "#3b82f6",
     color: "white",
     cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "600",
+    fontSize: "15px",
+    fontWeight: "500",
     width: "100%",
     boxSizing: "border-box",
-    marginTop: "0.3rem",
+    marginTop: "1rem",
     transition: "all 0.2s ease",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     "&:hover": {
-      backgroundColor: "#0056b3",
-      transform: "translateY(-1px)",
-      boxShadow: "0 4px 8px rgba(0, 123, 255, 0.3)",
+      background: "#2563eb",
     },
     "&:active": {
-      transform: "translateY(0)",
+      transform: "translateY(1px)",
     },
     "&.disabled": {
-      backgroundColor: "#6c757d",
+      background: "#d1d5db",
       cursor: "not-allowed",
-      transform: "none",
-      boxShadow: "none",
       "&:hover": {
-        backgroundColor: "#6c757d",
-        transform: "none",
-        boxShadow: "none",
+        background: "#d1d5db",
       },
     },
   },
@@ -123,20 +140,21 @@ const useStyles = createUseStyles({
     accentColor: "#28a745",
   },
   textarea: {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    minHeight: "120px",
+    padding: "12px 16px",
+    borderRadius: "8px",
+    border: "1px solid #e0e4e7",
+    minHeight: "100px",
     width: "100%",
     boxSizing: "border-box",
     fontSize: "14px",
-    fontFamily: "monospace",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Mono', Consolas, monospace",
     resize: "vertical",
-    transition: "all 0.2s ease-out",
+    transition: "all 0.2s ease",
+    background: "white",
     "&:focus": {
       outline: "none",
-      borderColor: "#28a745",
-      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
+      borderColor: "#3b82f6",
+      boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
     },
   },
   overlay: {
@@ -188,19 +206,18 @@ const useStyles = createUseStyles({
     }
   },
   toggleButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#3b82f6",
     color: "white",
     border: "none",
-    borderRadius: "50%",
-    width: "50px",
-    height: "50px",
-    minWidth: "50px",
-    minHeight: "50px",
-    fontSize: "24px",
-    fontWeight: "600",
+    borderRadius: "8px",
+    width: "36px",
+    height: "36px",
+    minWidth: "36px",
+    minHeight: "36px",
+    fontSize: "16px",
+    fontWeight: "500",
     cursor: "pointer",
-    transition: "transform 0.2s ease",
-    margin: "0 auto 1rem auto",
+    transition: "all 0.2s ease",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -209,10 +226,10 @@ const useStyles = createUseStyles({
     aspectRatio: "1",
     lineHeight: "1",
     "&:hover": {
-      backgroundColor: "#0056b3",
+      backgroundColor: "#2563eb",
     },
     "&:active": {
-      transform: "translateY(0)",
+      transform: "scale(0.95)",
     },
   },
   toggleContainer: {
@@ -220,8 +237,40 @@ const useStyles = createUseStyles({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    marginTop: "0.5rem",
+    marginTop: "1rem",
     marginBottom: "1rem",
+  },
+  modeSelector: {
+    display: "flex",
+    background: "#f3f4f6",
+    borderRadius: "8px",
+    padding: "4px",
+    border: "1px solid #e5e7eb",
+  },
+  modeOption: {
+    flex: 1,
+    padding: "8px 16px",
+    borderRadius: "6px",
+    border: "none",
+    background: "transparent",
+    color: "#6b7280",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: "500",
+    transition: "all 0.2s ease",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "&:hover": {
+      color: "#374151",
+    },
+  },
+  activeMode: {
+    background: "white",
+    color: "#1f2937",
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+    fontWeight: "600",
+    "&:hover": {
+      color: "#1f2937",
+    },
   },
   formContainer: {
     overflow: "hidden",
@@ -247,11 +296,18 @@ const useStyles = createUseStyles({
   }
 });
 
-const InputForm = () => {
+const InputForm = ({ 
+  backgroundThemes, 
+  selectedTheme, 
+  setSelectedTheme, 
+  customColors, 
+  setCustomColors, 
+  getCurrentGradient 
+}) => {
   const classes = useStyles();
-  const [name, setName] = useState("");
-  const [customName, setCustomName] = useState("");
-  const [isCustomName, setIsCustomName] = useState(false);
+  const [username, setUsername] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeTab, setActiveTab] = useState(TABS[0]);
   const [guesses, setGuesses] = useState("");
   const [didNotFinish, setDidNotFinish] = useState(false);
   const [wordleResult, setWordleResult] = useState("");
@@ -259,82 +315,379 @@ const InputForm = () => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [pasteWordle, setPasteWordle] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [testConfetti, setTestConfetti] = useState(false);
   const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   useEffect(() => {
-    const lastChosenName = localStorage.getItem("lastChosenName");
-    if (lastChosenName) {
-      if (names.includes(lastChosenName)) {
-        setName(lastChosenName);
-      } else {
-        setCustomName(lastChosenName);
-        setName("__new__");
-        setIsCustomName(true);
-      }
+    const cookieUser = getCookie("wordle-username");
+    if (cookieUser) {
+      setUsername(cookieUser);
+      setIsLoggedIn(true);
     }
   }, []);
 
-  const handleNameChange = (event) => {
-    const newName = event.target.value;
-    setName(newName);
-    if (newName === "__new__") {
-      setIsCustomName(true);
-    } else {
-      setIsCustomName(false);
-      localStorage.setItem("lastChosenName", newName);
-    }
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (username.trim().length < 3) return;
+    setCookie("wordle-username", username.trim());
+    setIsLoggedIn(true);
   };
 
-  const handleCustomNameChange = (event) => {
-    const newCustomName = event.target.value;
-    // Only allow letters (a-z, A-Z) and spaces, up to 12 characters max
-    // Allow 0+ characters during typing, but we'll validate 3+ on submission
-    const isValid = /^[a-zA-Z ]{0,12}$/.test(newCustomName);
-    
-    if (isValid) {
-      setCustomName(newCustomName);
-      if (newCustomName && newCustomName.length >= 3) {
-        localStorage.setItem("lastChosenName", newCustomName);
-      }
-    }
-    // If invalid, don't update the state (effectively blocking the input)
+  const handleLogout = () => {
+    setCookie("wordle-username", "", -1);
+    setIsLoggedIn(false);
+    setUsername("");
   };
 
-  const handlePasteWordleChange = (e) => {
-    const isChecked = e.target.checked;
-    setPasteWordle(isChecked);
-    
-    // Clear DNF checkbox and guesses when Paste Wordle Output is checked
-    // The DNF status and score will be determined automatically from the pasted content
-    if (isChecked) {
-      setDidNotFinish(false);
-      setGuesses("");
-    }
-  };
+  // Top right login info
+  const TopRightLogin = () => (
+    <div style={{
+      position: "fixed",
+      top: "1rem",
+      right: "1rem",
+      display: "flex",
+      alignItems: "center",
+      gap: "0.75rem",
+      background: "rgba(255, 255, 255, 0.98)",
+      backdropFilter: "blur(8px)",
+      padding: "0.75rem 1rem",
+      borderRadius: "50px",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+      fontSize: "14px",
+      fontWeight: "500",
+      zIndex: 100,
+      border: "1px solid rgba(255, 255, 255, 0.3)",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    }}>
+      {isLoggedIn && (
+        <>
+          <span style={{color: "#374151"}}>Welcome, {username}</span>
+          
+          {/* Settings Button */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                border: "none",
+                background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                transition: "all 0.2s ease",
+                position: "relative"
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = "scale(1.1)";
+                e.target.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.25)";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = "scale(1)";
+                e.target.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.15)";
+              }}
+              onClick={() => setShowSettings(!showSettings)}
+              title="Settings & Options"
+            >
+              <span style={{
+                color: "white",
+                fontSize: "16px",
+                textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)"
+              }}>
+                ⚙️
+              </span>
+            </button>
+            
+            {/* Settings Dropdown */}
+            {showSettings && (
+              <div style={{
+                position: 'absolute',
+                top: '35px',
+                right: '0',
+                width: '320px',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(15px)',
+                borderRadius: '12px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                padding: '0',
+                zIndex: 1000
+              }}>
+                {/* Header */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '12px 16px',
+                  borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  borderRadius: '12px 12px 0 0'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#333'
+                  }}>
+                    🎨 Background Themes
+                  </span>
+                  <button 
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      color: '#666',
+                      padding: '4px'
+                    }}
+                    onClick={() => setShowSettings(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                {/* Theme Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '8px',
+                  padding: '12px'
+                }}>
+                  {backgroundThemes && Object.entries(backgroundThemes).filter(([key]) => key !== 'custom').map(([key, theme]) => (
+                    <button
+                      key={key}
+                      style={{
+                        height: '50px',
+                        border: selectedTheme === key ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease',
+                        boxShadow: selectedTheme === key ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                        background: theme.gradient,
+                        transform: selectedTheme === key ? 'translateY(-2px)' : 'translateY(0)'
+                      }}
+                      onClick={() => setSelectedTheme(key)}
+                      title={theme.name}
+                      onMouseOver={(e) => {
+                        if (selectedTheme !== key) {
+                          e.target.style.transform = 'translateY(-1px)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (selectedTheme !== key) {
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                        }
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '4px',
+                        left: '8px',
+                        right: '8px',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
+                        textAlign: 'center',
+                        lineHeight: '1.2'
+                      }}>
+                        {theme.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Custom Colors Section */}
+                <div style={{
+                  borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+                  padding: '12px',
+                  backgroundColor: 'rgba(248, 249, 250, 0.8)'
+                }}>
+                  <div style={{
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: '8px'
+                  }}>
+                    🎨 Custom Colors
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    marginBottom: '8px'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{
+                        fontSize: '10px',
+                        color: '#666',
+                        fontWeight: '500',
+                        display: 'block',
+                        marginBottom: '2px'
+                      }}>
+                        Color 1:
+                      </label>
+                      <input
+                        type="color"
+                        value={customColors ? customColors.color1 : '#667eea'}
+                        onChange={(e) => setCustomColors && setCustomColors(prev => ({ ...prev, color1: e.target.value }))}
+                        style={{
+                          width: '100%',
+                          height: '32px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{
+                        fontSize: '10px',
+                        color: '#666',
+                        fontWeight: '500',
+                        display: 'block',
+                        marginBottom: '2px'
+                      }}>
+                        Color 2:
+                      </label>
+                      <input
+                        type="color"
+                        value={customColors ? customColors.color2 : '#764ba2'}
+                        onChange={(e) => setCustomColors && setCustomColors(prev => ({ ...prev, color2: e.target.value }))}
+                        style={{
+                          width: '100%',
+                          height: '32px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    style={{
+                      width: '100%',
+                      height: '40px',
+                      border: selectedTheme === 'custom' ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      background: customColors ? `linear-gradient(135deg, ${customColors.color1} 0%, ${customColors.color2} 100%)` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
+                      transition: 'all 0.2s ease',
+                      boxShadow: selectedTheme === 'custom' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)'
+                    }}
+                    onClick={() => setSelectedTheme('custom')}
+                  >
+                    Use Custom
+                  </button>
+                </div>
+                
+                {/* Logout Section */}
+                <div style={{
+                  borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+                  padding: '12px',
+                  backgroundColor: 'rgba(248, 249, 250, 0.8)'
+                }}>
+                  <button 
+                    style={{
+                      width: '100%',
+                      fontSize: "14px", 
+                      padding: "10px 16px", 
+                      borderRadius: "8px",
+                      border: "none",
+                      background: "#dc2626",
+                      color: "white",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      transition: "all 0.2s ease",
+                      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px"
+                    }} 
+                    onMouseOver={(e) => e.target.style.background = "#b91c1c"}
+                    onMouseOut={(e) => e.target.style.background = "#dc2626"}
+                    onClick={handleLogout}
+                  >
+                    <span>🚪</span>
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
 
-  const names = [
-    "Shay",
-    "Damien",
-    "Jake",
-    "Michael",
-    "Nick T",
-    "Nick M",
-    "Andy",
-    "Brett",
-    "Jordan",
-    "Jeff",
-    "Katie",
-    "Ryan D",
-    "James",
-    "Ryan",
-    "Ronan",
-    "Sean",
-    "Don",
-    "Simon",
-    "Cam",
-    "Callum"
-  ];
+  // Tab navigation
+  const TabBar = () => (
+    <div style={{
+      display: "flex",
+      justifyContent: "flex-start",
+      alignItems: "flex-end",
+      margin: "0 0 0 0",
+      position: "relative",
+      height: "50px",
+      maxWidth: "600px",
+      width: "600px",
+      zIndex: 10
+    }}>
+      {TABS.map((tab, idx) => (
+        <button
+          key={tab}
+          style={{
+            flex: 1,
+            maxWidth: "180px",
+            position: "relative",
+            zIndex: activeTab === tab ? 3 : 1,
+            fontWeight: activeTab === tab ? "600" : "500",
+            fontSize: "14px",
+            padding: activeTab === tab ? "14px 20px 18px 20px" : "10px 16px 14px 16px",
+            borderRadius: "8px 8px 0 0",
+            border: "none",
+            background: activeTab === tab 
+              ? "rgba(255, 255, 255, 0.98)" 
+              : "rgba(255, 255, 255, 0.6)",
+            backdropFilter: "blur(8px)",
+            color: activeTab === tab ? "#1a1a1a" : "#555",
+            boxShadow: activeTab === tab 
+              ? "none" 
+              : "0 2px 4px rgba(0,0,0,0.05)",
+            marginRight: idx < TABS.length - 1 ? "4px" : "0",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            outline: "none",
+            transform: activeTab === tab ? "translateY(1px)" : "translateY(0)",
+            borderBottom: activeTab === tab ? "none" : "1px solid rgba(255, 255, 255, 0.3)",
+          }}
+          onMouseOver={(e) => {
+            if (activeTab !== tab) {
+              e.target.style.background = "rgba(255, 255, 255, 0.75)";
+              e.target.style.color = "#333";
+            }
+          }}
+          onMouseOut={(e) => {
+            if (activeTab !== tab) {
+              e.target.style.background = "rgba(255, 255, 255, 0.6)";
+              e.target.style.color = "#555";
+            }
+          }}
+          onClick={() => setActiveTab(tab)}
+        >{tab}</button>
+      ))}
+    </div>
+  );
 
   // Create confetti pieces
   const createConfetti = () => {
@@ -369,40 +722,38 @@ const InputForm = () => {
 
   
     const parseWordleResult = (result) => {
-    const lines = result.toString().trim().split("\n");
-    const metadataLine = lines[0].trim(); // The first line contains the metadata
+      const lines = result.toString().trim().split("\n");
+      const metadataLine = lines[0].trim();
 
-    console.log("Metadata Line:", metadataLine); // Debugging line
+      // Check for hard mode asterisk
+      const hardMode = metadataLine.endsWith("*");
+      // Remove asterisk for parsing
+      const cleanMetadataLine = hardMode ? metadataLine.slice(0, -1).trim() : metadataLine;
 
-    // Regular expressions to match different formats
-    const metadataMatch = metadataLine.charAt(metadataLine.length - 3);
-    const wordleNumber = metadataLine.split(" ")[1];
-    let numberOfGuesses = 0;
-    let isDNF = false;
-    if (!(parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
-      console.log("not found integer must be x ", metadataMatch); // Debugging line
-      isDNF = true;
-    } else {
-      numberOfGuesses = parseInt(metadataMatch, 10);
-    }
+      // Regular expressions to match different formats
+      const metadataMatch = cleanMetadataLine.charAt(cleanMetadataLine.length - 3);
+      const wordleNumber = cleanMetadataLine.split(" ")[1];
+      let numberOfGuesses = 0;
+      let isDNF = false;
+      if (!(parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
+        isDNF = true;
+      } else {
+        numberOfGuesses = parseInt(metadataMatch, 10);
+      }
 
-    // Extract the result blocks (lines) from the remaining part
-    const resultBlocks = lines.slice(2, lines.length);
+      // Extract the result blocks (lines) from the remaining part
+      const resultBlocks = lines.slice(2, lines.length);
 
-    console.log("Number of Guesses: ", numberOfGuesses); // Debugging line
-    console.log("Wordle Result", wordleNumber);
-    console.log("Meta-dataMatch: ", metadataMatch);
-    console.log("Result Blocks: ", resultBlocks); // Debugging line
-
-    return [numberOfGuesses, wordleNumber, resultBlocks, isDNF]; // Return as a tuple
-  };
+      return [numberOfGuesses, wordleNumber, resultBlocks, isDNF, hardMode]; // Add hardMode to tuple
+    };
 
   const sendResultToTeams = async (
     numGuesses,
     wordleNumber,
     name,
     didNotFinish,
-    resultBlocks
+    resultBlocks,
+    hardMode = false // Add default value
   ) => {
     const grats = [
       "Genius",
@@ -416,7 +767,7 @@ const InputForm = () => {
     const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
 
     // Format the message consistently for all scores (1-6 guesses + DNF as 7)
-    const messageText = `${name} scored ${numGuesses} in Wordle #${wordleNumber} - ${grats[numGuesses - 1]}`;
+    const messageText = `${name} scored ${numGuesses} in Wordle #${wordleNumber} - ${grats[numGuesses - 1]}${hardMode ? ' 🦾' : ''}`;
 
     // Map the result blocks to TextBlocks with compact styling
     const textBlocks = resultBlocks.map((line) => ({
@@ -468,7 +819,7 @@ const InputForm = () => {
     setShowOverlay(true);
 
     // Get the final name to use
-    const finalName = isCustomName ? customName.trim() : name;
+    const finalName = username.trim();
 
     if (!finalName) {
       alert("Please provide your name.");
@@ -478,7 +829,7 @@ const InputForm = () => {
     }
 
     // Validate custom name length (3-12 characters)
-    if (isCustomName && (finalName.length < 3 || finalName.length > 12)) {
+    if (finalName.length < 3 || finalName.length > 12) {
       alert("Name must be between 3 and 12 characters long.");
       setLoading(false);
       setShowOverlay(false);
@@ -490,10 +841,11 @@ const InputForm = () => {
     let wordleNumber = '';
     let resultBlocks = [];
     let isDNF = didNotFinish; // Start with the checkbox value
+    let hardMode = false; // Default hard mode to false
     
     if (pasteWordle && wordleResult.trim().length > 0) {
       // Parse the pasted result
-      const [parsedWordleGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF] = 
+      const [parsedWordleGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF, parsedHardMode] = 
         parseWordleResult(wordleResult);
       
       // Check for conflict between pasted result and DNF checkbox
@@ -524,6 +876,8 @@ const InputForm = () => {
       // Set the values from parsing
       wordleNumber = parsedWordleNumber;
       resultBlocks = parsedResultBlocks;
+      // Add hardMode
+      hardMode = parsedHardMode;
     } else {
       // Manual entry - if DNF, set to 7, otherwise use the entered guesses
       finalGuesses = isDNF ? 7 : parseInt(guesses, 10) || 0;
@@ -540,7 +894,7 @@ const InputForm = () => {
     const isWordleResultPasted = wordleResult.trim().length > 0;
     const isNumGuessesProvided = parseInt(guesses, 10) > 0;
 
-    if (!name) {
+    if (!finalName) {
       alert("Please provide your name.");
       setLoading(false);
       setShowOverlay(false);
@@ -625,11 +979,12 @@ const InputForm = () => {
       // Store in Firestore - ensure guesses is 7 for DNF and include dnf flag
       await addDoc(collection(firestore, "scores"), {
         name: finalName,
-        guesses: isDNF ? 7 : finalGuesses, // Explicitly set 7 for DNF
+        guesses: isDNF ? 7 : finalGuesses,
         date: formattedNZDate,
-        isoDate: isoDateTime, // Add ISO datetime field
-        dnf: isDNF, // Add DNF flag to database
-        wordleNumber: wordleNumber || null, // Store Wordle number if available
+        isoDate: isoDateTime,
+        dnf: isDNF,
+        wordleNumber: wordleNumber || null,
+        hardMode: hardMode, // Save hardMode boolean
       });
 
       // Reset form
@@ -654,7 +1009,8 @@ const InputForm = () => {
           wordleNumber,
           finalName,
           isDNF,        // Use the calculated isDNF
-          resultBlocks
+          resultBlocks,
+          hardMode      // Pass hardMode to webhook
         );
       } else if (!pasteWordle && (isNumGuessesProvided || isDNF)) {
         // Send webhook for manual entries (both scored and DNF)
@@ -663,7 +1019,8 @@ const InputForm = () => {
           wordleNumber || "Unknown", 
           finalName, 
           isDNF, 
-          []
+          [],
+          hardMode      // Pass hardMode to webhook (will be false)
         );
       }
     } catch (error) {
@@ -672,6 +1029,8 @@ const InputForm = () => {
       setLoading(false);
       setTimeout(() => {
         setShowOverlay(false);
+        // Switch to Leaderboard tab after overlay disappears
+        setActiveTab("Leaderboard");
       }, 3000);
     }
   };
@@ -690,13 +1049,13 @@ const InputForm = () => {
 
   // Check if form is valid for submit button state
   const isFormValid = () => {
-    const finalName = isCustomName ? customName.trim() : name;
+    const finalName = username.trim();
     
     // Must have a name
     if (!finalName) return false;
     
     // Custom name must be 3-12 characters
-    if (isCustomName && (finalName.length < 3 || finalName.length > 12)) return false;
+    if (finalName.length < 3 || finalName.length > 12) return false;
     
     // Must have either guesses, DNF, or paste wordle with content
     if (pasteWordle) {
@@ -706,13 +1065,325 @@ const InputForm = () => {
     }
   };
 
+  // Login screen
+  if (!isLoggedIn) {
+    return (
+      <div style={{
+        maxWidth: "400px", 
+        margin: "4rem auto", 
+        padding: "2rem", 
+        background: "rgba(255, 255, 255, 0.98)",
+        backdropFilter: "blur(8px)",
+        borderRadius: "12px", 
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+        border: "1px solid rgba(255, 255, 255, 0.3)"
+      }}>
+        <h2 style={{
+          textAlign: "center", 
+          marginBottom: "2rem",
+          color: "#1a1a1a",
+          fontWeight: "600",
+          fontSize: "24px",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>Wordle Leaderboard</h2>
+        <p style={{
+          textAlign: "center",
+          color: "#6b7280",
+          fontSize: "15px",
+          marginBottom: "2rem",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        }}>Track your Wordle progress and compete with friends</p>
+        <form onSubmit={handleLogin}>
+          <label htmlFor="username" style={{
+            fontWeight: "500", 
+            fontSize: "14px",
+            color: "#374151",
+            display: "block",
+            marginBottom: "0.5rem",
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          }}>Choose Your Name:</label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            minLength={3}
+            maxLength={20}
+            required
+            style={{
+              width: "100%", 
+              padding: "12px 16px", 
+              borderRadius: "8px", 
+              border: "1px solid #e0e4e7", 
+              fontSize: "15px", 
+              marginBottom: "1.5rem",
+              boxSizing: "border-box",
+              transition: "all 0.2s ease",
+              background: "white",
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#3b82f6";
+              e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "#e0e4e7";
+              e.target.style.boxShadow = "none";
+            }}
+            placeholder="Enter your name"
+          />
+          <button type="submit" style={{
+            width: "100%", 
+            padding: "12px 24px", 
+            borderRadius: "8px", 
+            background: "#3b82f6", 
+            color: "white", 
+            fontWeight: "500", 
+            fontSize: "15px", 
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          }}
+          onMouseOver={(e) => {
+            e.target.style.background = "#2563eb";
+          }}
+          onMouseOut={(e) => {
+            e.target.style.background = "#3b82f6";
+          }}
+          onMouseDown={(e) => {
+            e.target.style.transform = "translateY(1px)";
+          }}
+          onMouseUp={(e) => {
+            e.target.style.transform = "translateY(0)";
+          }}
+          >Submit Your Name</button>
+        </form>
+      </div>
+    );
+  }
+
+  // Main app with tabs and content
   return (
     <>
+      <TopRightLogin />
+      <div style={{
+        width: "100%", 
+        maxWidth: "calc(100% - 20px)", 
+        margin: "0 auto", 
+        padding: "2rem 1rem",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
+      }}>
+        <div style={{
+          textAlign: "center",
+          marginBottom: "1rem",
+          width: "100%"
+        }}>
+         
+        </div>
+        <TabBar />
+        <div style={{
+          width: "100%", 
+          background: "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(8px)",
+          borderRadius: "0 0 12px 12px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+          border: "1px solid rgba(255, 255, 255, 0.3)",
+          borderTop: "none",
+          overflow: "hidden",
+          position: "relative",
+          zIndex: 2
+        }}>
+          {activeTab === "Score Entry" && (
+            <div style={{padding: "2rem", display: "flex", justifyContent: "center", width: "100%"}}>
+              <form onSubmit={handleSubmit} className={classes.form}>
+                <div className={classes.formGroup}>
+                  <label htmlFor="guesses">Enter your guesses (1-6):</label>
+                  <input
+                    id="guesses"
+                    type="number"
+                    value={guesses}
+                    onChange={e => setGuesses(e.target.value)}
+                    min="1"
+                    max="6"
+                    required={!pasteWordle && !didNotFinish}
+                    disabled={pasteWordle}
+                    className={`${classes.input} ${pasteWordle ? 'disabled' : ''}`}
+                  />
+                </div>
+                <div className={classes.checkboxGroup}>
+                  <label className={classes.checkboxWrapper}>
+                    <input
+                      type="checkbox"
+                      checked={didNotFinish}
+                      onChange={e => setDidNotFinish(e.target.checked)}
+                      className={classes.checkbox}
+                    />
+                    <span style={{marginLeft: "8px"}}>Did Not Finish (DNF)</span>
+                  </label>
+                </div>
+                <div className={classes.formGroup}>
+                  <label htmlFor="wordleResult">Paste your Wordle result:</label>
+                  <textarea
+                    id="wordleResult"
+                    value={wordleResult}
+                    onChange={e => setWordleResult(e.target.value)}
+                    className={classes.textarea}
+                    placeholder="Paste your Wordle result here"
+                    disabled={!pasteWordle}
+                    style={{
+                      backgroundColor: !pasteWordle ? "#f8f9fa" : "white",
+                      cursor: !pasteWordle ? "not-allowed" : "text"
+                    }}
+                  />
+                </div>
+                <div className={classes.toggleContainer}>
+                  <div className={classes.modeSelector}>
+                    <button
+                      type="button"
+                      onClick={() => setPasteWordle(false)}
+                      className={`${classes.modeOption} ${!pasteWordle ? classes.activeMode : ''}`}
+                    >
+                      ✏️ Manual Entry
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPasteWordle(true)}
+                      className={`${classes.modeOption} ${pasteWordle ? classes.activeMode : ''}`}
+                    >
+                      📋 Paste Result
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className={classes.button}
+                  disabled={loading || !isFormValid()}
+                >
+                  {loading ? "Submitting..." : "Submit Score"}
+                </button>
+              </form>
+            </div>
+          )}
+          {activeTab === "Leaderboard" && (
+            <div style={{padding: "2rem", width: "100%", minHeight: "60vh"}}>
+              <Leaderboard />
+            </div>
+          )}
+          {activeTab === "Chart" && (
+            <div style={{padding: "2rem", width: "100%", minHeight: "60vh"}}>
+              <BayesianChart />
+            </div>
+          )}
+          {activeTab === "Wordle Game" && (
+            <div style={{
+              padding: "2rem", 
+              width: "100%", 
+              minHeight: "60vh",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              gap: "2rem"
+            }}>
+              <div style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "16px",
+                padding: "3rem 2rem",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                maxWidth: "500px",
+                width: "100%"
+              }}>
+                <div style={{
+                  fontSize: "3rem",
+                  marginBottom: "1rem"
+                }}>
+                  🎯
+                </div>
+                <h2 style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "700",
+                  color: "#1a1a1a",
+                  margin: "0 0 1rem 0",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }}>
+                  Play Today's Wordle
+                </h2>
+                <p style={{
+                  fontSize: "1rem",
+                  color: "#6b7280",
+                  margin: "0 0 2rem 0",
+                  lineHeight: "1.5",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }}>
+                  Due to security restrictions, the New York Times Wordle game cannot be embedded directly. Click the button below to open Wordle in a new tab.
+                </p>
+                <button
+                  onClick={() => window.open('https://www.nytimes.com/games/wordle', '_blank', 'noopener,noreferrer')}
+                  style={{
+                    padding: "16px 32px",
+                    borderRadius: "12px",
+                    border: "none",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    margin: "0 auto"
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.3)";
+                  }}
+                  onMouseDown={(e) => {
+                    e.target.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseUp={(e) => {
+                    e.target.style.transform = "translateY(-2px)";
+                  }}
+                >
+                  <span>🔗</span>
+                  Open Wordle Game
+                </button>
+                <div style={{
+                  marginTop: "1.5rem",
+                  fontSize: "0.875rem",
+                  color: "#9ca3af",
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }}>
+                  After playing, come back here to submit your score!
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
       {showOverlay && (
-        <div className={`${classes.overlay} ${loading ? "" : classes.hidden}`}>
-          <div>
-            <h2>Submitting Result...</h2>
-          </div>
+        <div className={`${classes.overlay} ${showOverlay ? '' : classes.hidden}`}>
+          <div style={{
+            background: "rgba(255, 255, 255, 0.95)",
+            color: "#333",
+            padding: "2rem 3rem",
+            borderRadius: "16px",
+            backdropFilter: "blur(10px)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+            fontWeight: "600"
+          }}>Score submitted successfully! 🎉</div>
         </div>
       )}
       {showConfetti && (
@@ -720,127 +1391,6 @@ const InputForm = () => {
           {createConfetti()}
         </div>
       )}
-      
-      <div className={classes.toggleContainer}>
-        <button 
-          className={classes.toggleButton}
-          onClick={() => setIsFormExpanded(!isFormExpanded)}
-          type="button"
-          title={isFormExpanded ? "Hide Score Submission" : "Submit New Score"}
-        >
-          {isFormExpanded ? "▲" : "▼"}
-        </button>
-      </div>
-      
-      <div className={`${classes.formContainer} ${isFormExpanded ? 'expanded' : 'collapsed'}`}>
-        <form onSubmit={handleSubmit} className={classes.form}>
-        <div className={classes.formGroup}>
-          <label htmlFor="name">Name:</label>
-          <select
-            id="name"
-            value={name}
-            onChange={handleNameChange}
-            required={!didNotFinish && !isCustomName}
-            className={classes.select}
-            disabled={didNotFinish}
-          >
-            <option value="" disabled>
-              Select your name
-            </option>
-            {names.map((name, index) => (
-              <option key={index} value={name}>
-                {name}
-              </option>
-            ))}
-            <option value="__new__">Add New Name</option>
-          </select>
-        </div>
-
-        {isCustomName && (
-          <div className={classes.formGroup}>
-            <label htmlFor="customName">Enter your name:</label>
-            <input
-              type="text"
-              id="customName"
-              value={customName}
-              onChange={handleCustomNameChange}
-              required={!didNotFinish && isCustomName}
-              className={`${classes.input} ${didNotFinish ? classes.disabled : ""}`}
-              disabled={didNotFinish}
-              placeholder="Type your name (3-12 characters)"
-              pattern="[a-zA-Z ]{3,12}"
-              title="Name must be 3-12 characters, letters and spaces only"
-              minLength={3}
-              maxLength={12}
-            />
-          </div>
-        )}
-
-        <div className={classes.formGroup}>
-          <label htmlFor="guesses">Number of Guesses:</label>
-          <input
-            type="number"
-            id="guesses"
-            value={didNotFinish ? "" : guesses}
-            onChange={(e) => setGuesses(e.target.value)}
-            min={1}
-            max={6}
-            required={!didNotFinish && !pasteWordle}
-            className={`${classes.input} ${
-              didNotFinish || pasteWordle ? classes.disabled : ""
-            }`}
-            disabled={didNotFinish || pasteWordle}
-            placeholder="Enter 1-6"
-          />
-        </div>
-
-        <div className={classes.checkboxGroup}>
-          <div className={classes.checkboxWrapper}>
-            <input
-              type="checkbox"
-              id="didNotFinish"
-              checked={didNotFinish}
-              onChange={(e) => setDidNotFinish(e.target.checked)}
-              className={classes.checkbox}
-              disabled={pasteWordle}
-            />
-            <label htmlFor="didNotFinish">Did Not Finish</label>
-          </div>
-
-          <div className={classes.checkboxWrapper}>
-            <input
-              type="checkbox"
-              id="pasteWordle"
-              checked={pasteWordle}
-              onChange={handlePasteWordleChange}
-              className={classes.checkbox}
-            />
-            <label htmlFor="pasteWordle">Paste Wordle Output</label>
-          </div>
-        </div>
-
-        {pasteWordle && (
-          <div className={classes.formGroup}>
-            <label htmlFor="wordleResult">Paste your Wordle result:</label>
-            <textarea
-              id="wordleResult"
-              value={wordleResult}
-              onChange={(e) => setWordleResult(e.target.value)}
-              className={classes.textarea}
-              placeholder="Paste your Wordle result here..."
-            />
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className={`${classes.button} ${(!isFormValid() || loading) ? classes.disabled : ""}`}
-          disabled={!isFormValid() || loading}
-        >
-          {loading ? "Submitting..." : "Submit Score"}
-        </button>
-        </form>
-      </div>
     </>
   );
 };
