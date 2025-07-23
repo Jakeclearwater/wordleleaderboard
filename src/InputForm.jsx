@@ -143,7 +143,7 @@ const useStyles = createUseStyles({
     padding: "12px 16px",
     borderRadius: "8px",
     border: "1px solid #e0e4e7",
-    minHeight: "100px",
+    minHeight: "220px",
     width: "100%",
     boxSizing: "border-box",
     fontSize: "14px",
@@ -1199,46 +1199,7 @@ const InputForm = ({
           {activeTab === "Score Entry" && (
             <div style={{padding: "2rem", display: "flex", justifyContent: "center", width: "100%"}}>
               <form onSubmit={handleSubmit} className={classes.form}>
-                <div className={classes.formGroup}>
-                  <label htmlFor="guesses">Enter your guesses (1-6):</label>
-                  <input
-                    id="guesses"
-                    type="number"
-                    value={guesses}
-                    onChange={e => setGuesses(e.target.value)}
-                    min="1"
-                    max="6"
-                    required={!pasteWordle && !didNotFinish}
-                    disabled={pasteWordle}
-                    className={`${classes.input} ${pasteWordle ? 'disabled' : ''}`}
-                  />
-                </div>
-                <div className={classes.checkboxGroup}>
-                  <label className={classes.checkboxWrapper}>
-                    <input
-                      type="checkbox"
-                      checked={didNotFinish}
-                      onChange={e => setDidNotFinish(e.target.checked)}
-                      className={classes.checkbox}
-                    />
-                    <span style={{marginLeft: "8px"}}>Did Not Finish (DNF)</span>
-                  </label>
-                </div>
-                <div className={classes.formGroup}>
-                  <label htmlFor="wordleResult">Paste your Wordle result:</label>
-                  <textarea
-                    id="wordleResult"
-                    value={wordleResult}
-                    onChange={e => setWordleResult(e.target.value)}
-                    className={classes.textarea}
-                    placeholder="Paste your Wordle result here"
-                    disabled={!pasteWordle}
-                    style={{
-                      backgroundColor: !pasteWordle ? "#f8f9fa" : "white",
-                      cursor: !pasteWordle ? "not-allowed" : "text"
-                    }}
-                  />
-                </div>
+                {/* Mode Selector - moved to the top */}
                 <div className={classes.toggleContainer}>
                   <div className={classes.modeSelector}>
                     <button
@@ -1257,6 +1218,65 @@ const InputForm = ({
                     </button>
                   </div>
                 </div>
+                
+                {/* Conditionally render fields based on mode */}
+                {!pasteWordle && (
+                  <>
+                    <div className={classes.formGroup}>
+                      <label htmlFor="guesses">Enter your guesses (1-6):</label>
+                      <input
+                        id="guesses"
+                        type="number"
+                        value={guesses}
+                        onChange={e => setGuesses(e.target.value)}
+                        min="1"
+                        max="6"
+                        required={!didNotFinish}
+                        className={classes.input}
+                      />
+                    </div>
+                    <div className={classes.checkboxGroup}>
+                      <label className={classes.checkboxWrapper}>
+                        <input
+                          type="checkbox"
+                          checked={didNotFinish}
+                          onChange={e => setDidNotFinish(e.target.checked)}
+                          className={classes.checkbox}
+                        />
+                        <span style={{marginLeft: "8px"}}>Did Not Finish (DNF)</span>
+                      </label>
+                    </div>
+                  </>
+                )}
+                
+                {pasteWordle && (
+                  <>
+                    <div className={classes.formGroup}>
+                      <label htmlFor="wordleResult">Paste your Wordle result:</label>
+                      <textarea
+                        id="wordleResult"
+                        value={wordleResult}
+                        onChange={e => setWordleResult(e.target.value)}
+                        className={classes.textarea}
+                        placeholder={`Paste your Wordle result here, for example:
+
+Wordle 1,495 6/6
+
+⬛🟨🟨🟨⬛
+🟨⬛🟨⬛🟨
+⬛🟩🟩🟩⬛
+⬛🟩🟩🟩🟩
+⬛🟩🟩🟩🟩
+🟩🟩🟩🟩🟩`}
+                        style={{
+                          backgroundColor: "white",
+                          cursor: "text"
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+                
                 <button
                   type="submit"
                   className={classes.button}
@@ -1329,7 +1349,7 @@ const InputForm = ({
                     padding: "16px 32px",
                     borderRadius: "12px",
                     border: "none",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                     color: "white",
                     fontSize: "16px",
                     fontWeight: "600",
