@@ -368,24 +368,65 @@ const Leaderboard = () => {
         };
 
         // Weekly grouping - simplified to just average the games played
-        const groupWeeklyScores = (scores) => {
-          const grouped = scores.reduce((acc, score) => {
-            if (!acc[score.name]) {
-              acc[score.name] = { totalGuesses: 0, attempts: 0, playedDays: new Set() };
+        const groupWeeklyScores = (scores, weekStart, weekEnd) => {
+          // Build set of 5 most recent weekdays (Mon-Fri) up to today
+          const daysInWeek = [];
+          let d = new Date(weekEnd); // weekEnd is todayNZ
+          while (daysInWeek.length < 5) {
+            const dayOfWeek = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Mon-Fri only
+              daysInWeek.unshift(new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Pacific/Auckland',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+              }).format(d));
             }
+            d.setDate(d.getDate() - 1);
+          }
+
+          // Only consider scores from those 5 weekdays
+          // For each player, for each day, keep only the best score (lowest guesses)
+          const bestScoresByPlayerDay = {};
+          scores.forEach(score => {
+            const effectiveDate = getEffectiveDate(score);
+            if (!effectiveDate || !daysInWeek.includes(effectiveDate)) return;
+            const name = score.name;
             let guesses = parseFloat(score.guesses);
             if (isNaN(guesses) || guesses === 0) {
               guesses = 7; // DNF = 7
             }
-            acc[score.name].totalGuesses += guesses;
-            acc[score.name].attempts += 1;
-            
-            const effectiveDate = getEffectiveDate(score);
-            if (effectiveDate) {
-              acc[score.name].playedDays.add(effectiveDate);
+            if (!bestScoresByPlayerDay[name]) bestScoresByPlayerDay[name] = {};
+            // If multiple scores for the same day, keep the lowest
+            if (
+              bestScoresByPlayerDay[name][effectiveDate] === undefined ||
+              guesses < bestScoresByPlayerDay[name][effectiveDate]
+            ) {
+              bestScoresByPlayerDay[name][effectiveDate] = guesses;
             }
-            return acc;
-          }, {});
+          });
+
+          // Now build grouped data
+          const grouped = {};
+          Object.keys(bestScoresByPlayerDay).forEach(name => {
+            const scoresObj = bestScoresByPlayerDay[name];
+            const playedDaysArr = Object.keys(scoresObj);
+            const playedDays = new Set(playedDaysArr);
+            let totalGuesses = 0;
+            // Sum best scores for played days
+            playedDaysArr.forEach(day => {
+              totalGuesses += scoresObj[day];
+            });
+            // Add DNF (7) for each missing day
+            const missingDays = daysInWeek.filter(day => !playedDays.has(day));
+            totalGuesses += missingDays.length * 7;
+            // Total games is always 5
+            grouped[name] = {
+              totalGuesses,
+              playedDays: playedDays.size,
+              attempts: 5 // always 5 (played + DNF)
+            };
+          });
 
           return Object.keys(grouped)
             .map(name => {
@@ -393,18 +434,18 @@ const Leaderboard = () => {
               return {
                 name,
                 average: player.totalGuesses / player.attempts,
-                attempts: player.attempts,
-                playedDays: player.playedDays.size,
-                totalGames: player.attempts
+                attempts: player.playedDays, // only count played days for games
+                playedDays: player.playedDays,
+                totalGames: player.playedDays // only count played days for games
               };
             })
-            .filter(player => player.attempts > 0);
+            .filter(player => player.playedDays > 0);
         };
 
         const dailyLeaderboardArray = groupScoresSimple(dailyScores)
           .sort((a, b) => a.average - b.average);
 
-        const weeklyLeaderboardArray = groupWeeklyScores(weeklyScores)
+        const weeklyLeaderboardArray = groupWeeklyScores(weeklyScores, weekAgoNZStr, todayNZ)
           .sort((a, b) => a.average - b.average);
 
         // Compute global mean for Bayesian prior from allTimeScores
@@ -458,20 +499,17 @@ const Leaderboard = () => {
           .map(name => {
             const player = groupedAllTime[name];
             const rawAverage = player.totalGuesses / player.attempts;
-            
-            // Bayesian average with minimum attempts requirement
-            const alpha = Math.min(10, Math.max(3, player.attempts * 0.3)); // Dynamic alpha based on attempts
+
+            // Make alpha (global mean weight) more sensitive to attempts
+            // const alpha = Math.min(20, Math.max(5, player.attempts * 0.3)); // Stronger effect: more games, less prior
+            const alpha = 20;
             const bayesianAverage = (player.totalGuesses + (globalMean * alpha)) / (player.attempts + alpha);
-            
-            // Recency factor (decay over 30 days)
             const daysSinceLastAttempt = Math.max(0, (currentTime - player.lastAttempt) / (1000 * 60 * 60 * 24));
-            const recencyFactor = Math.exp(-daysSinceLastAttempt / 30);
-            
-            // Confidence factor based on number of attempts
-            const confidenceFactor = Math.min(1, player.attempts / 20);
-            
-            // Final adjusted score (lower is better)
-            const adjustedScore = bayesianAverage + (1 - recencyFactor) * 0.5 + (1 - confidenceFactor) * 0.3;
+            const R = 40;
+            const C = 0.3;
+            const recencyFactor = 1 + (daysSinceLast / R);
+            const AttemptsBonus = C * Math.log(player.attempts + 1);
+            const adjustedScore = (bayesianAverage * recencyFactor) - AttemptsBonus;
 
             return {
               name,
@@ -633,11 +671,14 @@ const Leaderboard = () => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   🌅 Today's Leaders
+                  <span title="Shows the best average score for each player for today's Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged.">
+                    🛈
+                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Best performers today</p>
               </div>
               <ul className={classes.leaderboardList}>
-                {dailyLeaderboard.slice(0, 10).map((entry, index) => (
+                {dailyLeaderboard.slice(0, 20).map((entry, index) => (
                   <li key={index} className={classes.leaderboardItem}>
                     <div className={`${classes.rank} ${getRankClass(index)}`}>
                       {getRankIcon(index)}
@@ -669,11 +710,14 @@ const Leaderboard = () => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   📅 This Week
+                  <span title="Shows the best average score for each player over the 5 most recent weekdays (Mon-Fri). For each day, only the best score is counted. Missing days are scored as DNF (7). Only played days are shown as games.">
+                    🛈
+                  </span>
                 </h2>
-                <p className={classes.cardSubtitle}>7-day performance</p>
+                <p className={classes.cardSubtitle}>5-day performance (Mon-Fri)</p>
               </div>
               <ul className={classes.leaderboardList}>
-                {weeklyLeaderboard.slice(0, 10).map((entry, index) => (
+                {weeklyLeaderboard.slice(0, 20).map((entry, index) => (
                   <li key={index} className={classes.leaderboardItem}>
                     <div className={`${classes.rank} ${getRankClass(index)}`}>
                       {getRankIcon(index)}
@@ -698,11 +742,14 @@ const Leaderboard = () => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   🏆 All-Time Champions
+                  <span title="Ranks players by Bayesian average: combines your actual average, a global average prior, and a recency penalty (scores 'rot' if you are inactive). Minimum 3 games required. Lower scores are better.">
+                    🛈
+                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Bayesian-adjusted rankings</p>
               </div>
               <ul className={classes.leaderboardList}>
-                {allTimeLeaderboard.slice(0, 10).map((entry, index) => (
+                {allTimeLeaderboard.slice(0, 20).map((entry, index) => (
                   <li key={index} className={classes.leaderboardItem}>
                     <div className={`${classes.rank} ${getRankClass(index)}`}>
                       {getRankIcon(index)}
@@ -715,7 +762,7 @@ const Leaderboard = () => {
                     </div>
                     <div className={classes.scoreDisplay}>
                       <span className={classes.scoreIcon}>{getScoreIcon(entry.bayesianAverage)}</span>
-                      <span>{entry.bayesianAverage.toFixed(2)}</span>
+                      <span>{entry.adjustedScore.toFixed(2)}</span>
                     </div>
                   </li>
                 ))}
@@ -727,11 +774,14 @@ const Leaderboard = () => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   📈 Pure Averages
+                  <span title="Shows the raw average score for each player with at least 5 games. No Bayesian adjustment or recency penalty. DNF (Did Not Finish) is scored as 7.">
+                    🛈
+                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Raw averages (5+ games)</p>
               </div>
               <ul className={classes.leaderboardList}>
-                {rawAverageLeaderboard.slice(0, 10).map((entry, index) => (
+                {rawAverageLeaderboard.slice(0, 20).map((entry, index) => (
                   <li key={index} className={classes.leaderboardItem}>
                     <div className={`${classes.rank} ${getRankClass(index)}`}>
                       {getRankIcon(index)}
@@ -756,11 +806,14 @@ const Leaderboard = () => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   🚀 Most Active
+                  <span title="Lists players by total games played. Shows their average score. All games count, including DNFs (scored as 7).">
+                    🛈
+                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Players by total games</p>
               </div>
               <ul className={classes.leaderboardList}>
-                {allAttemptsLeaderboard.slice(0, 10).map((entry, index) => (
+                {allAttemptsLeaderboard.slice(0, 20).map((entry, index) => (
                   <li key={index} className={classes.leaderboardItem}>
                     <div className={`${classes.rank} ${getRankClass(index)}`}>
                       {getRankIcon(index)}
@@ -786,6 +839,9 @@ const Leaderboard = () => {
                 <div className={classes.cardHeader}>
                   <h2 className={classes.cardTitle}>
                     🥄 Wooden Spoon
+                    <span title="Shows players with the most DNFs (Did Not Finish, scored as 7) this week. Only games from the 5 most recent weekdays are counted.">
+                      🛈
+                    </span>
                   </h2>
                   <p className={classes.cardSubtitle}>Most DNFs this week</p>
                 </div>
