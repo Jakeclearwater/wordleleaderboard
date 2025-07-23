@@ -504,11 +504,15 @@ const Leaderboard = () => {
             // const alpha = Math.min(20, Math.max(5, player.attempts * 0.3)); // Stronger effect: more games, less prior
             const alpha = 20;
             const bayesianAverage = (player.totalGuesses + (globalMean * alpha)) / (player.attempts + alpha);
+
+            // Recency factor: decay over 15 days (was 30)
             const daysSinceLastAttempt = Math.max(0, (currentTime - player.lastAttempt) / (1000 * 60 * 60 * 24));
-            const R = 40;
-            const C = 0.3;
-            const recencyFactor = 1 + (daysSinceLast / R);
+            // const recencyFactor = Math.exp(-daysSinceLastAttempt / 15); // Faster decay
+            const R = 30;
+            const C = 0.2;
+            const recencyFactor = 1 + (daysSinceLastAttempt / R);
             const AttemptsBonus = C * Math.log(player.attempts + 1);
+            // const confidenceFactor = Math.min(1, player.attempts / R);
             const adjustedScore = (bayesianAverage * recencyFactor) - AttemptsBonus;
 
             return {
@@ -516,7 +520,6 @@ const Leaderboard = () => {
               bayesianAverage,
               rawAverage,
               recencyFactor,
-              confidenceFactor,
               adjustedScore,
               attempts: player.attempts,
               average: rawAverage,
