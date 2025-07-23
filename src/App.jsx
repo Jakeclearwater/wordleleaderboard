@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import InputForm from './InputForm';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
@@ -16,10 +16,93 @@ const getBuildDateVersion = () => {
   return `${day}${month}${year}${hours}${minutes}${seconds}`;
 };
 
+// Cookie helper functions
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const setCookie = (name, value, days = 365) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+// Predefined background themes
+const backgroundThemes = {
+  default: {
+    name: '🌈 Default Purple',
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+  },
+  ocean: {
+    name: '🌊 Ocean Blue',
+    gradient: 'linear-gradient(135deg, #667db6 0%, #0082c8 50%, #0082c8 100%)'
+  },
+  sunset: {
+    name: '🌅 Sunset Orange',
+    gradient: 'linear-gradient(135deg, #ff9a56 0%, #ff6b6b 50%, #c44569 100%)'
+  },
+  forest: {
+    name: '🌲 Forest Green',
+    gradient: 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)'
+  },
+  midnight: {
+    name: '🌙 Midnight Blue',
+    gradient: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)'
+  },
+  aurora: {
+    name: '✨ Aurora',
+    gradient: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)'
+  },
+  cherry: {
+    name: '🌸 Cherry Blossom',
+    gradient: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)'
+  },
+  cosmic: {
+    name: '🚀 Cosmic',
+    gradient: 'linear-gradient(135deg, #8360c3 0%, #2ebf91 100%)'
+  },
+  monochrome: {
+    name: '⚫ Monochrome',
+    gradient: 'linear-gradient(135deg, #434343 0%, #000000 100%)'
+  },
+  custom: {
+    name: '🎨 Custom',
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+  }
+};
+
 const App = () => {
+  // Background theme state with cookie persistence
+  const [selectedTheme, setSelectedTheme] = useState(() => getCookie('background-theme') || 'default');
+  const [customColors, setCustomColors] = useState(() => {
+    const saved = getCookie('custom-background-colors');
+    return saved ? JSON.parse(saved) : { color1: '#667eea', color2: '#764ba2' };
+  });
+  const [showBackgroundPicker, setShowBackgroundPicker] = useState(false);
+
+  // Save theme preference to cookies
+  useEffect(() => {
+    setCookie('background-theme', selectedTheme);
+  }, [selectedTheme]);
+
+  // Save custom colors to cookies
+  useEffect(() => {
+    setCookie('custom-background-colors', JSON.stringify(customColors));
+  }, [customColors]);
+
+  // Get current gradient based on selected theme
+  const getCurrentGradient = () => {
+    if (selectedTheme === 'custom') {
+      return `linear-gradient(135deg, ${customColors.color1} 0%, ${customColors.color2} 100%)`;
+    }
+    return backgroundThemes[selectedTheme]?.gradient || backgroundThemes.default.gradient;
+  };
+
   const gradientStyle = {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    
+    background: getCurrentGradient(),
     minHeight: '100vh',
     width: '100%',
     margin: 0,
@@ -49,10 +132,18 @@ const App = () => {
   return (
     <div className={classes.App} style={gradientStyle}>
       <div id="backgroundOverlay" className={classes.overlay}></div>
+
       <div className={classes.container}>
         <p><span className={classes.versionInfo}>Build: {appVersion}</span></p>
         <h1 className={classes.title}>{wordleSpans}</h1>
-        <InputForm />
+        <InputForm 
+          backgroundThemes={backgroundThemes}
+          selectedTheme={selectedTheme}
+          setSelectedTheme={setSelectedTheme}
+          customColors={customColors}
+          setCustomColors={setCustomColors}
+          getCurrentGradient={getCurrentGradient}
+        />
         <footer className={classes.footer}>
           <p>Made with 💚 for Wordle enthusiasts · <span className={classes.spanicon} onClick={hack}>Don't break this!</span></p>
         </footer>

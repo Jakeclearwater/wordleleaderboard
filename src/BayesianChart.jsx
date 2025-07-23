@@ -620,92 +620,126 @@ const BayesianChart = () => {
     if (active && payload && payload.length) {
       return (
         <div style={{ 
-          backgroundColor: 'white', 
+          backgroundColor: '#fff', 
           padding: '12px', 
-          border: '1px solid #ccc',
+          border: '1px solid #ddd',
           borderRadius: '6px',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          fontSize: '13px',
-          minWidth: '200px',
-          zIndex: 9999,
-          position: 'relative',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          fontSize: '12px',
+          color: '#333',
+          fontFamily: 'inherit',
+          minWidth: '180px'
         }}>
-          <p style={{ 
-            margin: '0 0 8px 0', 
-            fontWeight: 'bold', 
-            fontSize: '14px', 
-            color: '#333 !important' 
+          {/* Date Header */}
+          <div style={{ 
+            fontWeight: '700', 
+            marginBottom: '8px',
+            color: '#333',
+            fontSize: '13px',
+            borderBottom: '1px solid #eee',
+            paddingBottom: '4px'
           }}>
             📅 {formatDate(label)}
-          </p>
-          {payload.map((entry, index) => {
-            if (entry.dataKey === 'globalAverage') {
-              return (
-                <p key={index} style={{ 
-                  margin: '2px 0', 
-                  color: '#333 !important',
+          </div>
+
+          {/* Global Average Section */}
+          {payload.find(entry => entry.dataKey === 'globalAverage') && (
+            <div style={{ 
+              marginBottom: '8px',
+              padding: '6px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '4px',
+              borderLeft: '3px solid #666'
+            }}>
+              <div style={{ 
+                color: '#666',
+                fontSize: '11px',
+                fontWeight: '600'
+              }}>
+                🌍 Global Bayesian Average
+              </div>
+              <div style={{ 
+                color: '#333',
+                fontSize: '12px',
+                fontWeight: '500',
+                marginTop: '2px'
+              }}>
+                {typeof payload.find(entry => entry.dataKey === 'globalAverage').value === 'number' 
+                  ? payload.find(entry => entry.dataKey === 'globalAverage').value.toFixed(2) 
+                  : payload.find(entry => entry.dataKey === 'globalAverage').value}
+              </div>
+            </div>
+          )}
+
+          {/* User Data Sections */}
+          {payload.filter(entry => entry.dataKey !== 'globalAverage').map((entry, index) => {
+            // Find the user data for this entry
+            const userData = chartData.find(d => d.date === label);
+            const userName = entry.dataKey;
+            const actualAvg = userData ? userData[`${userName}_actual`] : null;
+            const attempts = userData ? userData[`${userName}_attempts`] : null;
+            
+            return (
+              <div key={index} style={{ 
+                marginBottom: index < payload.filter(e => e.dataKey !== 'globalAverage').length - 1 ? '10px' : '0',
+                padding: '8px',
+                backgroundColor: '#fafafa',
+                borderRadius: '4px',
+                borderLeft: `3px solid ${entry.color || '#333'}`
+              }}>
+                {/* User Name */}
+                <div style={{ 
+                  fontWeight: '700',
+                  color: entry.color || '#333',
+                  marginBottom: '4px',
                   fontSize: '13px'
                 }}>
-                  🌍 Bayesian Global Avg: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
-                  <br />
-                  <span style={{ fontSize: '11px', color: '#666 !important' }}>
-                    (Average of all players' Bayesian scores)
-                  </span>
-                </p>
-              );
-            } else {
-              // Find the user data for this entry
-              const userData = chartData.find(d => d.date === label);
-              const userName = entry.dataKey;
-              const actualAvg = userData ? userData[`${userName}_actual`] : null;
-              const attempts = userData ? userData[`${userName}_attempts`] : null;
-              
-              // Get additional recency info from dateData
-              const dateInfo = dateData[label] && dateData[label][userName];
-              const daysSincePlay = dateInfo ? dateInfo.daysSinceLastPlay : null;
-              const recencyFactor = dateInfo ? dateInfo.recencyFactor : null;
-              
-              return (
-                <div key={index} style={{ 
-                  margin: '4px 0', 
-                  padding: '4px', 
-                  backgroundColor: '#f8f9fa', 
-                  borderRadius: '4px' 
-                }}>
-                  <p style={{ 
-                    margin: '0', 
-                    color: '#333 !important',
-                    fontSize: '13px',
-                    fontWeight: '500'
-                  }}>
-                    👤 {userName}
-                  </p>
-                  <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
-                    📊 Bayesian: {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
-                  </p>
-                  {actualAvg && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
-                      📈 Actual Avg: {actualAvg.toFixed(2)}
-                    </p>
-                  )}
-                  {attempts && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
-                      🎯 Attempts: {attempts}
-                    </p>
-                  )}
-                  {daysSincePlay !== null && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
-                      ⏱️ Days since last: {daysSincePlay}
-                    </p>
-                  )}
-                  {recencyFactor && (
-                    <p style={{ margin: '1px 0', fontSize: '12px', color: '#666 !important' }}>
-                      📉 Recency factor: {recencyFactor.toFixed(2)}
-                    </p>
-                  )}
+                  👤 {userName}
                 </div>
-              );
-            }
+                
+                {/* Bayesian Score */}
+                <div style={{ 
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '2px'
+                }}>
+                  <span style={{ color: '#666', fontSize: '11px' }}>📊 Bayesian Score:</span>
+                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '600' }}>
+                    {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+                  </span>
+                </div>
+
+                {/* Actual Average */}
+                {actualAvg && (
+                  <div style={{ 
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '2px'
+                  }}>
+                    <span style={{ color: '#666', fontSize: '11px' }}>📈 Actual Average:</span>
+                    <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                      {actualAvg.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Total Attempts */}
+                {attempts && (
+                  <div style={{ 
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{ color: '#666', fontSize: '11px' }}>🎯 Total Attempts:</span>
+                    <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                      {attempts}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
           })}
         </div>
       );

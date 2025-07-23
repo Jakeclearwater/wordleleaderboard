@@ -74,11 +74,15 @@ const useStyles = createUseStyles({
   },
   columns: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
     gap: '1.5rem',
     width: '100%',
-    maxWidth: '1400px',
+    maxWidth: '1600px',
     margin: '0 auto',
+    '@media (max-width: 1200px)': {
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+      maxWidth: '1400px',
+    },
     '@media (max-width: 768px)': {
       gridTemplateColumns: '1fr',
       gap: '1rem',
@@ -97,11 +101,28 @@ const useStyles = createUseStyles({
   },
   loading: {
     display: 'flex',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     height: '60vh',
     fontSize: '1.2em',
     color: '#666',
+  },
+  dancingCat: {
+    fontSize: '4rem',
+    animation: '$dance 1s ease-in-out infinite alternate',
+    marginBottom: '1rem',
+  },
+  '@keyframes dance': {
+    '0%': {
+      transform: 'rotate(-10deg) scale(1)',
+    },
+    '50%': {
+      transform: 'rotate(0deg) scale(1.1)',
+    },
+    '100%': {
+      transform: 'rotate(10deg) scale(1)',
+    },
   },
   icon: {
     marginRight: '8px',
@@ -135,7 +156,71 @@ const useStyles = createUseStyles({
     marginLeft: 'auto',
     fontWeight: '700',
     fontSize: '16px',
-  }
+  },
+  
+  // Statistics section styles
+  statsContainer: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '1rem',
+    margin: '2rem 0',
+    padding: '0 1rem',
+    maxWidth: '800px',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    '@media (max-width: 768px)': {
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '0.75rem',
+      margin: '1.5rem 0',
+    },
+  },
+  
+  statCard: {
+    background: 'rgba(255, 255, 255, 0.85)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
+    padding: '1.25rem',
+    textAlign: 'center',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.12)',
+      background: 'rgba(255, 255, 255, 0.95)',
+    },
+    '@media (max-width: 768px)': {
+      padding: '1rem',
+    },
+  },
+  
+  statValue: {
+    fontSize: '2rem',
+    fontWeight: '700',
+    color: '#333',
+    margin: '0.5rem 0 0.25rem 0',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    '@media (max-width: 768px)': {
+      fontSize: '1.75rem',
+    },
+  },
+  
+  statLabel: {
+    fontSize: '0.875rem',
+    color: '#666',
+    fontWeight: '500',
+    margin: '0',
+    lineHeight: '1.2',
+  },
+  
+  statIcon: {
+    fontSize: '1.5rem',
+    marginBottom: '0.5rem',
+    display: 'block',
+  },
 });
 
 const grayShades = [
@@ -152,6 +237,12 @@ const Leaderboard = () => {
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
   const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
   const [woodspoonLeaderboard, setWoodspoonLeaderboard] = useState([]);
+  const [stats, setStats] = useState({
+    totalPlayers: 0,
+    activeCompetitors: 0,
+    totalGames: 0,
+    averageScore: 0
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -448,6 +539,37 @@ const Leaderboard = () => {
           entries: groupedWoodspoonScores[name].entries.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date descending
         })).sort((a, b) => b.count - a.count);
 
+        // Calculate statistics
+        const uniquePlayers = new Set(allScores.map(score => score.name));
+        const totalPlayers = uniquePlayers.size;
+        
+        // Active competitors (players who played in the last 7 days)
+        const activeCompetitors = new Set(
+          allScores
+            .filter(score => {
+              const effectiveDate = getEffectiveDate(score);
+              return effectiveDate && effectiveDate >= weekAgoNZStr;
+            })
+            .map(score => score.name)
+        ).size;
+
+        const totalGames = allScores.length;
+        
+        // Calculate average score (treating DNF/invalid as 7)
+        const totalScore = allScores.reduce((sum, score) => {
+          let g = parseFloat(score.guesses);
+          if (isNaN(g) || g === 0) g = 7; // Treat as DNF
+          return sum + g;
+        }, 0);
+        const averageScore = totalGames > 0 ? totalScore / totalGames : 0;
+
+        setStats({
+          totalPlayers,
+          activeCompetitors,
+          totalGames,
+          averageScore
+        });
+
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
         setAllTimeLeaderboard(allTimeLeaderboardArray);
@@ -467,11 +589,40 @@ const Leaderboard = () => {
     <div className={classes.leaderboardContainer}>
       {loading ? (
         <div className={classes.loading}>
-          <BounceLoader color="#555" />
+          <div className={classes.dancingCat}>🐱</div>
+          <div>Loading Wordle results...</div>
         </div>
       ) : (
         <>
           <h1 className={classes.resultsHeader}>Wordle Results</h1>
+          
+          {/* Statistics Section */}
+          <div className={classes.statsContainer}>
+            <div className={classes.statCard}>
+              <span className={classes.statIcon}>👥</span>
+              <div className={classes.statValue}>{stats.totalPlayers}</div>
+              <div className={classes.statLabel}>Total Players</div>
+            </div>
+            
+            <div className={classes.statCard}>
+              <span className={classes.statIcon}>🎮</span>
+              <div className={classes.statValue}>{stats.activeCompetitors}</div>
+              <div className={classes.statLabel}>Active Competitors</div>
+            </div>
+            
+            <div className={classes.statCard}>
+              <span className={classes.statIcon}>📊</span>
+              <div className={classes.statValue}>{stats.totalGames}</div>
+              <div className={classes.statLabel}>Total Games</div>
+            </div>
+            
+            <div className={classes.statCard}>
+              <span className={classes.statIcon}>🎯</span>
+              <div className={classes.statValue}>{stats.averageScore.toFixed(2)}</div>
+              <div className={classes.statLabel}>Average Score</div>
+            </div>
+          </div>
+          
           <div className={classes.columns}>
 
             <section className={classes.col}>
