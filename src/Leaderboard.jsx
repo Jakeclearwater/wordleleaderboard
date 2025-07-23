@@ -7,242 +7,267 @@ import { BounceLoader } from 'react-spinners';
 const useStyles = createUseStyles({
   leaderboardContainer: {
     padding: '0',
-    textAlign: 'center',
     width: '100%',
-    maxWidth: '100%',
-    margin: '0',
-    boxSizing: 'border-box',
-  },
-  title: {
-    fontSize: '18px',
-    textAlign: 'center',
-    color: '#333',
-    marginBottom: '1.5rem',
-    marginTop: '0',
-    fontWeight: '700',
-    lineHeight: '1.2',
-  },
-  list: {
-    listStyleType: 'none',
-    padding: '0',
-    margin: '0',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-  },
-  listItem: {
-    padding: '1rem 1.25rem',
-    background: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '12px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
-    color: '#333',
-    fontSize: '15px',
-    fontWeight: '500',
-    transition: 'all 0.3s ease',
-    cursor: 'help',
-    '&:hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.12)',
-      background: 'rgba(255, 255, 255, 0.9)',
-    },
-  },
-  listItemLast: {
-    // No special styling needed anymore since we removed borders
-  },
-  col: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'stretch',
-    flex: 1,
-    minWidth: '280px',
-    maxWidth: '400px',
-    padding: '1.5rem',
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-    borderRadius: '16px',
-    margin: '0.75rem',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-      transform: 'translateY(-4px)',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
-    },
-  },
-  columns: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '1.5rem',
-    width: '100%',
-    maxWidth: '1600px',
+    maxWidth: '1200px',
     margin: '0 auto',
-    '@media (max-width: 1200px)': {
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      maxWidth: '1400px',
-    },
-    '@media (max-width: 768px)': {
-      gridTemplateColumns: '1fr',
-      gap: '1rem',
-    },
-  },
-  resultsHeader: {
-    color: '#333',
-    fontSize: '2rem',
-    marginTop: '0',
-    marginBottom: '2rem',
-    fontWeight: '700',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-  },
-  loading: {
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '60vh',
-    fontSize: '1.2em',
-    color: '#666',
-  },
-  dancingCat: {
-    fontSize: '4rem',
-    animation: '$dance 1s ease-in-out infinite alternate',
-    marginBottom: '1rem',
-  },
-  '@keyframes dance': {
-    '0%': {
-      transform: 'rotate(-10deg) scale(1)',
-    },
-    '50%': {
-      transform: 'rotate(0deg) scale(1.1)',
-    },
-    '100%': {
-      transform: 'rotate(10deg) scale(1)',
-    },
-  },
-  icon: {
-    marginRight: '8px',
-    fontSize: '16px',
-  },
-  spoon: {
-    marginRight: '8px',
-    fontSize: '16px',
-    filter: 'sepia(1) saturate(2) hue-rotate(15deg)',
-    transform: 'rotate(-8deg)',
-  },
-  rankNumber: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: '24px',
-    height: '24px',
-    borderRadius: '50%',
-    fontSize: '12px',
-    fontWeight: '700',
-    marginRight: '12px',
-    color: 'white',
-    flexShrink: 0,
-  },
-  playerName: {
-    fontWeight: '600',
-    marginRight: '8px',
-    color: '#333',
-  },
-  playerScore: {
-    marginLeft: 'auto',
-    fontWeight: '700',
-    fontSize: '16px',
+    gap: 'var(--space-8)',
   },
   
-  // Statistics section styles
-  statsContainer: {
+  header: {
+    textAlign: 'center',
+    marginBottom: 'var(--space-8)',
+    position: 'relative',
+  },
+  
+  headerTitle: {
+    fontSize: 'clamp(2rem, 5vw, 3rem)',
+    fontWeight: '800',
+    color: 'var(--text-primary, #1f2937)',
+    margin: '0 0 var(--space-3) 0',
+    letterSpacing: '-0.02em',
+    // Remove gradient text effect for better visibility
+    // background: 'var(--gradient-hero)',
+    // backgroundClip: 'text',
+    // WebkitBackgroundClip: 'text',
+    // WebkitTextFillColor: 'transparent',
+    // textFillColor: 'transparent',
+  },
+  
+  headerSubtitle: {
+    fontSize: '1.2rem',
+    color: 'var(--text-secondary, #6b7280)',
+    fontWeight: '400',
+    margin: 0,
+  },
+  
+  statsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '1rem',
-    margin: '2rem 0',
-    padding: '0 1rem',
-    maxWidth: '800px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: 'var(--space-6)',
+    marginBottom: 'var(--space-8)',
     '@media (max-width: 768px)': {
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: '0.75rem',
-      margin: '1.5rem 0',
+      gridTemplateColumns: '1fr',
+      gap: 'var(--space-4)',
     },
   },
   
   statCard: {
-    background: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '12px',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
-    padding: '1.25rem',
-    textAlign: 'center',
-    transition: 'all 0.3s ease',
+    background: 'var(--card-bg, #ffffff)',
+    borderRadius: 'var(--radius-2xl, 1rem)',
+    padding: 'var(--space-8, 2rem)',
+    boxShadow: 'var(--shadow-medium, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06))',
+    border: '1px solid var(--border-light, #e5e7eb)',
+    position: 'relative',
+    overflow: 'hidden',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     '&:hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.12)',
-      background: 'rgba(255, 255, 255, 0.95)',
+      transform: 'translateY(-4px)',
+      boxShadow: 'var(--shadow-large, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05))',
     },
-    '@media (max-width: 768px)': {
-      padding: '1rem',
-    },
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '4px',
+      background: 'var(--gradient-hero, linear-gradient(135deg, #6aaa64 0%, #c9b458 100%))',
+    }
+  },
+  
+  statCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-3)',
+    marginBottom: 'var(--space-4)',
+  },
+  
+  statIcon: {
+    fontSize: '1.5rem',
+    padding: 'var(--space-3, 0.75rem)',
+    borderRadius: 'var(--radius-lg, 0.5rem)',
+    background: 'rgba(106, 170, 100, 0.1)',
+    color: 'var(--wordle-green, #6aaa64)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '48px',
+    minHeight: '48px',
+  },
+  
+  statTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    color: 'var(--text-primary, #1f2937)',
+    margin: 0,
   },
   
   statValue: {
     fontSize: '2rem',
     fontWeight: '700',
-    color: '#333',
-    margin: '0.5rem 0 0.25rem 0',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    color: 'var(--wordle-green, #6aaa64)',
+    margin: '0 0 var(--space-2) 0',
+    lineHeight: 1,
+  },
+  
+  statSubtitle: {
+    fontSize: '0.9rem',
+    color: 'var(--text-secondary, #6b7280)',
+    margin: 0,
+  },
+  
+  leaderboardGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+    gap: 'var(--space-6)',
     '@media (max-width: 768px)': {
-      fontSize: '1.75rem',
+      gridTemplateColumns: '1fr',
+      gap: 'var(--space-4)',
     },
   },
   
-  statLabel: {
-    fontSize: '0.875rem',
-    color: '#666',
-    fontWeight: '500',
-    margin: '0',
-    lineHeight: '1.2',
+  leaderboardCard: {
+    background: 'var(--card-bg, #ffffff)',
+    borderRadius: 'var(--radius-2xl, 1rem)',
+    boxShadow: 'var(--shadow-medium, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06))',
+    border: '1px solid var(--border-light, #e5e7eb)',
+    overflow: 'hidden',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    '&:hover': {
+      transform: 'translateY(-2px)',
+      boxShadow: 'var(--shadow-large, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05))',
+    }
   },
   
-  statIcon: {
-    fontSize: '1.5rem',
-    marginBottom: '0.5rem',
-    display: 'block',
+  cardHeader: {
+    padding: 'var(--space-6, 1.5rem) var(--space-6, 1.5rem) var(--space-4, 1rem)',
+    borderBottom: '1px solid var(--border-light, #e5e7eb)',
+    background: 'linear-gradient(135deg, rgba(106, 170, 100, 0.05) 0%, rgba(201, 180, 88, 0.05) 100%)',
+  },
+  
+  cardTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: 'var(--text-primary, #1f2937)',
+    margin: '0 0 var(--space-1, 0.25rem) 0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-2, 0.5rem)',
+  },
+  
+  cardSubtitle: {
+    fontSize: '0.9rem',
+    color: 'var(--text-secondary, #6b7280)',
+    margin: 0,
+  },
+  
+  leaderboardList: {
+    listStyleType: 'none',
+    padding: 0,
+    margin: 0,
+    maxHeight: '400px',
+    overflowY: 'auto',
+  },
+  
+  leaderboardItem: {
+    padding: 'var(--space-4, 1rem) var(--space-6, 1.5rem)',
+    borderBottom: '1px solid var(--border-light, #e5e7eb)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-4, 1rem)',
+    transition: 'all 0.2s ease',
+    background: 'transparent',
+    '&:hover': {
+      background: 'rgba(106, 170, 100, 0.05)',
+    },
+    '&:last-child': {
+      borderBottom: 'none',
+    },
+  },
+  
+  rank: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: 'var(--text-secondary, #6b7280)',
+    minWidth: '32px',
+    textAlign: 'center',
+  },
+  
+  rankFirst: {
+    color: '#FFD700',
+    fontSize: '1.3rem',
+  },
+  
+  rankSecond: {
+    color: '#C0C0C0',
+    fontSize: '1.2rem',
+  },
+  
+  rankThird: {
+    color: '#CD7F32',
+    fontSize: '1.15rem',
+  },
+  
+  playerInfo: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--space-1, 0.25rem)',
+  },
+  
+  playerName: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: 'var(--text-primary, #1f2937)',
+    margin: 0,
+  },
+  
+  playerStats: {
+    fontSize: '0.85rem',
+    color: 'var(--text-secondary, #6b7280)',
+    margin: 0,
+  },
+  
+  scoreDisplay: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-2, 0.5rem)',
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    color: 'var(--text-primary, #1f2937)',
+  },
+  
+  scoreIcon: {
+    fontSize: '1.2rem',
+  },
+  
+  loading: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '200px',
+    gap: 'var(--space-4, 1rem)',
+  },
+  
+  loadingText: {
+    fontSize: '1.1rem',
+    color: 'var(--text-secondary, #6b7280)',
+    fontWeight: '500',
   },
 });
-
-const grayShades = [
-  '#8a8a8a', '#949494', '#9e9e9e', '#a8a8a8', '#b2b2b2',
-  '#bcbcbc', '#c6c6c6', '#d0d0d0', '#dadada', '#e4e4e4',
-  '#eeeeee', '#f2f2f2', '#f6f6f6', '#f9f9f9', '#fcfcfc',
-  '#fefefe', '#ffffff',
-];
 
 const Leaderboard = () => {
   const classes = useStyles();
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
+  const [rawAverageLeaderboard, setRawAverageLeaderboard] = useState([]);
   const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
   const [woodspoonLeaderboard, setWoodspoonLeaderboard] = useState([]);
-  const [stats, setStats] = useState({
-    totalPlayers: 0,
-    activeCompetitors: 0,
-    totalGames: 0,
-    averageScore: 0
-  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -277,155 +302,85 @@ const Leaderboard = () => {
         const getEffectiveDate = (score) => {
           // Only use isoDate - ignore records without it
           if (score.isoDate) {
-            // Convert ISO datetime to NZ date
-            const isoDate = new Date(score.isoDate);
             return new Intl.DateTimeFormat('en-CA', {
               timeZone: 'Pacific/Auckland',
               year: 'numeric',
               month: '2-digit',
               day: '2-digit'
-            }).format(isoDate);
-          } else {
-            // No isoDate - ignore this record
-            return null;
+            }).format(new Date(score.isoDate));
           }
+          return null;
         };
 
-        // Filter out records without isoDate first, then filter by date range
-        const validScores = allScores.filter(score => score.isoDate);
-
-        const dailyScores = validScores.filter(score => {
+        // Filter scores by time periods
+        const dailyScores = allScores.filter(score => {
           const effectiveDate = getEffectiveDate(score);
           return effectiveDate === todayNZ;
         });
 
-        const weeklyScores = validScores.filter(score => {
+        const weeklyScores = allScores.filter(score => {
           const effectiveDate = getEffectiveDate(score);
-          return effectiveDate >= weekAgoNZStr;
+          return effectiveDate && effectiveDate >= weekAgoNZStr && effectiveDate <= todayNZ;
         });
 
-        // Use only valid scores for all-time leaderboard
-        const allTimeScores = validScores;
+        const allTimeScores = allScores.filter(score => getEffectiveDate(score)); // Only include scores with valid dates
 
-        // Fetch woodspoon leaderboard with guesses=7 (only from valid scores)
-        const woodspoonScores = validScores.filter(score => score.guesses === 7);
-
-        // Also find scores that are 0 or null/undefined to include them as DNFs (only from valid scores)
-        const additionalDNFs = validScores.filter(score => 
-          score.guesses === 0 || score.guesses === null || score.guesses === undefined
-        );
-
-        // Combine both types of DNFs
-        const allDNFScores = [...woodspoonScores, ...additionalDNFs];
-
-        console.log('Total scores fetched:', allScores.length);
-        console.log('Valid scores (with isoDate):', validScores.length);
-        console.log('Daily scores found:', dailyScores.length, dailyScores);
-        console.log('Weekly scores found:', weeklyScores.length);
-        console.log('All time scores found:', allTimeScores.length);
-
-        // For daily: simple averages - treating 0, null, undefined as 7 (DNF)
+        // Simple grouping function for daily leaderboards
         const groupScoresSimple = (scores) => {
-          const grouped = scores.reduce((acc, s) => {
-            // Extract the guesses value
-            let g = parseFloat(s.guesses);
-            
-            // Convert 0, NaN, null, undefined to 7 (DNF)
-            if (isNaN(g) || g === 0) {
-              g = 7;  // Treat as DNF
+          const grouped = scores.reduce((acc, score) => {
+            if (!acc[score.name]) {
+              acc[score.name] = { totalGuesses: 0, attempts: 0 };
             }
-            
-            if (!acc[s.name]) {
-              acc[s.name] = { totalGuesses: 0, attempts: 0 };
+            let guesses = parseFloat(score.guesses);
+            if (isNaN(guesses) || guesses === 0) {
+              guesses = 7; // DNF = 7
             }
-            acc[s.name].totalGuesses += g;
-            acc[s.name].attempts += 1;
+            acc[score.name].totalGuesses += guesses;
+            acc[score.name].attempts += 1;
             return acc;
           }, {});
-          
-          return Object.keys(grouped).map(name => {
-            const { totalGuesses, attempts } = grouped[name];
-            return {
+
+          return Object.keys(grouped)
+            .map(name => ({
               name,
-              average: totalGuesses / attempts
-            };
-          });
+              average: grouped[name].totalGuesses / grouped[name].attempts,
+              attempts: grouped[name].attempts
+            }))
+            .filter(player => player.attempts > 0);
         };
 
-        // For weekly: consider missed weekdays as DNFs (score of 7), excluding weekends
+        // Weekly grouping - simplified to just average the games played
         const groupWeeklyScores = (scores) => {
-          // Get all weekdays (Monday-Friday) in the past 7 days using NZ timezone
-          const weekdays = [];
-          const currentNZTime = new Date();
-          
-          for (let i = 0; i < 7; i++) {
-            const checkDate = new Date(currentNZTime.getTime() - i * 24 * 60 * 60 * 1000);
-            const nzDateStr = new Intl.DateTimeFormat('en-CA', {
-              timeZone: 'Pacific/Auckland',
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            }).format(checkDate);
-            
-            const dayOfWeek = checkDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-            
-            // Only include weekdays (Monday=1 to Friday=5)
-            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-              weekdays.push(nzDateStr);
+          const grouped = scores.reduce((acc, score) => {
+            if (!acc[score.name]) {
+              acc[score.name] = { totalGuesses: 0, attempts: 0, playedDays: new Set() };
             }
-          }
-
-          const grouped = scores.reduce((acc, s) => {
-            // Get effective date using the helper function
-            const effectiveDate = getEffectiveDate(s);
-            
-            // Check if score date is a weekday using the effective date
-            const scoreDate = new Date(effectiveDate + 'T00:00:00');
-            const dayOfWeek = scoreDate.getDay();
-            
-            // Skip weekend scores (Sunday=0, Saturday=6)
-            if (dayOfWeek === 0 || dayOfWeek === 6) {
-              return acc;
+            let guesses = parseFloat(score.guesses);
+            if (isNaN(guesses) || guesses === 0) {
+              guesses = 7; // DNF = 7
             }
+            acc[score.name].totalGuesses += guesses;
+            acc[score.name].attempts += 1;
             
-            // Extract the guesses value
-            let g = parseFloat(s.guesses);
-            
-            // Convert 0, NaN, null, undefined to 7 (DNF)
-            if (isNaN(g) || g === 0) {
-              g = 7;  // Treat as DNF
+            const effectiveDate = getEffectiveDate(score);
+            if (effectiveDate) {
+              acc[score.name].playedDays.add(effectiveDate);
             }
-            
-            if (!acc[s.name]) {
-              acc[s.name] = { 
-                totalGuesses: 0, 
-                playedDays: new Set(),
-                scores: {}
-              };
-            }
-            acc[s.name].totalGuesses += g;
-            acc[s.name].playedDays.add(effectiveDate);
-            acc[s.name].scores[effectiveDate] = g;
             return acc;
           }, {});
-          
-          return Object.keys(grouped).map(name => {
-            const playerData = grouped[name];
-            const playedWeekdaysCount = playerData.playedDays.size;
-            const totalWeekdays = weekdays.length;
-            const missedWeekdaysCount = totalWeekdays - playedWeekdaysCount;
-            
-            // Add 7 points for each missed weekday
-            const totalWithMissedDays = playerData.totalGuesses + (missedWeekdaysCount * 7);
-            
-            return {
-              name,
-              average: totalWeekdays > 0 ? totalWithMissedDays / totalWeekdays : 0, // Divide by actual weekdays
-              playedDays: playedWeekdaysCount,
-              missedDays: missedWeekdaysCount,
-              totalWeekdays: totalWeekdays
-            };
-          });
+
+          return Object.keys(grouped)
+            .map(name => {
+              const player = grouped[name];
+              return {
+                name,
+                average: player.totalGuesses / player.attempts,
+                attempts: player.attempts,
+                playedDays: player.playedDays.size,
+                totalGames: player.attempts
+              };
+            })
+            .filter(player => player.attempts > 0);
         };
 
         const dailyLeaderboardArray = groupScoresSimple(dailyScores)
@@ -449,13 +404,9 @@ const Leaderboard = () => {
         }, { totalGuesses: 0, totalCount: 0 });
 
         const globalMean = allTimeSum.totalCount > 0 ? (allTimeSum.totalGuesses / allTimeSum.totalCount) : 4.5;
-        const alpha = 20;   // Strength of the prior
-        const R = 40;       // Recency scaling factor
-        const C = 0.2;      // Attempts bonus scaling factor
-        const parseDate = (d) => new Date(d);
         const currentTime = new Date();
 
-        // Group for Bayesian leaderboard - now properly handles DNFs
+        // Group for all-time leaderboard - simplified approach
         const groupedAllTime = allTimeScores.reduce((acc, s) => {
           // Extract and normalize guesses
           let g = parseFloat(s.guesses);
@@ -470,13 +421,13 @@ const Leaderboard = () => {
           if (!effectiveDate) return acc;
           
           if (!acc[s.name]) {
-            acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: parseDate(effectiveDate) };
+            acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: new Date(effectiveDate) };
           }
           
           acc[s.name].totalGuesses += g;
           acc[s.name].attempts += 1;
           
-          const attemptDate = parseDate(effectiveDate);
+          const attemptDate = new Date(effectiveDate);
           if (attemptDate > acc[s.name].lastAttempt) {
             acc[s.name].lastAttempt = attemptDate;
           }
@@ -484,360 +435,363 @@ const Leaderboard = () => {
           return acc;
         }, {});
 
-        const computeBayesianFinalScore = (playerData) => {
-          const { totalGuesses, attempts, lastAttempt } = playerData;
-          const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
-          const daysSinceLast = Math.floor((currentTime - lastAttempt) / (24 * 60 * 60 * 1000));
-          const RecencyFactor = 1 + (daysSinceLast / R);
-          const AttemptsBonus = C * Math.log(attempts + 1);
-          const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
-          return { finalScore };
-        };
+        // Calculate Bayesian averages with proper sorting
+        const allTimeLeaderboardArray = Object.keys(groupedAllTime)
+          .map(name => {
+            const player = groupedAllTime[name];
+            const rawAverage = player.totalGuesses / player.attempts;
+            
+            // Bayesian average with minimum attempts requirement
+            const alpha = Math.min(10, Math.max(3, player.attempts * 0.3)); // Dynamic alpha based on attempts
+            const bayesianAverage = (player.totalGuesses + (globalMean * alpha)) / (player.attempts + alpha);
+            
+            // Recency factor (decay over 30 days)
+            const daysSinceLastAttempt = Math.max(0, (currentTime - player.lastAttempt) / (1000 * 60 * 60 * 24));
+            const recencyFactor = Math.exp(-daysSinceLastAttempt / 30);
+            
+            // Confidence factor based on number of attempts
+            const confidenceFactor = Math.min(1, player.attempts / 20);
+            
+            // Final adjusted score (lower is better)
+            const adjustedScore = bayesianAverage + (1 - recencyFactor) * 0.5 + (1 - confidenceFactor) * 0.3;
 
-        const allTimeLeaderboardArray = Object.keys(groupedAllTime).map(name => {
-          const { totalGuesses, attempts, lastAttempt } = groupedAllTime[name];
-          const actualAverage = totalGuesses / attempts; // Calculate actual average
-          const BayesAvg = (totalGuesses + globalMean * alpha) / (attempts + alpha);
-          const daysSinceLast = Math.floor((currentTime - lastAttempt) / (24 * 60 * 60 * 1000));
-          const RecencyFactor = 1 + (daysSinceLast / R);
-          const AttemptsBonus = C * Math.log(attempts + 1);
-          const finalScore = (BayesAvg * RecencyFactor) - AttemptsBonus;
+            return {
+              name,
+              bayesianAverage,
+              rawAverage,
+              recencyFactor,
+              confidenceFactor,
+              adjustedScore,
+              attempts: player.attempts,
+              average: rawAverage,
+              lastAttempt: player.lastAttempt
+            };
+          })
+          .filter(player => player.attempts >= 3) // Minimum 3 games to qualify
+          .sort((a, b) => a.adjustedScore - b.adjustedScore); // Sort by adjusted score (lower is better)
 
+        // Simple raw average leaderboard (minimum 5 games)
+        const rawAverageLeaderboard = Object.keys(groupedAllTime)
+          .map(name => {
+            const player = groupedAllTime[name];
+            return {
+              name,
+              attempts: player.attempts,
+              average: player.totalGuesses / player.attempts
+            };
+          })
+          .filter(player => player.attempts >= 5) // Minimum 5 games for raw average
+          .sort((a, b) => a.average - b.average); // Sort by raw average (lower is better)
+
+        const allAttemptsLeaderboardArray = Object.keys(groupedAllTime).map(name => {
+          const player = groupedAllTime[name];
           return {
             name,
-            finalScore,
-            BayesAvg,
-            RecencyFactor,
-            AttemptsBonus,
-            actualAverage, // Include actual average in the data
+            attempts: player.attempts,
+            average: player.totalGuesses / player.attempts
           };
-        }).sort((a, b) => a.finalScore - b.finalScore);
+        }).sort((a, b) => b.attempts - a.attempts);
 
-        // Attempts leaderboard
-        const allAttemptsLeaderboardArray = Object.keys(groupedAllTime).map(name => ({
-          name,
-          attempts: groupedAllTime[name].attempts
-        })).sort((a, b) => b.attempts - a.attempts);
-
-        // Woodspoon leaderboard - use the combined DNFs
-        const groupedWoodspoonScores = allDNFScores.reduce((acc, score) => {
+        // Wooden spoon leaderboard (most DNFs this week)
+        const woodspoonData = weeklyScores.reduce((acc, score) => {
           if (!acc[score.name]) {
-            acc[score.name] = { count: 0, entries: [] };
+            acc[score.name] = { totalDNFs: 0, attempts: 0 };
           }
-          acc[score.name].count += 1;
-          acc[score.name].entries.push({
-            date: getEffectiveDate(score),
-            wordleNumber: score.wordleNumber,
-            guesses: score.guesses
-          });
+          const guesses = parseFloat(score.guesses);
+          if (isNaN(guesses) || guesses === 0 || guesses === 7 || score.dnf) {
+            acc[score.name].totalDNFs += 1;
+          }
+          acc[score.name].attempts += 1;
           return acc;
         }, {});
-        
-        const woodspoonLeaderboardArray = Object.keys(groupedWoodspoonScores).map(name => ({
-          name,
-          count: groupedWoodspoonScores[name].count,
-          entries: groupedWoodspoonScores[name].entries.sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date descending
-        })).sort((a, b) => b.count - a.count);
 
-        // Calculate statistics
-        const uniquePlayers = new Set(allScores.map(score => score.name));
-        const totalPlayers = uniquePlayers.size;
-        
-        // Active competitors (players who played in the last 7 days)
-        const activeCompetitors = new Set(
-          allScores
-            .filter(score => {
-              const effectiveDate = getEffectiveDate(score);
-              return effectiveDate && effectiveDate >= weekAgoNZStr;
-            })
-            .map(score => score.name)
-        ).size;
-
-        const totalGames = allScores.length;
-        
-        // Calculate average score (treating DNF/invalid as 7)
-        const totalScore = allScores.reduce((sum, score) => {
-          let g = parseFloat(score.guesses);
-          if (isNaN(g) || g === 0) g = 7; // Treat as DNF
-          return sum + g;
-        }, 0);
-        const averageScore = totalGames > 0 ? totalScore / totalGames : 0;
-
-        setStats({
-          totalPlayers,
-          activeCompetitors,
-          totalGames,
-          averageScore
-        });
+        const woodspoonLeaderboardArray = Object.keys(woodspoonData)
+          .map(name => ({
+            name,
+            totalDNFs: woodspoonData[name].totalDNFs,
+            attempts: woodspoonData[name].attempts
+          }))
+          .filter(entry => entry.totalDNFs > 0)
+          .sort((a, b) => b.totalDNFs - a.totalDNFs);
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
         setAllTimeLeaderboard(allTimeLeaderboardArray);
+        setRawAverageLeaderboard(rawAverageLeaderboard);
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
         setWoodspoonLeaderboard(woodspoonLeaderboardArray);
-        setLoading(false);
-
       } catch (error) {
-        console.error('Error fetching leaderboards: ', error);
+        console.error('Error fetching leaderboards:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchLeaderboards();
   }, []);
 
+  const getRankIcon = (index) => {
+    switch (index) {
+      case 0: return '🥇';
+      case 1: return '🥈';
+      case 2: return '🥉';
+      default: return `#${index + 1}`;
+    }
+  };
+
+  const getRankClass = (index) => {
+    switch (index) {
+      case 0: return classes.rankFirst;
+      case 1: return classes.rankSecond;
+      case 2: return classes.rankThird;
+      default: return '';
+    }
+  };
+
+  const getScoreIcon = (average) => {
+    if (average <= 2.5) return '🎯';
+    if (average <= 3.5) return '🔥';
+    if (average <= 4.5) return '⭐';
+    if (average <= 5.5) return '👍';
+    return '🤔';
+  };
+
+  const totalPlayers = allTimeLeaderboard.length;
+  const totalGames = allAttemptsLeaderboard.reduce((sum, player) => sum + player.attempts, 0);
+  const avgScore = allTimeLeaderboard.length > 0 
+    ? allTimeLeaderboard.reduce((sum, player) => sum + player.average, 0) / allTimeLeaderboard.length 
+    : 0;
+
   return (
     <div className={classes.leaderboardContainer}>
       {loading ? (
         <div className={classes.loading}>
-          <div className={classes.dancingCat}>🐱</div>
-          <div>Loading Wordle results...</div>
+          <BounceLoader color="var(--wordle-green)" size={40} />
+          <div className={classes.loadingText}>Loading leaderboards...</div>
         </div>
       ) : (
         <>
-          <h1 className={classes.resultsHeader}>Wordle Results</h1>
-          
-          {/* Statistics Section */}
-          <div className={classes.statsContainer}>
+          <div className={classes.header}>
+            <h1 className={classes.headerTitle}>Leaderboard</h1>
+            <p className={classes.headerSubtitle}>
+              See how you stack up against your fellow Wordle enthusiasts
+            </p>
+          </div>
+
+          {/* Stats Overview */}
+          <div className={classes.statsGrid}>
             <div className={classes.statCard}>
-              <span className={classes.statIcon}>👥</span>
-              <div className={classes.statValue}>{stats.totalPlayers}</div>
-              <div className={classes.statLabel}>Total Players</div>
+              <div className={classes.statCardHeader}>
+                <div className={classes.statIcon}>👥</div>
+                <div className={classes.statTitle}>Total Players</div>
+              </div>
+              <div className={classes.statValue}>{totalPlayers}</div>
+              <div className={classes.statSubtitle}>Active competitors</div>
             </div>
             
             <div className={classes.statCard}>
-              <span className={classes.statIcon}>🎮</span>
-              <div className={classes.statValue}>{stats.activeCompetitors}</div>
-              <div className={classes.statLabel}>Active Competitors</div>
+              <div className={classes.statCardHeader}>
+                <div className={classes.statIcon}>🎮</div>
+                <div className={classes.statTitle}>Total Games</div>
+              </div>
+              <div className={classes.statValue}>{totalGames}</div>
+              <div className={classes.statSubtitle}>Games played</div>
             </div>
             
             <div className={classes.statCard}>
-              <span className={classes.statIcon}>📊</span>
-              <div className={classes.statValue}>{stats.totalGames}</div>
-              <div className={classes.statLabel}>Total Games</div>
-            </div>
-            
-            <div className={classes.statCard}>
-              <span className={classes.statIcon}>🎯</span>
-              <div className={classes.statValue}>{stats.averageScore.toFixed(2)}</div>
-              <div className={classes.statLabel}>Average Score</div>
+              <div className={classes.statCardHeader}>
+                <div className={classes.statIcon}>📊</div>
+                <div className={classes.statTitle}>Average Score</div>
+              </div>
+              <div className={classes.statValue}>{avgScore.toFixed(2)}</div>
+              <div className={classes.statSubtitle}>Across all players</div>
             </div>
           </div>
-          
-          <div className={classes.columns}>
 
-            <section className={classes.col}>
-              <h1 className={classes.title}>🏆 Daily Leaderboard</h1>
-              <ul className={classes.list}>
-                {dailyLeaderboard && dailyLeaderboard.slice(0, 12).map((entry, index) => {
-                  const getRankColor = (position) => {
-                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
-                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
-                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
-                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
-                  };
-                  
-                  return (
-                    <li key={index} className={classes.listItem}>
-                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <span 
-                          className={classes.rankNumber}
-                          style={{ background: getRankColor(index) }}
-                        >
-                          {index + 1}
-                        </span>
-                        {/* {index === 0 && <span className={classes.icon}>👑</span>} */}
-                        <span className={classes.playerName}>{entry.name}</span>
-                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
-                          {entry.average.toFixed(2)}
-                        </span>
+          {/* Leaderboards */}
+          <div className={classes.leaderboardGrid}>
+            {/* Daily Leaderboard */}
+            <div className={classes.leaderboardCard}>
+              <div className={classes.cardHeader}>
+                <h2 className={classes.cardTitle}>
+                  🌅 Today's Leaders
+                </h2>
+                <p className={classes.cardSubtitle}>Best performers today</p>
+              </div>
+              <ul className={classes.leaderboardList}>
+                {dailyLeaderboard.slice(0, 10).map((entry, index) => (
+                  <li key={index} className={classes.leaderboardItem}>
+                    <div className={`${classes.rank} ${getRankClass(index)}`}>
+                      {getRankIcon(index)}
+                    </div>
+                    <div className={classes.playerInfo}>
+                      <div className={classes.playerName}>{entry.name}</div>
+                      <div className={classes.playerStats}>
+                        {entry.attempts} game{entry.attempts !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <div className={classes.scoreDisplay}>
+                      <span className={classes.scoreIcon}>{getScoreIcon(entry.average)}</span>
+                      <span>{entry.average.toFixed(2)}</span>
+                    </div>
+                  </li>
+                ))}
+                {dailyLeaderboard.length === 0 && (
+                  <li className={classes.leaderboardItem}>
+                    <div style={{textAlign: 'center', padding: 'var(--space-8, 2rem)', color: 'var(--text-muted, #9ca3af)', width: '100%'}}>
+                      No games played today yet
+                    </div>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            {/* Weekly Leaderboard */}
+            <div className={classes.leaderboardCard}>
+              <div className={classes.cardHeader}>
+                <h2 className={classes.cardTitle}>
+                  📅 This Week
+                </h2>
+                <p className={classes.cardSubtitle}>7-day performance</p>
+              </div>
+              <ul className={classes.leaderboardList}>
+                {weeklyLeaderboard.slice(0, 10).map((entry, index) => (
+                  <li key={index} className={classes.leaderboardItem}>
+                    <div className={`${classes.rank} ${getRankClass(index)}`}>
+                      {getRankIcon(index)}
+                    </div>
+                    <div className={classes.playerInfo}>
+                      <div className={classes.playerName}>{entry.name}</div>
+                      <div className={classes.playerStats}>
+                        {entry.playedDays} day{entry.playedDays !== 1 ? 's' : ''} • {entry.totalGames} game{entry.totalGames !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <div className={classes.scoreDisplay}>
+                      <span className={classes.scoreIcon}>{getScoreIcon(entry.average)}</span>
+                      <span>{entry.average.toFixed(2)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* All-Time Leaderboard */}
+            <div className={classes.leaderboardCard}>
+              <div className={classes.cardHeader}>
+                <h2 className={classes.cardTitle}>
+                  🏆 All-Time Champions
+                </h2>
+                <p className={classes.cardSubtitle}>Bayesian-adjusted rankings</p>
+              </div>
+              <ul className={classes.leaderboardList}>
+                {allTimeLeaderboard.slice(0, 10).map((entry, index) => (
+                  <li key={index} className={classes.leaderboardItem}>
+                    <div className={`${classes.rank} ${getRankClass(index)}`}>
+                      {getRankIcon(index)}
+                    </div>
+                    <div className={classes.playerInfo}>
+                      <div className={classes.playerName}>{entry.name}</div>
+                      <div className={classes.playerStats}>
+                        {entry.attempts} games • Raw: {entry.rawAverage.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className={classes.scoreDisplay}>
+                      <span className={classes.scoreIcon}>{getScoreIcon(entry.bayesianAverage)}</span>
+                      <span>{entry.bayesianAverage.toFixed(2)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Raw Average Leaderboard */}
+            <div className={classes.leaderboardCard}>
+              <div className={classes.cardHeader}>
+                <h2 className={classes.cardTitle}>
+                  📈 Pure Averages
+                </h2>
+                <p className={classes.cardSubtitle}>Raw averages (5+ games)</p>
+              </div>
+              <ul className={classes.leaderboardList}>
+                {rawAverageLeaderboard.slice(0, 10).map((entry, index) => (
+                  <li key={index} className={classes.leaderboardItem}>
+                    <div className={`${classes.rank} ${getRankClass(index)}`}>
+                      {getRankIcon(index)}
+                    </div>
+                    <div className={classes.playerInfo}>
+                      <div className={classes.playerName}>{entry.name}</div>
+                      <div className={classes.playerStats}>
+                        {entry.attempts} game{entry.attempts !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <div className={classes.scoreDisplay}>
+                      <span className={classes.scoreIcon}>{getScoreIcon(entry.average)}</span>
+                      <span>{entry.average.toFixed(2)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Most Active Players */}
+            <div className={classes.leaderboardCard}>
+              <div className={classes.cardHeader}>
+                <h2 className={classes.cardTitle}>
+                  🚀 Most Active
+                </h2>
+                <p className={classes.cardSubtitle}>Players by total games</p>
+              </div>
+              <ul className={classes.leaderboardList}>
+                {allAttemptsLeaderboard.slice(0, 10).map((entry, index) => (
+                  <li key={index} className={classes.leaderboardItem}>
+                    <div className={`${classes.rank} ${getRankClass(index)}`}>
+                      {getRankIcon(index)}
+                    </div>
+                    <div className={classes.playerInfo}>
+                      <div className={classes.playerName}>{entry.name}</div>
+                      <div className={classes.playerStats}>
+                        Avg: {entry.average.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className={classes.scoreDisplay}>
+                      <span className={classes.scoreIcon}>🎯</span>
+                      <span>{entry.attempts}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Wooden Spoon */}
+            {woodspoonLeaderboard.length > 0 && (
+              <div className={classes.leaderboardCard}>
+                <div className={classes.cardHeader}>
+                  <h2 className={classes.cardTitle}>
+                    🥄 Wooden Spoon
+                  </h2>
+                  <p className={classes.cardSubtitle}>Most DNFs this week</p>
+                </div>
+                <ul className={classes.leaderboardList}>
+                  {woodspoonLeaderboard.slice(0, 5).map((entry, index) => (
+                    <li key={index} className={classes.leaderboardItem}>
+                      <div className={classes.rank}>
+                        🥄
+                      </div>
+                      <div className={classes.playerInfo}>
+                        <div className={classes.playerName}>{entry.name}</div>
+                        <div className={classes.playerStats}>
+                          {entry.totalDNFs} DNF{entry.totalDNFs !== 1 ? 's' : ''} out of {entry.attempts}
+                        </div>
+                      </div>
+                      <div className={classes.scoreDisplay}>
+                        <span className={classes.scoreIcon}>🚫</span>
+                        <span>{((entry.totalDNFs / entry.attempts) * 100).toFixed(0)}%</span>
                       </div>
                     </li>
-                  );
-                })}
-              </ul>
-            </section>
-
-            <section className={classes.col}>
-              <h1 className={classes.title}>📅 Weekly Average</h1>
-              <ul className={classes.list}>
-                {weeklyLeaderboard && weeklyLeaderboard.slice(0, 12).map((entry, index) => {
-                  const getRankColor = (position) => {
-                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
-                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
-                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
-                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
-                  };
-                  
-                  return (
-                    <li key={index} 
-                        className={classes.listItem}
-                        title={`Played ${entry.playedDays} out of ${entry.totalWeekdays} weekdays. Missed weekdays count as DNF (7 points).`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <span 
-                          className={classes.rankNumber}
-                          style={{ background: getRankColor(index) }}
-                        >
-                          {index + 1}
-                        </span>
-                        <span className={classes.playerName}>{entry.name}</span>
-                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
-                          {entry.average.toFixed(2)}
-                        </span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-            <section className={classes.col}>
-              <h1 className={classes.title}>
-                <span
-                  style={{ cursor: 'help' }}
-                  title={`Bayesian Average:
-      
-      The Bayesian Average adjusts a player's average guesses using a global prior (global mean) for fairness, especially when the number of attempts is low.
-      
-      Formula:
-      BayesAvg = (TotalGuesses + (GlobalMean × Alpha)) / (Attempts + Alpha)
-      
-      - TotalGuesses: The sum of all guesses by the player.
-      - GlobalMean: The average number of guesses across all players (used as a prior).
-      - Alpha: The prior strength, which determines how much weight is given to the global mean.
-
-      Rot Factor (RecencyFactor):
-      Encourages recent activity and penalizes long periods of inactivity.
-
-      Formula:
-      RecencyFactor = 1 + (DaysSinceLast / R)
-      
-      - DaysSinceLast: The number of days since the player's last recorded attempt.
-      - R: A scaling factor to control the penalty for inactivity.
-
-      Attempts Bonus:
-      A slight penalty applied for more frequent attempts to balance scores.
-
-      Formula:
-      AttemptsBonus = C × log(Attempts + 1)
-      
-      - C: A scaling factor for the penalty.
-      `}
-                >
-                🧮 Bayesian Average
-                </span>
-              </h1>
-              <ul className={classes.list}>
-                {allTimeLeaderboard && allTimeLeaderboard.slice(0, 12).map((entry, index) => {
-                  const getRankColor = (position) => {
-                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
-                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
-                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
-                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
-                  };
-                  
-                  return (
-                    <li key={index}
-                        className={classes.listItem}
-                        title={`FinalScore = (BayesAvg x RecencyFactor) - AttemptsBonus
-        
-        Your Actual Average: ${entry.actualAverage.toFixed(2)}
-        
-        Formula:
-        FinalScore = (${entry.BayesAvg.toFixed(2)} x ${entry.RecencyFactor.toFixed(2)}) - ${entry.AttemptsBonus.toFixed(2)}
-
-        Explanation:
-        - Actual Average (${entry.actualAverage.toFixed(2)}): Your raw average score across all attempts.
-        - BayesAvg (${entry.BayesAvg.toFixed(2)}): Your average guesses adjusted with a global prior for fairness.
-        - RecencyFactor (${entry.RecencyFactor.toFixed(2)}): Rewards recent activity, penalizes inactivity over time.
-        - AttemptsBonus (${entry.AttemptsBonus.toFixed(2)}): A slight penalty for more attempts, balancing frequent guesses.`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <span 
-                          className={classes.rankNumber}
-                          style={{ background: getRankColor(index) }}
-                        >
-                          {index + 1}
-                        </span>
-                        <span className={classes.playerName}>{entry.name}</span>
-                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
-                          {entry.finalScore.toFixed(2)}
-                        </span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-
-
-            <section className={classes.col}>
-              <h1 className={classes.title}>📊 Attempts Leaderboard</h1>
-              <ul className={classes.list}>
-                {allAttemptsLeaderboard && allAttemptsLeaderboard.slice(0, 12).map((entry, index) => {
-                  const getRankColor = (position) => {
-                    if (position === 0) return 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold
-                    if (position === 1) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)'; // Silver
-                    if (position === 2) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze
-                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
-                  };
-                  
-                  return (
-                    <li key={index} className={classes.listItem}>
-                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <span 
-                          className={classes.rankNumber}
-                          style={{ background: getRankColor(index) }}
-                        >
-                          {index + 1}
-                        </span>
-                        <span className={classes.playerName}>{entry.name}</span>
-                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('FFD700') ? '#B8860B' : '#667eea' }}>
-                          {entry.attempts}
-                        </span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-
-            <section className={classes.col}>
-              <h1 className={classes.title}>🥄 Wooden Spoon</h1>
-              <ul className={classes.list}>
-                {woodspoonLeaderboard && woodspoonLeaderboard.slice(0, 12).map((entry, index) => {
-                  const getRankColor = (position) => {
-                    if (position === 0) return 'linear-gradient(135deg, #CD7F32, #B8860B)'; // Bronze for worst performance
-                    if (position === 1) return 'linear-gradient(135deg, #A0A0A0, #888888)'; // Dark silver
-                    if (position === 2) return 'linear-gradient(135deg, #808080, #696969)'; // Gray
-                    return 'linear-gradient(135deg, #667eea, #764ba2)'; // Default purple gradient
-                  };
-                  
-                  return (
-                    <li key={index}
-                        className={classes.listItem}
-                        title={`Recent DNFs:\n${entry.entries.slice(0, 5).map(e => 
-                          `${e.date}${e.wordleNumber ? ` - Wordle #${e.wordleNumber}` : ''} - DNF`
-                        ).join('\n')}${entry.entries.length > 5 ? `\n... and ${entry.entries.length - 5} more` : ''}`}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        <span 
-                          className={classes.rankNumber}
-                          style={{ background: getRankColor(index) }}
-                        >
-                          {index + 1}
-                        </span>
-                        {index === 0 && <span className={classes.spoon}>🥄</span>}
-                        <span className={classes.playerName}>{entry.name}</span>
-                        <span className={classes.playerScore} style={{ color: getRankColor(index).includes('CD7F32') ? '#8B4513' : '#667eea' }}>
-                          {entry.count}
-                        </span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </>
       )}

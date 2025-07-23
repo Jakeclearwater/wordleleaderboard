@@ -1181,23 +1181,7 @@ const InputForm = ({
           marginBottom: "1rem",
           width: "100%"
         }}>
-          <h1 style={{
-            fontSize: "1.5rem",
-            fontWeight: "700",
-            color: "#FFF",
-            margin: "0 0 1.5rem 0",
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-          }}>
-            Leaderboard
-          </h1>
-          <p style={{
-            fontSize: "1rem",
-            color: "#6b7280",
-            margin: "0",
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-          }}>
-            Track your Wordle progress and compete with friends
-          </p>
+         
         </div>
         <TabBar />
         <div style={{

@@ -173,9 +173,7 @@ const useStyles = createUseStyles({
     maxWidth: '100%',
     padding: '0 1rem',
     boxSizing: 'border-box',
-    '& p': {
-      color: 'white !important'
-    },
+    
   },
   overlay: {
     position: 'fixed',
