@@ -1,10 +1,13 @@
-import { createUseStyles } from "react-jss";
+
 import React, { useState, useEffect } from "react";
+import { createUseStyles } from "react-jss";
+
 import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "./firebase"; // Adjust the import path as necessary
 import axios from "axios"; // For sending HTTP requests
 import Leaderboard from "./Leaderboard";
 import BayesianChart from "./BayesianChart";
+import { FlippingCountdownNZT, CountdownTimer } from "./FlippingCountdownNZT";
 
 // Cookie helpers
 const getCookie = (name) => {
@@ -1264,21 +1267,7 @@ const InputForm = ({
           {activeTab === "Score Entry" && (
             <div style={{padding: "2rem", display: "flex", justifyContent: "center", width: "100%"}}>
               {alreadySubmittedToday ? (
-                <div style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  padding: "2rem 1rem",
-                  background: "rgba(255,255,255,0.98)",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                  border: "1px solid rgba(255,255,255,0.3)",
-                  fontSize: "1.25rem",
-                  color: "#374151",
-                  fontWeight: "500"
-                }}>
+                <FlippingCountdownNZT>
                   <span
                     style={{fontSize: "3rem", marginBottom: "1rem", cursor: "pointer", userSelect: "none"}}
                     title="Celebrate!"
@@ -1287,7 +1276,10 @@ const InputForm = ({
                       setTimeout(() => setShowConfetti(false), 4000);
                     }}
                   >🎉</span>
-                  <div>Oops - You've already submitted your Wordle score for today.<br />Come back tomorrow for another chance!</div>
+                  <div style={{marginBottom: "1.5rem"}}>Oops - You've already submitted your Wordle score for today.<br />
+                    <span style={{fontWeight: 600, color: "#374151"}}>Next entry opens in:</span>
+                  </div>
+                  <CountdownTimer />
                   {todaysScore && (
                     <div style={{
                       marginTop: "1.5rem",
@@ -1305,10 +1297,14 @@ const InputForm = ({
                       {todaysScore.hardMode && <span style={{marginLeft: "0.5rem", color: "#374151"}}>🦾 Hard Mode</span>}
                     </div>
                   )}
-                </div>
+                </FlippingCountdownNZT>
+
+
+// --- Flipping Countdown Components ---
+
+// Place these after the export default InputForm
               ) : (
                 <form onSubmit={handleSubmit} className={classes.form}>
-                  {/* Mode Selector - moved to the top */}
                   <div className={classes.toggleContainer}>
                     <div className={classes.modeSelector}>
                       <button
