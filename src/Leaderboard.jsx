@@ -278,7 +278,7 @@ const useStyles = createUseStyles({
   },
 });
 
-const Leaderboard = () => {
+  const Leaderboard = () => {
   const classes = useStyles();
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
