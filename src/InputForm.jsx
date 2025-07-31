@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { createUseStyles } from "react-jss";
 
@@ -30,17 +29,17 @@ const useStyles = createUseStyles({
     display: "flex",
     flexDirection: "column",
     padding: "2rem",
-    width: "400px",
-    maxWidth: "400px",
-    minWidth: "400px",
+    width: "100%",
+    maxWidth: "420px",
+    minWidth: "220px",
     margin: "0 auto",
     gap: "1.5rem",
     boxSizing: "border-box",
-    "@media (max-width: 480px)": {
-      width: "calc(100vw - 2rem)",
-      maxWidth: "calc(100vw - 2rem)",
-      minWidth: "calc(100vw - 2rem)",
+    "@media (max-width: 600px)": {
       padding: "1rem",
+      maxWidth: "98vw",
+      minWidth: "0",
+      width: "100%",
     },
     "& label": {
       color: "#374151 !important",
@@ -63,10 +62,16 @@ const useStyles = createUseStyles({
     border: "1px solid #e0e4e7",
     fontSize: "15px",
     width: "100%",
+    minWidth: "0",
+    maxWidth: "100%",
     boxSizing: "border-box",
     transition: "all 0.2s ease",
     background: "white",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "@media (max-width: 600px)": {
+      fontSize: "15px",
+      padding: "12px 12px",
+    },
     "&:focus": {
       outline: "none",
       borderColor: "#3b82f6",
@@ -146,18 +151,45 @@ const useStyles = createUseStyles({
     padding: "12px 16px",
     borderRadius: "8px",
     border: "1px solid #e0e4e7",
-    minHeight: "220px",
+    minHeight: "120px",
     width: "100%",
+    minWidth: "0",
+    maxWidth: "100%",
     boxSizing: "border-box",
     fontSize: "14px",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Mono', Consolas, monospace",
     resize: "vertical",
     transition: "all 0.2s ease",
     background: "white",
+    "@media (max-width: 600px)": {
+      fontSize: "14px",
+      padding: "10px 10px",
+      minHeight: "80px",
+    },
     "&:focus": {
       outline: "none",
       borderColor: "#3b82f6",
       boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
+    },
+    "&::placeholder": {
+      color: "#bfc6d1",
+      opacity: 0.55,
+    },
+    "&::-webkit-input-placeholder": {
+      color: "#bfc6d1",
+      opacity: 0.55,
+    },
+    "&::-moz-placeholder": {
+      color: "#bfc6d1",
+      opacity: 0.55,
+    },
+    "&:-ms-input-placeholder": {
+      color: "#bfc6d1",
+      opacity: 0.55,
+    },
+    "&::-ms-input-placeholder": {
+      color: "#bfc6d1",
+      opacity: 0.55,
     },
   },
   overlay: {
@@ -288,15 +320,15 @@ const useStyles = createUseStyles({
   formContainer: {
     overflow: "hidden",
     transition: "max-height 0.3s ease-out, opacity 0.3s ease-out",
-    width: "400px",
-    maxWidth: "400px",
-    minWidth: "400px",
+    width: "100%",
+    maxWidth: "420px",
+    minWidth: "220px",
     margin: "0 auto",
     boxSizing: "border-box",
-    "@media (max-width: 480px)": {
-      width: "calc(100vw - 2rem)",
-      maxWidth: "calc(100vw - 2rem)",
-      minWidth: "calc(100vw - 2rem)",
+    "@media (max-width: 600px)": {
+      width: "100%",
+      maxWidth: "98vw",
+      minWidth: "0",
     },
     "&.collapsed": {
       maxHeight: "0",
@@ -1323,7 +1355,6 @@ const InputForm = ({
                       </button>
                     </div>
                   </div>
-                  {/* ...existing code for form fields and submit button... */}
                   {!pasteWordle && (
                     <>
                       <div className={classes.formGroup}>
