@@ -278,7 +278,7 @@ const useStyles = createUseStyles({
   },
 });
 
-  const Leaderboard = () => {
+const Leaderboard = () => {
   const classes = useStyles();
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
@@ -347,7 +347,7 @@ const useStyles = createUseStyles({
         const groupScoresSimple = (scores) => {
           const grouped = scores.reduce((acc, score) => {
             if (!acc[score.name]) {
-              acc[score.name] = { totalGuesses: 0, attempts: 0 };
+              acc[score.name] = { totalGuesses: 0, attempts: 0, earliest: null };
             }
             let guesses = parseFloat(score.guesses);
             if (isNaN(guesses) || guesses === 0) {
@@ -355,6 +355,18 @@ const useStyles = createUseStyles({
             }
             acc[score.name].totalGuesses += guesses;
             acc[score.name].attempts += 1;
+            // Track earliest submission time
+            let dateObj = null;
+            if (score.isoDate) {
+              dateObj = new Date(score.isoDate);
+            } else if (score.timestamp && score.timestamp.toDate) {
+              dateObj = score.timestamp.toDate();
+            } else if (score.timestamp) {
+              dateObj = new Date(score.timestamp);
+            }
+            if (dateObj && (!acc[score.name].earliest || dateObj < acc[score.name].earliest)) {
+              acc[score.name].earliest = dateObj;
+            }
             return acc;
           }, {});
 
@@ -362,7 +374,8 @@ const useStyles = createUseStyles({
             .map(name => ({
               name,
               average: grouped[name].totalGuesses / grouped[name].attempts,
-              attempts: grouped[name].attempts
+              attempts: grouped[name].attempts,
+              earliest: grouped[name].earliest
             }))
             .filter(player => player.attempts > 0);
         };
@@ -443,7 +456,11 @@ const useStyles = createUseStyles({
         };
 
         const dailyLeaderboardArray = groupScoresSimple(dailyScores)
-          .sort((a, b) => a.average - b.average);
+          .sort((a, b) => {
+            if (a.average !== b.average) return a.average - b.average;
+            if (a.earliest && b.earliest) return a.earliest - b.earliest;
+            return 0;
+          });
 
         const weeklyLeaderboardArray = groupWeeklyScores(weeklyScores, weekAgoNZStr, todayNZ)
           .sort((a, b) => a.average - b.average);

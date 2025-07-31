@@ -279,15 +279,18 @@ const useStyles = createUseStyles({
   },
   color_green: {
     backgroundColor: '#6aaa64',
-    border: '2px solid #5a8a54',
+    // border: '2px solid #5a8a54',
+    border: 'none',
   },
   color_yellow: {
     backgroundColor: '#c9b458',
-    border: '2px solid #b9a448',
+    //border: '2px solid #b9a448',
+    border: 'none',
   },
   color_gray: {
     backgroundColor: '#787c7e',
-    border: '2px solid #686c6e',
+    //border: '2px solid #686c6e',
+    border: 'none',
   }
 });
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { createUseStyles } from 'react-jss';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -17,6 +18,7 @@ const useStyles = createUseStyles({
     width: '100%',
     boxSizing: 'border-box',
     transition: 'all 0.3s ease',
+    overflow: 'visible',
     '&:hover': {
       transform: 'translateY(-2px)',
       boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
@@ -144,9 +146,11 @@ const useStyles = createUseStyles({
     boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
     fontSize: '13px',
     minWidth: '200px',
-    zIndex: 9999,
-    position: 'relative',
+    zIndex: 2147483647,
+    overflow: 'visible',
+    position: 'fixed',
     color: '#333 !important',
+    pointerEvents: 'auto',
     '& *': {
       color: '#333 !important',
     },
@@ -616,135 +620,161 @@ const BayesianChart = () => {
     return date.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' });
   };
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{ 
-          backgroundColor: '#fff', 
-          padding: '12px', 
-          border: '1px solid #ddd',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          fontSize: '12px',
+  // Track mouse position for portal tooltip
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const chartRef = useRef();
+
+  // CustomTooltip using React portal
+  const CustomTooltip = ({ active, payload, label, coordinate }) => {
+    useEffect(() => {
+      if (active && coordinate) {
+        // coordinate is relative to chart SVG, so get chart's bounding rect
+        const chartRect = chartRef.current?.getBoundingClientRect();
+        if (chartRect) {
+          setTooltipPos({
+            x: chartRect.left + coordinate.x + 10, // 10px offset
+            y: chartRect.top + coordinate.y - 10, // 10px offset up
+          });
+        }
+      }
+    }, [active, coordinate]);
+
+    if (!(active && payload && payload.length)) return null;
+
+    const tooltipContent = (
+      <div style={{
+        backgroundColor: '#fff',
+        padding: '12px',
+        border: '1px solid #ddd',
+        borderRadius: '6px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        fontSize: '12px',
+        color: '#333',
+        fontFamily: 'inherit',
+        minWidth: '180px',
+        position: 'fixed',
+        left: tooltipPos.x,
+        top: tooltipPos.y,
+        zIndex: 2147483647,
+        pointerEvents: 'auto',
+        maxWidth: '320px',
+        transition: 'left 0.05s, top 0.05s',
+      }}>
+        {/* Date Header */}
+        <div style={{
+          fontWeight: '700',
+          marginBottom: '8px',
           color: '#333',
-          fontFamily: 'inherit',
-          minWidth: '180px'
+          fontSize: '13px',
+          borderBottom: '1px solid #eee',
+          paddingBottom: '4px'
         }}>
-          {/* Date Header */}
-          <div style={{ 
-            fontWeight: '700', 
+          📅 {formatDate(label)}
+        </div>
+
+        {/* Global Average Section */}
+        {payload.find(entry => entry.dataKey === 'globalAverage') && (
+          <div style={{
             marginBottom: '8px',
-            color: '#333',
-            fontSize: '13px',
-            borderBottom: '1px solid #eee',
-            paddingBottom: '4px'
+            padding: '6px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px',
+            borderLeft: '3px solid #666'
           }}>
-            📅 {formatDate(label)}
-          </div>
-
-          {/* Global Average Section */}
-          {payload.find(entry => entry.dataKey === 'globalAverage') && (
-            <div style={{ 
-              marginBottom: '8px',
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '4px',
-              borderLeft: '3px solid #666'
+            <div style={{
+              color: '#666',
+              fontSize: '11px',
+              fontWeight: '600'
             }}>
-              <div style={{ 
-                color: '#666',
-                fontSize: '11px',
-                fontWeight: '600'
-              }}>
-                🌍 Global Bayesian Average
-              </div>
-              <div style={{ 
-                color: '#333',
-                fontSize: '12px',
-                fontWeight: '500',
-                marginTop: '2px'
-              }}>
-                {typeof payload.find(entry => entry.dataKey === 'globalAverage').value === 'number' 
-                  ? payload.find(entry => entry.dataKey === 'globalAverage').value.toFixed(2) 
-                  : payload.find(entry => entry.dataKey === 'globalAverage').value}
-              </div>
+              🌍 Global Bayesian Average
             </div>
-          )}
+            <div style={{
+              color: '#333',
+              fontSize: '12px',
+              fontWeight: '500',
+              marginTop: '2px'
+            }}>
+              {typeof payload.find(entry => entry.dataKey === 'globalAverage').value === 'number'
+                ? payload.find(entry => entry.dataKey === 'globalAverage').value.toFixed(2)
+                : payload.find(entry => entry.dataKey === 'globalAverage').value}
+            </div>
+          </div>
+        )}
 
-          {/* User Data Sections */}
-          {payload.filter(entry => entry.dataKey !== 'globalAverage').map((entry, index) => {
-            // Find the user data for this entry
-            const userData = chartData.find(d => d.date === label);
-            const userName = entry.dataKey;
-            const actualAvg = userData ? userData[`${userName}_actual`] : null;
-            const attempts = userData ? userData[`${userName}_attempts`] : null;
-            
-            return (
-              <div key={index} style={{ 
-                marginBottom: index < payload.filter(e => e.dataKey !== 'globalAverage').length - 1 ? '10px' : '0',
-                padding: '8px',
-                backgroundColor: '#fafafa',
-                borderRadius: '4px',
-                borderLeft: `3px solid ${entry.color || '#333'}`
+        {/* User Data Sections */}
+        {payload.filter(entry => entry.dataKey !== 'globalAverage').map((entry, index) => {
+          // Find the user data for this entry
+          const userData = chartData.find(d => d.date === label);
+          const userName = entry.dataKey;
+          const actualAvg = userData ? userData[`${userName}_actual`] : null;
+          const attempts = userData ? userData[`${userName}_attempts`] : null;
+
+          return (
+            <div key={index} style={{
+              marginBottom: index < payload.filter(e => e.dataKey !== 'globalAverage').length - 1 ? '10px' : '0',
+              padding: '8px',
+              backgroundColor: '#fafafa',
+              borderRadius: '4px',
+              borderLeft: `3px solid ${entry.color || '#333'}`
+            }}>
+              {/* User Name */}
+              <div style={{
+                fontWeight: '700',
+                color: entry.color || '#333',
+                marginBottom: '4px',
+                fontSize: '13px'
               }}>
-                {/* User Name */}
-                <div style={{ 
-                  fontWeight: '700',
-                  color: entry.color || '#333',
-                  marginBottom: '4px',
-                  fontSize: '13px'
-                }}>
-                  👤 {userName}
-                </div>
-                
-                {/* Bayesian Score */}
-                <div style={{ 
+                👤 {userName}
+              </div>
+
+              {/* Bayesian Score */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '2px'
+              }}>
+                <span style={{ color: '#666', fontSize: '11px' }}>📊 Bayesian Score:</span>
+                <span style={{ color: '#333', fontSize: '11px', fontWeight: '600' }}>
+                  {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+                </span>
+              </div>
+
+              {/* Actual Average */}
+              {actualAvg && (
+                <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   marginBottom: '2px'
                 }}>
-                  <span style={{ color: '#666', fontSize: '11px' }}>📊 Bayesian Score:</span>
-                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '600' }}>
-                    {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+                  <span style={{ color: '#666', fontSize: '11px' }}>📈 Actual Average:</span>
+                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                    {actualAvg.toFixed(2)}
                   </span>
                 </div>
+              )}
 
-                {/* Actual Average */}
-                {actualAvg && (
-                  <div style={{ 
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '2px'
-                  }}>
-                    <span style={{ color: '#666', fontSize: '11px' }}>📈 Actual Average:</span>
-                    <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
-                      {actualAvg.toFixed(2)}
-                    </span>
-                  </div>
-                )}
+              {/* Total Attempts */}
+              {attempts && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ color: '#666', fontSize: '11px' }}>🎯 Total Attempts:</span>
+                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                    {attempts}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
 
-                {/* Total Attempts */}
-                {attempts && (
-                  <div style={{ 
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <span style={{ color: '#666', fontSize: '11px' }}>🎯 Total Attempts:</span>
-                    <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
-                      {attempts}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
+    return ReactDOM.createPortal(tooltipContent, document.body);
   };
 
   if (loading) {
@@ -998,7 +1028,11 @@ const BayesianChart = () => {
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
+        <LineChart
+          data={chartData}
+          margin={{ top: 20, right: 10, left: 10, bottom: 5 }}
+          ref={chartRef}
+        >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
             dataKey="date" 
@@ -1016,7 +1050,6 @@ const BayesianChart = () => {
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ position: 'relative', zIndex: 1 }} />
-          
           {/* Bayesian Global Average Line - dashed */}
           <Line
             type="monotone"
@@ -1027,7 +1060,6 @@ const BayesianChart = () => {
             dot={false}
             name="Bayesian Global Average"
           />
-          
           {/* Individual User Lines */}
           {selectedUsers.map((userName, index) => (
             <Line
