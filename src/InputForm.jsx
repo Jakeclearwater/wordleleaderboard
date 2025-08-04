@@ -362,7 +362,11 @@ const InputForm = ({
   const [wordleResult, setWordleResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [pasteWordle, setPasteWordle] = useState(false);
+  // Remember entry mode in cookie
+  const [pasteWordle, setPasteWordle] = useState(() => {
+    const mode = getCookie("wordle-entry-mode");
+    return mode === "paste";
+  });
   const [showConfetti, setShowConfetti] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [testConfetti, setTestConfetti] = useState(false);
@@ -893,14 +897,20 @@ const InputForm = ({
                     <div className={classes.modeSelector}>
                       <button
                         type="button"
-                        onClick={() => setPasteWordle(false)}
+                        onClick={() => {
+                          setPasteWordle(false);
+                          setCookie("wordle-entry-mode", "manual");
+                        }}
                         className={`${classes.modeOption} ${!pasteWordle ? classes.activeMode : ''}`}
                       >
                         ✏️ Manual Entry
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPasteWordle(true)}
+                        onClick={() => {
+                          setPasteWordle(true);
+                          setCookie("wordle-entry-mode", "paste");
+                        }}
                         className={`${classes.modeOption} ${pasteWordle ? classes.activeMode : ''}`}
                       >
                         📋 Paste Result
