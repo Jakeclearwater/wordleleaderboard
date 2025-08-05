@@ -114,7 +114,13 @@ const InputForm = ({
       alert("Name must be 3-20 letters or spaces (a-z, A-Z, spaces) only.");
       return;
     }
-    setCookie("wordle-username", trimmed);
+    // Auto-capitalize each word (e.g., "john do" becomes "John Do")
+    const capitalizedName = trimmed
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    setCookie("wordle-username", capitalizedName);
+    setUsername(capitalizedName);
     setIsLoggedIn(true);
   };
 
