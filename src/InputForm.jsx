@@ -330,9 +330,6 @@ const InputForm = ({
       setWordleResult("");
       setPasteWordle(false);
 
-      // Auto-hide the form after successful submission
-      setIsFormExpanded(false);
-
       // Show confetti for excellent scores (1 to 3 guesses)
       if (!isDNF && finalGuesses <= 3) {
         setShowConfetti(true);
