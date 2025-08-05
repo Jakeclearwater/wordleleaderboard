@@ -75,7 +75,7 @@ const FlipDigit = ({ digit }) => {
       margin: '0 0.05em',
       fontFamily: 'monospace',
       fontSize: '1em',
-      boxShadow: '0 2px 8px #0002, 0 8px 18px 0 #0006', // desk shadow
+      boxShadow: '0 1px 4px #0002, 0 8px 18px 0 #0006', // desk shadow
       position: 'relative',
       perspective: '80px',
       overflow: 'hidden',

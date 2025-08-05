@@ -1,4 +1,54 @@
 import React from "react";
+// Inject confetti styles and keyframes directly for component encapsulation
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  if (!document.head.querySelector('style[data-confetti-styles]')) {
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = `
+      .confetti {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+        overflow: hidden;
+      }
+      .confetti-piece {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: #FFD700;
+        box-shadow: 0 0 24px 8px rgba(0,0,0,0.12);
+        animation: confettiBurst 2.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        will-change: transform, opacity;
+      }
+      @keyframes confettiBurst {
+        0% {
+          transform: translate(-50%, -50%) scale(0.2) rotateZ(0deg);
+          opacity: 1;
+          filter: blur(0px);
+        }
+        10% {
+          transform: translate(-50%, -50%) scale(1.2) rotateZ(90deg);
+          opacity: 1;
+          filter: blur(0px);
+        }
+        80% {
+          filter: blur(0px);
+        }
+        100% {
+          transform: translate(calc(-50% + var(--end-x, 0px)), calc(-50% + var(--end-y, 0px))) scale(2.2) rotateZ(1080deg);
+          opacity: 0;
+          filter: blur(2px);
+        }
+      }
+    `;
+    styleTag.setAttribute('data-confetti-styles', 'true');
+    document.head.appendChild(styleTag);
+  }
+}
 
 export const createConfetti = () => {
   const colors = [
@@ -35,7 +85,7 @@ export const createConfetti = () => {
 
 export const Confetti = ({ show, classes }) => (
   show ? (
-    <div className={classes.confetti}>
+    <div className="confetti">
       {createConfetti()}
     </div>
   ) : null
