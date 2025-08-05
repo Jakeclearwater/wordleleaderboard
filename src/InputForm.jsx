@@ -27,13 +27,13 @@ import useStyles from "./useStyles";
 // Restore TABS for tab navigation
 const TABS = ["Wordle Game", "Score Entry", "Leaderboard", "Chart"];
 
-const InputForm = ({ 
-  backgroundThemes, 
-  selectedTheme, 
-  setSelectedTheme, 
-  customColors, 
-  setCustomColors, 
-  getCurrentGradient 
+const InputForm = ({
+  backgroundThemes,
+  selectedTheme,
+  setSelectedTheme,
+  customColors,
+  setCustomColors,
+  getCurrentGradient
 }) => {
   const classes = useStyles();
   const [username, setUsername] = useState("");
@@ -124,32 +124,32 @@ const InputForm = ({
     setUsername("");
   };
 
- 
-    const parseWordleResult = (result) => {
-      const lines = result.toString().trim().split("\n");
-      const metadataLine = lines[0].trim();
 
-      // Check for hard mode asterisk
-      const hardMode = metadataLine.endsWith("*");
-      // Remove asterisk for parsing
-      const cleanMetadataLine = hardMode ? metadataLine.slice(0, -1).trim() : metadataLine;
+  const parseWordleResult = (result) => {
+    const lines = result.toString().trim().split("\n");
+    const metadataLine = lines[0].trim();
 
-      // Regular expressions to match different formats
-      const metadataMatch = cleanMetadataLine.charAt(cleanMetadataLine.length - 3);
-      const wordleNumber = cleanMetadataLine.split(" ")[1];
-      let numberOfGuesses = 0;
-      let isDNF = false;
-      if (!(parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
-        isDNF = true;
-      } else {
-        numberOfGuesses = parseInt(metadataMatch, 10);
-      }
+    // Check for hard mode asterisk
+    const hardMode = metadataLine.endsWith("*");
+    // Remove asterisk for parsing
+    const cleanMetadataLine = hardMode ? metadataLine.slice(0, -1).trim() : metadataLine;
 
-      // Extract the result blocks (lines) from the remaining part
-      const resultBlocks = lines.slice(2, lines.length);
+    // Regular expressions to match different formats
+    const metadataMatch = cleanMetadataLine.charAt(cleanMetadataLine.length - 3);
+    const wordleNumber = cleanMetadataLine.split(" ")[1];
+    let numberOfGuesses = 0;
+    let isDNF = false;
+    if (!(parseInt(metadataMatch, 10) > 0 && parseInt(metadataMatch, 10) < 7)) {
+      isDNF = true;
+    } else {
+      numberOfGuesses = parseInt(metadataMatch, 10);
+    }
 
-      return [numberOfGuesses, wordleNumber, resultBlocks, isDNF, hardMode]; // Add hardMode to tuple
-    };
+    // Extract the result blocks (lines) from the remaining part
+    const resultBlocks = lines.slice(2, lines.length);
+
+    return [numberOfGuesses, wordleNumber, resultBlocks, isDNF, hardMode]; // Add hardMode to tuple
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -179,12 +179,12 @@ const InputForm = ({
     let resultBlocks = [];
     let isDNF = didNotFinish; // Start with the checkbox value
     let hardMode = false; // Default hard mode to false
-    
+
     if (pasteWordle && wordleResult.trim().length > 0) {
       // Parse the pasted result
-      const [parsedWordleGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF, parsedHardMode] = 
+      const [parsedWordleGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF, parsedHardMode] =
         parseWordleResult(wordleResult);
-      
+
       // Check for conflict between pasted result and DNF checkbox
       if (didNotFinish && !parsedIsDNF && parsedWordleGuesses > 0 && parsedWordleGuesses <= 6) {
         // User checked DNF but pasted a successful result - show confirmation
@@ -192,7 +192,7 @@ const InputForm = ({
           `Conflict detected: You checked "Did Not Finish" but your pasted result shows you completed it in ${parsedWordleGuesses} guesses.\n\n` +
           `Click OK to use your actual score (${parsedWordleGuesses}) or Cancel to cancel submission.`
         );
-        
+
         if (confirmOverride) {
           // Use the pasted result and uncheck DNF
           isDNF = false;
@@ -209,7 +209,7 @@ const InputForm = ({
         isDNF = isDNF || parsedIsDNF;
         finalGuesses = isDNF ? 7 : parsedWordleGuesses;
       }
-      
+
       // Set the values from parsing
       wordleNumber = parsedWordleNumber;
       resultBlocks = parsedResultBlocks;
@@ -218,7 +218,7 @@ const InputForm = ({
     } else {
       // Manual entry - if DNF, set to 7, otherwise use the entered guesses
       finalGuesses = isDNF ? 7 : parseInt(guesses, 10) || 0;
-      
+
       // Estimate current Wordle number for manual entries
       // Wordle started on June 19, 2021 (Wordle #1 was June 19, 2021)
       const startDate = new Date('2021-06-19');
@@ -226,7 +226,7 @@ const InputForm = ({
       const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
       wordleNumber = (daysDiff + 1).toString();
     }
-    
+
     // Additional validation
     const isWordleResultPasted = wordleResult.trim().length > 0;
     const isNumGuessesProvided = parseInt(guesses, 10) > 0;
@@ -244,7 +244,7 @@ const InputForm = ({
         `Conflict detected: You checked "Did Not Finish" but entered a valid score of ${guesses} guesses.\n\n` +
         `Click OK to use your actual score (${guesses}) or Cancel to cancel submission.`
       );
-      
+
       if (confirmDNF) {
         // Use the entered score and uncheck DNF
         isDNF = false;
@@ -307,7 +307,7 @@ const InputForm = ({
       day: '2-digit'
     }).format(now);
     const formattedNZDate = nzTime; // Already in YYYY-MM-DD format
-    
+
     // Create ISO datetime with the current actual time
     // Save the exact time when the score was submitted
     const isoDateTime = new Date().toISOString();
@@ -329,7 +329,7 @@ const InputForm = ({
       setDidNotFinish(false);
       setWordleResult("");
       setPasteWordle(false);
-      
+
       // Auto-hide the form after successful submission
       setIsFormExpanded(false);
 
@@ -352,10 +352,10 @@ const InputForm = ({
       } else if (!pasteWordle && (isNumGuessesProvided || isDNF)) {
         // Send webhook for manual entries (both scored and DNF)
         await sendResultToTeams(
-          finalGuesses,  
-          wordleNumber || "Unknown", 
-          finalName, 
-          isDNF, 
+          finalGuesses,
+          wordleNumber || "Unknown",
+          finalName,
+          isDNF,
           [],
           hardMode      // Pass hardMode to webhook (will be false)
         );
@@ -375,13 +375,13 @@ const InputForm = ({
   // Check if form is valid for submit button state
   const isFormValid = () => {
     const finalName = username.trim();
-    
+
     // Must have a name
     if (!finalName) return false;
-    
+
     // Custom name must be 3-12 characters
     if (finalName.length < 3 || finalName.length > 12) return false;
-    
+
     // Must have either guesses, DNF, or paste wordle with content
     if (pasteWordle) {
       return wordleResult.trim().length > 0;
@@ -442,95 +442,97 @@ const InputForm = ({
         </div>
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
         <div className={classes.contentCard}>
+
           {activeTab === "Score Entry" && (
-            <div style={{padding: "2rem", display: "flex", justifyContent: "center", width: "100%"}}>
-              {alreadySubmittedToday ? (
-                <FlippingCountdownNZT>
-                  <span
-                    style={{fontSize: "3rem", marginBottom: "1rem", cursor: "pointer", userSelect: "none"}}
-                    title="Celebrate!"
-                    onClick={() => {
-                      setShowConfetti(true);
-                      setTimeout(() => setShowConfetti(false), 4000);
-                    }}
-                  >🎉</span>
-                  <div style={{marginBottom: "1.5rem"}}>Oops - You've already submitted your Wordle score for today.<br />
-                    <span style={{fontWeight: 600, color: "#374151"}}>Next entry opens in:</span>
-                  </div>
-                  <CountdownTimer />
-                  {todaysScore && (
-                    <div className={classes.todaysScore}>
-                      <span style={{fontSize: "2rem", marginRight: "0.5rem"}}>{todaysScore.dnf ? "🛑" : "⭐"}</span>
-                      Your score: <span style={{fontWeight: "700", color: "#374151"}}>{todaysScore.guesses}</span>
-                      {todaysScore.dnf && <span style={{marginLeft: "0.5rem", color: "#dc2626"}}>(DNF)</span>}
-                      {todaysScore.hardMode && <span style={{marginLeft: "0.5rem", color: "#374151"}}>🦾 Hard Mode</span>}
+            <div className={classes.activeTab}>
+              <div className={classes.innerContentCard}>
+                {alreadySubmittedToday ? (
+                  <FlippingCountdownNZT>
+                    <span
+                      style={{ fontSize: "3rem", marginBottom: "1rem", cursor: "pointer", userSelect: "none" }}
+                      title="Celebrate!"
+                      onClick={() => {
+                        setShowConfetti(true);
+                        setTimeout(() => setShowConfetti(false), 4000);
+                      }}
+                    >🎉</span>
+                    <div style={{ marginBottom: "1.5rem" }}>Oops - You've already submitted your Wordle score for today.<br />
+                      <span style={{ fontWeight: 600, color: "#374151" }}>Next entry opens in:</span>
                     </div>
-                  )}
-                </FlippingCountdownNZT>
-              ) : (
-                <form onSubmit={handleSubmit} className={classes.form}>
-                  <div className={classes.toggleContainer}>
-                    <div className={classes.modeSelector}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPasteWordle(false);
-                          setCookie("wordle-entry-mode", "manual");
-                        }}
-                        className={`${classes.modeOption} ${!pasteWordle ? classes.activeMode : ''}`}
-                      >
-                        ✏️ Manual Entry
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPasteWordle(true);
-                          setCookie("wordle-entry-mode", "paste");
-                        }}
-                        className={`${classes.modeOption} ${pasteWordle ? classes.activeMode : ''}`}
-                      >
-                        📋 Paste Result
-                      </button>
-                    </div>
-                  </div>
-                  {!pasteWordle && (
-                    <>
-                      <div className={classes.formGroup}>
-                        <label htmlFor="guesses">Enter your guesses (1-6):</label>
-                        <input
-                          id="guesses"
-                          type="number"
-                          value={guesses}
-                          onChange={e => setGuesses(e.target.value)}
-                          min="1"
-                          max="6"
-                          required={!didNotFinish}
-                          className={classes.input}
-                        />
+                    <CountdownTimer />
+                    {todaysScore && (
+                      <div className={classes.todaysScore}>
+                        <span style={{ fontSize: "2rem", marginRight: "0.5rem" }}>{todaysScore.dnf ? "🛑" : "⭐"}</span>
+                        Your score: <span style={{ fontWeight: "700", color: "#374151" }}>{todaysScore.guesses}</span>
+                        {todaysScore.dnf && <span style={{ marginLeft: "0.5rem", color: "#dc2626" }}>(DNF)</span>}
+                        {todaysScore.hardMode && <span style={{ marginLeft: "0.5rem", color: "#374151" }}>🦾 Hard Mode</span>}
                       </div>
-                      <div className={classes.checkboxGroup}>
-                        <label className={classes.checkboxWrapper}>
+                    )}
+                  </FlippingCountdownNZT>
+                ) : (
+                  <form onSubmit={handleSubmit} className={classes.form}>
+                    <div className={classes.toggleContainer}>
+                      <div className={classes.modeSelector}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPasteWordle(false);
+                            setCookie("wordle-entry-mode", "manual");
+                          }}
+                          className={`${classes.modeOption} ${!pasteWordle ? classes.activeMode : ''}`}
+                        >
+                          ✏️ Manual Entry
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPasteWordle(true);
+                            setCookie("wordle-entry-mode", "paste");
+                          }}
+                          className={`${classes.modeOption} ${pasteWordle ? classes.activeMode : ''}`}
+                        >
+                          📋 Paste Result
+                        </button>
+                      </div>
+                    </div>
+                    {!pasteWordle && (
+                      <>
+                        <div className={classes.formGroup}>
+                          <label htmlFor="guesses">Enter your guesses (1-6):</label>
                           <input
-                            type="checkbox"
-                            checked={didNotFinish}
-                            onChange={e => setDidNotFinish(e.target.checked)}
-                            className={classes.checkbox}
+                            id="guesses"
+                            type="number"
+                            value={guesses}
+                            onChange={e => setGuesses(e.target.value)}
+                            min="1"
+                            max="6"
+                            required={!didNotFinish}
+                            className={classes.input}
                           />
-                          <span style={{marginLeft: "8px"}}>Did Not Finish (DNF)</span>
-                        </label>
-                      </div>
-                    </>
-                  )}
-                  {pasteWordle && (
-                    <>
-                      <div className={classes.formGroup}>
-                        <label htmlFor="wordleResult">Paste your Wordle result:</label>
-                        <textarea
-                          id="wordleResult"
-                          value={wordleResult}
-                          onChange={e => setWordleResult(e.target.value)}
-                          className={classes.textarea}
-                          placeholder={`Paste your Wordle result here, for example:
+                        </div>
+                        <div className={classes.checkboxGroup}>
+                          <label className={classes.checkboxWrapper}>
+                            <input
+                              type="checkbox"
+                              checked={didNotFinish}
+                              onChange={e => setDidNotFinish(e.target.checked)}
+                              className={classes.checkbox}
+                            />
+                            <span style={{ marginLeft: "8px" }}>Did Not Finish (DNF)</span>
+                          </label>
+                        </div>
+                      </>
+                    )}
+                    {pasteWordle && (
+                      <>
+                        <div className={classes.formGroup}>
+                          <label htmlFor="wordleResult">Paste your Wordle result:</label>
+                          <textarea
+                            id="wordleResult"
+                            value={wordleResult}
+                            onChange={e => setWordleResult(e.target.value)}
+                            className={classes.textarea}
+                            placeholder={`Paste your Wordle result here, for example:
 
 Wordle 1,495 6/6
 
@@ -540,46 +542,49 @@ Wordle 1,495 6/6
 ⬛🟩🟩🟩🟩
 ⬛🟩🟩🟩🟩
 🟩🟩🟩🟩🟩`}
-                          style={{
-                            backgroundColor: "white",
-                            cursor: "text"
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                  <button
-                    type="submit"
-                    className={classes.button}
-                    disabled={loading || !isFormValid()}
-                  >
-                    {loading ? "Submitting..." : "Submit Score"}
-                  </button>
-                </form>
-              )}
+                            style={{
+                              backgroundColor: "white",
+                              cursor: "text"
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                    <button
+                      type="submit"
+                      className={classes.button}
+                      disabled={loading || !isFormValid()}
+                    >
+                      {loading ? "Submitting..." : "Submit Score"}
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
           )}
           {activeTab === "Leaderboard" && (
-            <div style={{padding: "2rem", width: "100%", minHeight: "60vh"}}>
+            <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
               <Leaderboard />
             </div>
           )}
           {activeTab === "Chart" && (
-            <div style={{padding: "2rem", width: "100%", minHeight: "60vh"}}>
+            <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
               <BayesianChart />
             </div>
           )}
           {activeTab === "Wordle Game" && (
             <div className={classes.activeTab}>
-              <div className={classes.contentCard}>
+              <div className={classes.innerContentCard}>
                 <div style={{
                   fontSize: "3rem",
                   marginBottom: "1rem"
                 }}>
+
                   🎯
                 </div>
-                <p >
-                  Unfortunately, the New York Times Wordle game cannot be embedded directly. <br />Click the button below to open Wordle in a new tab.
+                <p className={classes.greyParagraph} style={{ fontSize: "1.5rem", fontWeight: "600", color: "black" }}>Play Today's Wordle</p>
+                <p className={classes.greyParagraph}>
+                  The New York Times Wordle game cannot be embedded directly. Click the button below to open Wordle in a new tab.
                 </p>
                 <br />
                 <button
@@ -606,12 +611,7 @@ Wordle 1,495 6/6
                   <span>🔗</span>
                   Open Wordle Game
                 </button>
-                <div style={{
-                  marginTop: "1.5rem",
-                  fontSize: "0.875rem",
-                  color: "#9ca3af",
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                }}>
+                <div className={classes.greyParagraphSubText}>
                   After playing, come back here to submit your score!
                 </div>
               </div>
