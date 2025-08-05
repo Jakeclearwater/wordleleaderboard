@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { createUseStyles } from "react-jss";
-
 import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "./firebase"; // Adjust the import path as necessary
-import axios from "axios"; // For sending HTTP requests
+import { sendResultToTeams } from "./sendResultToTeams";
 import Leaderboard from "./Leaderboard";
 import BayesianChart from "./BayesianChart";
 import { FlippingCountdownNZT, CountdownTimer } from "./FlippingCountdownNZT";
+import TopRightLogin from "./TopRightLogin";
+import { Confetti } from "./Confetti";
+import TabBar from "./TabBar";
 
 // Cookie helpers
 const getCookie = (name) => {
@@ -21,325 +22,10 @@ const setCookie = (name, value, days = 365) => {
   document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
 };
 
-const TABS = ["Wordle Game", "Score Entry", "Leaderboard", "Chart"];
+import useStyles from "./useStyles";
 
-// Define your styles
-const useStyles = createUseStyles({
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    padding: "2rem",
-    width: "100%",
-    maxWidth: "420px",
-    minWidth: "220px",
-    margin: "0 auto",
-    gap: "1.5rem",
-    boxSizing: "border-box",
-    "@media (max-width: 600px)": {
-      padding: "1rem",
-      maxWidth: "98vw",
-      minWidth: "0",
-      width: "100%",
-    },
-    "& label": {
-      color: "#374151 !important",
-      fontWeight: "500",
-      fontSize: "14px",
-      marginBottom: "0.5rem",
-      display: "block",
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    },
-  },
-  formGroup: {
-    display: "flex",
-    flexDirection: "column",
-    transition: "all 0.2s ease-out",
-    gap: "0.25rem",
-  },
-  input: {
-    padding: "12px 16px",
-    borderRadius: "8px",
-    border: "1px solid #e0e4e7",
-    fontSize: "15px",
-    width: "100%",
-    minWidth: "0",
-    maxWidth: "100%",
-    boxSizing: "border-box",
-    transition: "all 0.2s ease",
-    background: "white",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    "@media (max-width: 600px)": {
-      fontSize: "15px",
-      padding: "12px 12px",
-    },
-    "&:focus": {
-      outline: "none",
-      borderColor: "#3b82f6",
-      boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
-    },
-    "&.disabled": {
-      backgroundColor: "#f8f9fa",
-      cursor: "not-allowed",
-      color: "#6c757d",
-      borderColor: "#dee2e6",
-    },
-  },
-  select: {
-    padding: "12px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    backgroundColor: "white",
-    color: "black",
-    fontSize: "16px",
-    width: "100%",
-    boxSizing: "border-box",
-    appearance: "none",
-    backgroundImage: "url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 4 5\"><path fill=\"%23666\" d=\"M2 0L0 2h4zm0 5L0 3h4z\"/></svg>')",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 12px center",
-    backgroundSize: "12px",
-    "&:focus": {
-      outline: "none",
-      borderColor: "#28a745",
-      boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
-    },
-  },
-  button: {
-    padding: "12px 24px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#3b82f6",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "15px",
-    fontWeight: "500",
-    width: "100%",
-    boxSizing: "border-box",
-    marginTop: "1rem",
-    transition: "all 0.2s ease",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    "&:hover": {
-      background: "#2563eb",
-    },
-    "&:active": {
-      transform: "translateY(1px)",
-    },
-    "&.disabled": {
-      background: "#d1d5db",
-      cursor: "not-allowed",
-      "&:hover": {
-        background: "#d1d5db",
-      },
-    },
-  },
-  checkboxGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-  },
-  checkboxWrapper: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-  },
-  checkbox: {
-    width: "18px",
-    height: "18px",
-    accentColor: "#28a745",
-  },
-  textarea: {
-    padding: "12px 16px",
-    borderRadius: "8px",
-    border: "1px solid #e0e4e7",
-    minHeight: "120px",
-    width: "100%",
-    minWidth: "0",
-    maxWidth: "100%",
-    boxSizing: "border-box",
-    fontSize: "14px",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Mono', Consolas, monospace",
-    resize: "vertical",
-    transition: "all 0.2s ease",
-    background: "white",
-    "@media (max-width: 600px)": {
-      fontSize: "14px",
-      padding: "10px 10px",
-      minHeight: "80px",
-    },
-    "&:focus": {
-      outline: "none",
-      borderColor: "#3b82f6",
-      boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
-    },
-    "&::placeholder": {
-      color: "#bfc6d1",
-      opacity: 0.55,
-    },
-    "&::-webkit-input-placeholder": {
-      color: "#bfc6d1",
-      opacity: 0.55,
-    },
-    "&::-moz-placeholder": {
-      color: "#bfc6d1",
-      opacity: 0.55,
-    },
-    "&:-ms-input-placeholder": {
-      color: "#bfc6d1",
-      opacity: 0.55,
-    },
-    "&::-ms-input-placeholder": {
-      color: "#bfc6d1",
-      opacity: 0.55,
-    },
-  },
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    color: "white",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-    opacity: 1,
-    transition: "opacity 1s ease",
-  },
-  hidden: {
-    opacity: 0,
-  },
-  confetti: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    pointerEvents: 'none',
-    zIndex: 9999,
-    overflow: 'hidden',
-    '& .confetti-piece': {
-      position: 'absolute',
-      width: '22px',
-      height: '22px',
-      borderRadius: '50%',
-      backgroundColor: '#FFD700',
-      boxShadow: '0 0 24px 8px rgba(0,0,0,0.12)',
-      animation: '$confettiBurst 2.5s cubic-bezier(0.23, 1, 0.32, 1) forwards',
-      willChange: 'transform, opacity',
-    }
-  },
-  '@keyframes confettiBurst': {
-    '0%': {
-      transform: 'translate(-50%, -50%) scale(0.2) rotateZ(0deg)',
-      opacity: 1,
-      filter: 'blur(0px)',
-    },
-    '10%': {
-      transform: 'translate(-50%, -50%) scale(1.2) rotateZ(90deg)',
-      opacity: 1,
-      filter: 'blur(0px)',
-    },
-    '80%': {
-      filter: 'blur(0px)',
-    },
-    '100%': {
-      transform: 'translate(calc(-50% + var(--end-x, 0px)), calc(-50% + var(--end-y, 0px))) scale(2.2) rotateZ(1080deg)',
-      opacity: 0,
-      filter: 'blur(2px)',
-    }
-  },
-  toggleButton: {
-    backgroundColor: "#3b82f6",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    width: "36px",
-    height: "36px",
-    minWidth: "36px",
-    minHeight: "36px",
-    fontSize: "16px",
-    fontWeight: "500",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    flexShrink: 0,
-    aspectRatio: "1",
-    lineHeight: "1",
-    "&:hover": {
-      backgroundColor: "#2563eb",
-    },
-    "&:active": {
-      transform: "scale(0.95)",
-    },
-  },
-  toggleContainer: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    marginTop: "1rem",
-    marginBottom: "1rem",
-  },
-  modeSelector: {
-    display: "flex",
-    background: "#f3f4f6",
-    borderRadius: "8px",
-    padding: "4px",
-    border: "1px solid #e5e7eb",
-  },
-  modeOption: {
-    flex: 1,
-    padding: "8px 16px",
-    borderRadius: "6px",
-    border: "none",
-    background: "transparent",
-    color: "#6b7280",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: "500",
-    transition: "all 0.2s ease",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    "&:hover": {
-      color: "#374151",
-    },
-  },
-  activeMode: {
-    background: "white",
-    color: "#1f2937",
-    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-    fontWeight: "600",
-    "&:hover": {
-      color: "#1f2937",
-    },
-  },
-  formContainer: {
-    overflow: "hidden",
-    transition: "max-height 0.3s ease-out, opacity 0.3s ease-out",
-    width: "100%",
-    maxWidth: "420px",
-    minWidth: "220px",
-    margin: "0 auto",
-    boxSizing: "border-box",
-    "@media (max-width: 600px)": {
-      width: "100%",
-      maxWidth: "98vw",
-      minWidth: "0",
-    },
-    "&.collapsed": {
-      maxHeight: "0",
-      opacity: "0",
-    },
-    "&.expanded": {
-      maxHeight: "1000px",
-      opacity: "1",
-    },
-  }
-});
+// Restore TABS for tab navigation
+const TABS = ["Wordle Game", "Score Entry", "Leaderboard", "Chart"];
 
 const InputForm = ({ 
   backgroundThemes, 
@@ -358,11 +44,12 @@ const InputForm = ({
   const [wordleResult, setWordleResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [pasteWordle, setPasteWordle] = useState(false);
+  const [pasteWordle, setPasteWordle] = useState(() => {
+    const mode = getCookie("wordle-entry-mode");
+    return mode === "paste";
+  });
   const [showConfetti, setShowConfetti] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [testConfetti, setTestConfetti] = useState(false);
-  const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [alreadySubmittedToday, setAlreadySubmittedToday] = useState(false);
   const [todaysScore, setTodaysScore] = useState(null);
 
@@ -374,7 +61,6 @@ const InputForm = ({
     }
   }, []);
 
-  // Check if already submitted for today (NZT)
   useEffect(() => {
     const checkAlreadySubmitted = async () => {
       if (!username) {
@@ -425,7 +111,7 @@ const InputForm = ({
     // Only allow a-z, A-Z, and spaces, 3-20 chars
     const valid = /^[a-zA-Z ]{3,20}$/.test(trimmed);
     if (!valid) {
-      alert("Name must be 3-20 letters or spaces (a-z, A-Z, space) only.");
+      alert("Name must be 3-20 letters or spaces (a-z, A-Z, spaces) only.");
       return;
     }
     setCookie("wordle-username", trimmed);
@@ -438,390 +124,7 @@ const InputForm = ({
     setUsername("");
   };
 
-  // Top right login info
-  const TopRightLogin = () => (
-    <div style={{
-      position: "fixed",
-      top: "1rem",
-      right: "1rem",
-      display: "flex",
-      alignItems: "center",
-      gap: "0.75rem",
-      background: "rgba(255, 255, 255, 0.98)",
-      backdropFilter: "blur(8px)",
-      padding: "0.75rem 1rem",
-      borderRadius: "50px",
-      boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-      fontSize: "14px",
-      fontWeight: "500",
-      zIndex: 100,
-      border: "1px solid rgba(255, 255, 255, 0.3)",
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    }}>
-      {isLoggedIn && (
-        <>
-          <span style={{color: "#374151"}}>Welcome, {username}</span>
-          
-          {/* Settings Button */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "50%",
-                border: "none",
-                background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
-                transition: "all 0.2s ease",
-                position: "relative"
-              }}
-              onMouseOver={(e) => {
-                e.target.style.transform = "scale(1.1)";
-                e.target.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.25)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.transform = "scale(1)";
-                e.target.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.15)";
-              }}
-              onClick={() => setShowSettings(!showSettings)}
-              title="Settings & Options"
-            >
-              <span style={{
-                color: "white",
-                fontSize: "16px",
-                textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)"
-              }}>
-                ⚙️
-              </span>
-            </button>
-            
-            {/* Settings Dropdown */}
-            {showSettings && (
-              <div style={{
-                position: 'absolute',
-                top: '35px',
-                right: '0',
-                width: '320px',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(15px)',
-                borderRadius: '12px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                padding: '0',
-                zIndex: 1000
-              }}>
-                {/* Header */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '12px 16px',
-                  borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  borderRadius: '12px 12px 0 0'
-                }}>
-                  <span style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#333'
-                  }}>
-                    🎨 Background Themes
-                  </span>
-                  <button 
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      color: '#666',
-                      padding: '4px'
-                    }}
-                    onClick={() => setShowSettings(false)}
-                  >
-                    ✕
-                  </button>
-                </div>
-                
-                {/* Theme Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '8px',
-                  padding: '12px'
-                }}>
-                  {backgroundThemes && Object.entries(backgroundThemes).filter(([key]) => key !== 'custom').map(([key, theme]) => (
-                    <button
-                      key={key}
-                      style={{
-                        height: '50px',
-                        border: selectedTheme === key ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        transition: 'all 0.2s ease',
-                        boxShadow: selectedTheme === key ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                        background: theme.gradient,
-                        transform: selectedTheme === key ? 'translateY(-2px)' : 'translateY(0)'
-                      }}
-                      onClick={() => setSelectedTheme(key)}
-                      title={theme.name}
-                      onMouseOver={(e) => {
-                        if (selectedTheme !== key) {
-                          e.target.style.transform = 'translateY(-1px)';
-                          e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-                        }
-                      }}
-                      onMouseOut={(e) => {
-                        if (selectedTheme !== key) {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                        }
-                      }}
-                    >
-                      <span style={{
-                        position: 'absolute',
-                        bottom: '4px',
-                        left: '8px',
-                        right: '8px',
-                        color: 'white',
-                        fontSize: '10px',
-                        fontWeight: '600',
-                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
-                        textAlign: 'center',
-                        lineHeight: '1.2'
-                      }}>
-                        {theme.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Custom Colors Section */}
-                <div style={{
-                  borderTop: '1px solid rgba(0, 0, 0, 0.1)',
-                  padding: '12px',
-                  backgroundColor: 'rgba(248, 249, 250, 0.8)'
-                }}>
-                  <div style={{
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: '#333',
-                    marginBottom: '8px'
-                  }}>
-                    🎨 Custom Colors
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    marginBottom: '8px'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{
-                        fontSize: '10px',
-                        color: '#666',
-                        fontWeight: '500',
-                        display: 'block',
-                        marginBottom: '2px'
-                      }}>
-                        Color 1:
-                      </label>
-                      <input
-                        type="color"
-                        value={customColors ? customColors.color1 : '#667eea'}
-                        onChange={(e) => setCustomColors && setCustomColors(prev => ({ ...prev, color1: e.target.value }))}
-                        style={{
-                          width: '100%',
-                          height: '32px',
-                          border: '1px solid #ddd',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{
-                        fontSize: '10px',
-                        color: '#666',
-                        fontWeight: '500',
-                        display: 'block',
-                        marginBottom: '2px'
-                      }}>
-                        Color 2:
-                      </label>
-                      <input
-                        type="color"
-                        value={customColors ? customColors.color2 : '#764ba2'}
-                        onChange={(e) => setCustomColors && setCustomColors(prev => ({ ...prev, color2: e.target.value }))}
-                        style={{
-                          width: '100%',
-                          height: '32px',
-                          border: '1px solid #ddd',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    style={{
-                      width: '100%',
-                      height: '40px',
-                      border: selectedTheme === 'custom' ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      background: customColors ? `linear-gradient(135deg, ${customColors.color1} 0%, ${customColors.color2} 100%)` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      color: 'white',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedTheme === 'custom' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)'
-                    }}
-                    onClick={() => setSelectedTheme('custom')}
-                  >
-                    Use Custom
-                  </button>
-                </div>
-                
-                {/* Logout Section */}
-                <div style={{
-                  borderTop: '1px solid rgba(0, 0, 0, 0.1)',
-                  padding: '12px',
-                  backgroundColor: 'rgba(248, 249, 250, 0.8)'
-                }}>
-                  <button 
-                    style={{
-                      width: '100%',
-                      fontSize: "14px", 
-                      padding: "10px 16px", 
-                      borderRadius: "8px",
-                      border: "none",
-                      background: "#dc2626",
-                      color: "white",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                      transition: "all 0.2s ease",
-                      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px"
-                    }} 
-                    onMouseOver={(e) => e.target.style.background = "#b91c1c"}
-                    onMouseOut={(e) => e.target.style.background = "#dc2626"}
-                    onClick={handleLogout}
-                  >
-                    <span>🚪</span>
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  // Tab navigation
-  const TabBar = () => (
-    <div style={{
-      display: "flex",
-      justifyContent: "flex-start",
-      alignItems: "flex-end",
-      margin: "0 0 0 0",
-      position: "relative",
-      height: "50px",
-      maxWidth: "600px",
-      width: "600px",
-      zIndex: 10
-    }}>
-      {TABS.map((tab, idx) => (
-        <button
-          key={tab}
-          style={{
-            flex: 1,
-            maxWidth: "180px",
-            position: "relative",
-            zIndex: activeTab === tab ? 3 : 1,
-            fontWeight: activeTab === tab ? "600" : "500",
-            fontSize: "14px",
-            padding: activeTab === tab ? "14px 20px 18px 20px" : "10px 16px 14px 16px",
-            borderRadius: "8px 8px 0 0",
-            border: "none",
-            background: activeTab === tab 
-              ? "rgba(255, 255, 255, 0.98)" 
-              : "rgba(255, 255, 255, 0.6)",
-            backdropFilter: "blur(8px)",
-            color: activeTab === tab ? "#1a1a1a" : "#555",
-            boxShadow: activeTab === tab 
-              ? "none" 
-              : "0 2px 4px rgba(0,0,0,0.05)",
-            marginRight: idx < TABS.length - 1 ? "4px" : "0",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            outline: "none",
-            transform: activeTab === tab ? "translateY(1px)" : "translateY(0)",
-            borderBottom: activeTab === tab ? "none" : "1px solid rgba(255, 255, 255, 0.3)",
-          }}
-          onMouseOver={(e) => {
-            if (activeTab !== tab) {
-              e.target.style.background = "rgba(255, 255, 255, 0.75)";
-              e.target.style.color = "#333";
-            }
-          }}
-          onMouseOut={(e) => {
-            if (activeTab !== tab) {
-              e.target.style.background = "rgba(255, 255, 255, 0.6)";
-              e.target.style.color = "#555";
-            }
-          }}
-          onClick={() => setActiveTab(tab)}
-        >{tab}</button>
-      ))}
-    </div>
-  );
-
-  // Create confetti pieces
-  const createConfetti = () => {
-    const colors = [
-      '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-      '#FFB347', '#B39DDB', '#F06292', '#81C784', '#FF8A65', '#90CAF9'
-    ];
-    const pieces = [];
-    const confettiCount = 120;
-    for (let i = 0; i < confettiCount; i++) {
-      // Generate random angle and distance for burst effect
-      const angle = (Math.PI * 2 * i) / confettiCount + Math.random() * 0.5;
-      const distance = 180 + Math.random() * 600;
-      const endX = Math.cos(angle) * distance;
-      const endY = Math.sin(angle) * distance;
-      pieces.push(
-        <div
-          key={i}
-          className="confetti-piece"
-          style={{
-            left: '50%',
-            top: '50%',
-            backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-            animationDelay: `${Math.random() * 0.7}s`,
-            animationDuration: `${2 + Math.random() * 1.5}s`,
-            '--end-x': `${endX}px`,
-            '--end-y': `${endY}px`,
-            boxShadow: `0 0 32px 8px ${colors[Math.floor(Math.random() * colors.length)]}55`,
-          }}
-        />
-      );
-    }
-    return pieces;
-  };
-
-  
+ 
     const parseWordleResult = (result) => {
       const lines = result.toString().trim().split("\n");
       const metadataLine = lines[0].trim();
@@ -848,72 +151,6 @@ const InputForm = ({
       return [numberOfGuesses, wordleNumber, resultBlocks, isDNF, hardMode]; // Add hardMode to tuple
     };
 
-  const sendResultToTeams = async (
-    numGuesses,
-    wordleNumber,
-    name,
-    didNotFinish,
-    resultBlocks,
-    hardMode = false // Add default value
-  ) => {
-    const grats = [
-      "Genius",
-      "Magnificent",
-      "Impressive",
-      "Splendid",
-      "Great",
-      "Phew",
-      "Spoon!",
-    ];
-    const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
-
-    // Format the message consistently for all scores (1-6 guesses + DNF as 7)
-    const messageText = `${name} scored ${numGuesses} in Wordle #${wordleNumber} - ${grats[numGuesses - 1]}${hardMode ? ' 🦾' : ''}`;
-
-    // Map the result blocks to TextBlocks with compact styling
-    const textBlocks = resultBlocks.map((line) => ({
-      type: "TextBlock",
-      text: line,
-      wrap: true, // Allow text to wrap within the card
-      spacing: "None", // Reduce spacing between lines
-      size: "Medium", // Use smaller text size
-    }));
-
-    // Define the payload for the Teams webhook
-    const payload = {
-      type: "message",
-      attachments: [
-        {
-          contentType: "application/vnd.microsoft.card.adaptive",
-          content: {
-            $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-            type: "AdaptiveCard",
-            version: "1.2",
-            body: [
-              {
-                type: "TextBlock",
-                text: messageText,
-                weight: "bolder",
-                size: "Medium",
-                spacing: "None", // Reduce spacing for the title text
-              },
-              ...textBlocks,
-            ],
-          },
-        },
-      ],
-    };
-
-    // Send the payload to the Teams webhook
-    try {
-      console.log("Sending result to Teams:", payload);
-      const response = await axios.post(webhookUrl, payload);
-      console.log("Teams response:", response);
-    } catch (error) {
-      console.error("Error sending result to Teams:", error);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -937,7 +174,6 @@ const InputForm = ({
       return;
     }
 
-    // This is the problematic part - we need to ensure DNF is always 7
     let finalGuesses = 0;
     let wordleNumber = '';
     let resultBlocks = [];
@@ -1136,18 +372,6 @@ const InputForm = ({
     }
   };
 
-  // Handle test confetti checkbox
-  const handleTestConfetti = (e) => {
-    setTestConfetti(e.target.checked);
-    if (e.target.checked) {
-      setShowConfetti(true);
-      setTimeout(() => {
-        setShowConfetti(false);
-        setTestConfetti(false);
-      }, 4000); // Hide after 4 seconds and uncheck
-    }
-  };
-
   // Check if form is valid for submit button state
   const isFormValid = () => {
     const finalName = username.trim();
@@ -1169,40 +393,11 @@ const InputForm = ({
   // Login screen
   if (!isLoggedIn) {
     return (
-      <div style={{
-        maxWidth: "400px", 
-        margin: "4rem auto", 
-        padding: "2rem", 
-        background: "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(8px)",
-        borderRadius: "12px", 
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(255, 255, 255, 0.3)"
-      }}>
-        <h2 style={{
-          textAlign: "center", 
-          marginBottom: "2rem",
-          color: "#1a1a1a",
-          fontWeight: "600",
-          fontSize: "24px",
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        }}>Wordle Leaderboard</h2>
-        <p style={{
-          textAlign: "center",
-          color: "#6b7280",
-          fontSize: "15px",
-          marginBottom: "2rem",
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        }}>Track your Wordle progress and compete with friends</p>
+      <div className={classes.loginContainer}>
+        <h2 className={classes.loginTitle}>Wordle Leaderboard</h2>
+        <p className={classes.loginSubtitle}>Track your Wordle progress and compete with friends</p>
         <form onSubmit={handleLogin}>
-          <label htmlFor="username" style={{
-            fontWeight: "500", 
-            fontSize: "14px",
-            color: "#374151",
-            display: "block",
-            marginBottom: "0.5rem",
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-          }}>Choose Your Name:</label>
+          <label htmlFor="username" className={classes.loginLabel}>Choose Your Name:</label>
           <input
             id="username"
             type="text"
@@ -1211,54 +406,12 @@ const InputForm = ({
             minLength={3}
             maxLength={20}
             required
-            style={{
-              width: "100%", 
-              padding: "12px 16px", 
-              borderRadius: "8px", 
-              border: "1px solid #e0e4e7", 
-              fontSize: "15px", 
-              marginBottom: "1.5rem",
-              boxSizing: "border-box",
-              transition: "all 0.2s ease",
-              background: "white",
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "#3b82f6";
-              e.target.style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#e0e4e7";
-              e.target.style.boxShadow = "none";
-            }}
+            className={classes.loginInput}
             placeholder="Enter your name"
           />
-          <button type="submit" style={{
-            width: "100%", 
-            padding: "12px 24px", 
-            borderRadius: "8px", 
-            background: "#3b82f6", 
-            color: "white", 
-            fontWeight: "500", 
-            fontSize: "15px", 
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-          }}
-          onMouseOver={(e) => {
-            e.target.style.background = "#2563eb";
-          }}
-          onMouseOut={(e) => {
-            e.target.style.background = "#3b82f6";
-          }}
-          onMouseDown={(e) => {
-            e.target.style.transform = "translateY(1px)";
-          }}
-          onMouseUp={(e) => {
-            e.target.style.transform = "translateY(0)";
-          }}
-          >Submit Your Name</button>
+          <button type="submit" className={classes.loginButton}>
+            Submit Your Name
+          </button>
         </form>
       </div>
     );
@@ -1267,35 +420,28 @@ const InputForm = ({
   // Main app with tabs and content
   return (
     <>
-      <TopRightLogin />
-      <div style={{
-        width: "100%", 
-        maxWidth: "calc(100% - 20px)", 
-        margin: "0 auto", 
-        padding: "2rem 1rem",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center"
-      }}>
+      <TopRightLogin
+        isLoggedIn={isLoggedIn}
+        username={username}
+        getCurrentGradient={getCurrentGradient}
+        showSettings={showSettings}
+        setShowSettings={setShowSettings}
+        backgroundThemes={backgroundThemes}
+        selectedTheme={selectedTheme}
+        setSelectedTheme={setSelectedTheme}
+        customColors={customColors}
+        setCustomColors={setCustomColors}
+        handleLogout={handleLogout}
+      />
+      <div className={classes.mainResponsiveMargin}>
         <div style={{
           textAlign: "center",
           marginBottom: "1rem",
           width: "100%"
         }}>
         </div>
-        <TabBar />
-        <div style={{
-          width: "100%", 
-          background: "rgba(255, 255, 255, 0.98)",
-          backdropFilter: "blur(8px)",
-          borderRadius: "0 0 12px 12px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          border: "1px solid rgba(255, 255, 255, 0.3)",
-          borderTop: "none",
-          overflow: "hidden",
-          position: "relative",
-          zIndex: 2
-        }}>
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <div className={classes.contentCard}>
           {activeTab === "Score Entry" && (
             <div style={{padding: "2rem", display: "flex", justifyContent: "center", width: "100%"}}>
               {alreadySubmittedToday ? (
@@ -1313,16 +459,7 @@ const InputForm = ({
                   </div>
                   <CountdownTimer />
                   {todaysScore && (
-                    <div style={{
-                      marginTop: "1.5rem",
-                      fontSize: "1.1rem",
-                      color: "#2563eb",
-                      background: "#f3f4f6",
-                      borderRadius: "8px",
-                      padding: "1rem 1.5rem",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                      fontWeight: "600"
-                    }}>
+                    <div className={classes.todaysScore}>
                       <span style={{fontSize: "2rem", marginRight: "0.5rem"}}>{todaysScore.dnf ? "🛑" : "⭐"}</span>
                       Your score: <span style={{fontWeight: "700", color: "#374151"}}>{todaysScore.guesses}</span>
                       {todaysScore.dnf && <span style={{marginLeft: "0.5rem", color: "#dc2626"}}>(DNF)</span>}
@@ -1330,25 +467,26 @@ const InputForm = ({
                     </div>
                   )}
                 </FlippingCountdownNZT>
-
-
-// --- Flipping Countdown Components ---
-
-// Place these after the export default InputForm
               ) : (
                 <form onSubmit={handleSubmit} className={classes.form}>
                   <div className={classes.toggleContainer}>
                     <div className={classes.modeSelector}>
                       <button
                         type="button"
-                        onClick={() => setPasteWordle(false)}
+                        onClick={() => {
+                          setPasteWordle(false);
+                          setCookie("wordle-entry-mode", "manual");
+                        }}
                         className={`${classes.modeOption} ${!pasteWordle ? classes.activeMode : ''}`}
                       >
                         ✏️ Manual Entry
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPasteWordle(true)}
+                        onClick={() => {
+                          setPasteWordle(true);
+                          setCookie("wordle-entry-mode", "paste");
+                        }}
                         className={`${classes.modeOption} ${pasteWordle ? classes.activeMode : ''}`}
                       >
                         📋 Paste Result
@@ -1432,69 +570,23 @@ Wordle 1,495 6/6
             </div>
           )}
           {activeTab === "Wordle Game" && (
-            <div style={{
-              padding: "2rem", 
-              width: "100%", 
-              minHeight: "60vh",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              gap: "2rem"
-            }}>
-              <div style={{
-                background: "rgba(255, 255, 255, 0.95)",
-                backdropFilter: "blur(10px)",
-                borderRadius: "16px",
-                padding: "3rem 2rem",
-                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-                maxWidth: "500px",
-                width: "100%"
-              }}>
+            <div className={classes.activeTab}>
+              <div className={classes.contentCard}>
                 <div style={{
                   fontSize: "3rem",
                   marginBottom: "1rem"
                 }}>
                   🎯
                 </div>
-                <h2 style={{
-                  fontSize: "1.5rem",
-                  fontWeight: "700",
-                  color: "#1a1a1a",
-                  margin: "0 0 1rem 0",
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                }}>
-                  Play Today's Wordle
-                </h2>
-                <p style={{
-                  fontSize: "1rem",
-                  color: "#6b7280",
-                  margin: "0 0 2rem 0",
-                  lineHeight: "1.5",
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                }}>
-                  Due to security restrictions, the New York Times Wordle game cannot be embedded directly. Click the button below to open Wordle in a new tab.
+                <p >
+                  Unfortunately, the New York Times Wordle game cannot be embedded directly. <br />Click the button below to open Wordle in a new tab.
                 </p>
+                <br />
                 <button
                   onClick={() => window.open('https://www.nytimes.com/games/wordle', '_blank', 'noopener,noreferrer')}
+                  className={classes.playButtonStyle}
                   style={{
-                    padding: "16px 32px",
-                    borderRadius: "12px",
-                    border: "none",
-                    background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
-                    fontSize: "16px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    margin: "0 auto"
+                    background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                   }}
                   onMouseOver={(e) => {
                     e.target.style.transform = "translateY(-2px)";
@@ -1540,11 +632,7 @@ Wordle 1,495 6/6
           }}>Score submitted successfully! 🎉</div>
         </div>
       )}
-      {showConfetti && (
-        <div className={classes.confetti}>
-          {createConfetti()}
-        </div>
-      )}
+      <Confetti show={showConfetti} classes={classes} />
     </>
   );
 };
