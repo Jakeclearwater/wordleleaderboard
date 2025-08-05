@@ -59,6 +59,39 @@ const useStyles = createUseStyles({
         lineHeight: "1.5",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     },
+
+    greyParagraph: {
+        marginTop: "1.5rem",
+        fontSize: "1rem",
+        color: "#737983ff",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    },
+
+    greyParagraphSubText: {
+        marginTop: "1.5rem",
+        fontSize: "0.875rem",
+        color: "#9ca3af",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    },
+
+    innerContentCard: {
+        maxWidth: "500px",
+        background: "rgba(255, 255, 255, 0.98)",
+        backdropFilter: "blur(8px)",
+        borderRadius: "0 0 12px 12px",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+        border: "1px solid rgba(255, 255, 255, 0.3)",
+        borderTop: "none",
+        overflow: "hidden",
+        position: "relative",
+        zIndex: 2,
+        padding: "1rem",
+        boxSizing: "border-box",
+        margin: "0 0 2rem 0",
+        lineHeight: "1.5",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    },
+
     mainResponsiveMargin: {
         width: "100%",
         maxWidth: "calc(100% - 20px)",
