@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const TopRightLogin = ({
   isLoggedIn,
@@ -12,20 +12,34 @@ const TopRightLogin = ({
   customColors,
   setCustomColors,
   handleLogout
-}) => (
+}) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 480);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return (
   <div style={{
     position: "fixed",
-    top: "1rem",
-    right: "1rem",
+    top: "0.75rem",
+    right: "0.75rem",
     display: "flex",
     alignItems: "center",
-    gap: "0.75rem",
+    gap: isMobile ? "0.4rem" : "0.6rem",
     background: "rgba(255, 255, 255, 0.98)",
     backdropFilter: "blur(8px)",
-    padding: "0.75rem 1rem",
+    padding: isMobile ? "0.4rem 0.6rem" : "0.6rem 0.8rem",
     borderRadius: "50px",
     boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-    fontSize: "14px",
+    fontSize: isMobile ? "11px" : "13px",
     fontWeight: "500",
     zIndex: 100,
     border: "1px solid rgba(255, 255, 255, 0.3)",
@@ -33,13 +47,15 @@ const TopRightLogin = ({
   }}>
     {isLoggedIn && (
       <>
-        <span style={{ color: "#374151" }}>Welcome, {username}</span>
+        <span style={{ color: "#374151" }}>
+          {isMobile ? username : `Welcome, ${username}`}
+        </span>
         {/* Settings Button */}
         <div style={{ position: "relative" }}>
           <button
             style={{
-              width: "32px",
-              height: "32px",
+              width: isMobile ? "24px" : "28px",
+              height: isMobile ? "24px" : "28px",
               borderRadius: "50%",
               border: "none",
               background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -64,7 +80,7 @@ const TopRightLogin = ({
           >
             <span style={{
               color: "white",
-              fontSize: "16px",
+              fontSize: isMobile ? "12px" : "14px",
               textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)"
             }}>
               ⚙️
@@ -76,7 +92,8 @@ const TopRightLogin = ({
               position: 'absolute',
               top: '35px',
               right: '0',
-              width: '320px',
+              width: isMobile ? '280px' : '320px',
+              maxWidth: 'calc(100vw - 2rem)',
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(15px)',
               borderRadius: '12px',
@@ -119,7 +136,7 @@ const TopRightLogin = ({
               {/* Theme Grid */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
                 gap: '8px',
                 padding: '12px'
               }}>
@@ -127,7 +144,7 @@ const TopRightLogin = ({
                   <button
                     key={key}
                     style={{
-                      height: '50px',
+                      height: isMobile ? '40px' : '50px',
                       border: selectedTheme === key ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -205,7 +222,7 @@ const TopRightLogin = ({
                       onChange={e => setCustomColors && setCustomColors(prev => ({ ...prev, color1: e.target.value }))}
                       style={{
                         width: '100%',
-                        height: '32px',
+                        height: isMobile ? '28px' : '32px',
                         border: '1px solid #ddd',
                         borderRadius: '4px',
                         cursor: 'pointer'
@@ -228,7 +245,7 @@ const TopRightLogin = ({
                       onChange={e => setCustomColors && setCustomColors(prev => ({ ...prev, color2: e.target.value }))}
                       style={{
                         width: '100%',
-                        height: '32px',
+                        height: isMobile ? '28px' : '32px',
                         border: '1px solid #ddd',
                         borderRadius: '4px',
                         cursor: 'pointer'
@@ -239,7 +256,7 @@ const TopRightLogin = ({
                 <button
                   style={{
                     width: '100%',
-                    height: '40px',
+                    height: isMobile ? '36px' : '40px',
                     border: selectedTheme === 'custom' ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
                     borderRadius: '6px',
                     cursor: 'pointer',
@@ -294,6 +311,7 @@ const TopRightLogin = ({
       </>
     )}
   </div>
-);
+  );
+};
 
 export default TopRightLogin;

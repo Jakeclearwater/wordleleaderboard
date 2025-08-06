@@ -48,6 +48,10 @@ const backgroundThemes = {
     name: '🌲 Forest Green',
     gradient: 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)'
   },
+  caruba: {
+    name: '🌴 Caruba Jungle',
+    gradient: 'linear-gradient(135deg, #6aaa64 0%, #c9b458 100%)'
+  },
   midnight: {
     name: '🌙 Midnight Blue',
     gradient: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)'
@@ -197,7 +201,7 @@ const useStyles = createUseStyles({
     fontSize: '3.8rem',
     fontWeight: '900',
     letterSpacing: '-0.02em',
-    margin: '1.5rem 0 0 0',
+    margin: '2.4rem 0 0 0',
     padding: '0.5rem',
     display: 'flex',
     justifyContent: 'center',
@@ -205,8 +209,8 @@ const useStyles = createUseStyles({
     flexWrap: 'wrap',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     '@media (max-width: 768px)': {
-      fontSize: '2.8rem',
-      margin: '1rem 0 0.5rem 0',
+      fontSize: '2.4rem',
+      margin: '3.2rem 0 -1rem 0',
     },
   },
   footer: {
