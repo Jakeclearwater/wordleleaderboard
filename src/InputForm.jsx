@@ -556,7 +556,18 @@ Wordle 1,495 6/6
                     <button
                       type="submit"
                       className={classes.button}
+                      style={{ background: getCurrentGradient(), transition: 'all 0.2s ease' }}
                       disabled={loading || !isFormValid()}
+                      onMouseOver={e => {
+                        e.target.style.filter = 'brightness(1.1)';
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+                      }}
+                      onMouseOut={e => {
+                        e.target.style.filter = 'brightness(1)';
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '';
+                      }}
                     >
                       {loading ? "Submitting..." : "Submit Score"}
                     </button>
@@ -567,7 +578,7 @@ Wordle 1,495 6/6
           )}
           {activeTab === "Leaderboard" && (
             <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
-              <Leaderboard />
+              <Leaderboard getCurrentGradient={getCurrentGradient} />
             </div>
           )}
           {activeTab === "Chart" && (

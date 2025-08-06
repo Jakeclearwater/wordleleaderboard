@@ -92,7 +92,7 @@ const useStyles = createUseStyles({
       left: 0,
       right: 0,
       height: '4px',
-      background: 'var(--gradient-hero, linear-gradient(135deg, #6aaa64 0%, #c9b458 100%))',
+      background: props => props.gradient,
     }
   },
   
@@ -278,8 +278,9 @@ const useStyles = createUseStyles({
   },
 });
 
-const Leaderboard = () => {
-  const classes = useStyles();
+const Leaderboard = ({ getCurrentGradient }) => {
+  // Pass dynamic gradient into JSS props
+  const classes = useStyles({ gradient: getCurrentGradient() });
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
