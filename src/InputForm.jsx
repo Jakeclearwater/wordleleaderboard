@@ -8,6 +8,7 @@ import { FlippingCountdownNZT, CountdownTimer } from "./FlippingCountdownNZT";
 import TopRightLogin from "./TopRightLogin";
 import { Confetti } from "./Confetti";
 import TabBar from "./TabBar";
+import PersonalStatistics from "./PersonalStatistics";
 
 // Cookie helpers
 const getCookie = (name) => {
@@ -369,8 +370,7 @@ const InputForm = ({
       setLoading(false);
       setTimeout(() => {
         setShowOverlay(false);
-        // Switch to Leaderboard tab after overlay disappears
-        setActiveTab("Leaderboard");
+        // Keep user on Score Entry tab to see their personal statistics
       }, 3000);
     }
   };
@@ -450,28 +450,11 @@ const InputForm = ({
             <div className={classes.activeTab}>
               <div className={classes.innerContentCard}>
                 {alreadySubmittedToday ? (
-                  <FlippingCountdownNZT>
-                    <span
-                      style={{ fontSize: "3rem", marginBottom: "1rem", cursor: "pointer", userSelect: "none" }}
-                      title="Celebrate!"
-                      onClick={() => {
-                        setShowConfetti(true);
-                        setTimeout(() => setShowConfetti(false), 4000);
-                      }}
-                    >🎉</span>
-                    <div style={{ marginBottom: "1.5rem" }}>Oops - You've already submitted your Wordle score for today.<br />
-                      <span style={{ fontWeight: 600, color: "#374151" }}>Next entry opens in:</span>
-                    </div>
-                    <CountdownTimer />
-                    {todaysScore && (
-                      <div className={classes.todaysScore}>
-                        <span style={{ fontSize: "2rem", marginRight: "0.5rem" }}>{todaysScore.dnf ? "🛑" : "⭐"}</span>
-                        Your score: <span style={{ fontWeight: "700", color: "#374151" }}>{todaysScore.guesses}</span>
-                        {todaysScore.dnf && <span style={{ marginLeft: "0.5rem", color: "#dc2626" }}>(DNF)</span>}
-                        {todaysScore.hardMode && <span style={{ marginLeft: "0.5rem", color: "#374151" }}>🦾 Hard Mode</span>}
-                      </div>
-                    )}
-                  </FlippingCountdownNZT>
+                  <PersonalStatistics 
+                    username={username}
+                    todaysScore={todaysScore}
+                    getCurrentGradient={getCurrentGradient}
+                  />
                 ) : (
                   <form onSubmit={handleSubmit} className={classes.form}>
                     <div className={classes.toggleContainer}>
