@@ -23,12 +23,20 @@ export const CountdownTimer = () => {
   const minutes = Math.floor((secondsLeft % 3600) / 60);
   const seconds = secondsLeft % 60;
   return (
-    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', fontSize: '2.5rem', fontWeight: 700 }}>
-      <FlippingNumber value={hours} label="HRS" />
-      <span style={{fontSize: '2.2rem', color: '#bbb', fontWeight: 400}}>:</span>
-      <FlippingNumber value={minutes} label="MIN" />
-      <span style={{fontSize: '2.2rem', color: '#bbb', fontWeight: 400}}>:</span>
-      <FlippingNumber value={seconds} label="SEC" />
+    <div style={{ 
+      display: 'flex', 
+      gap: '0.75rem', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      fontSize: '1.5rem', 
+      fontWeight: 700,
+      fontFamily: 'monospace'
+    }}>
+      <FlippingNumber value={hours} label="H" />
+      <span style={{fontSize: '1.5rem', color: '#666', fontWeight: 400, marginTop: '-0.5rem'}}>:</span>
+      <FlippingNumber value={minutes} label="M" />
+      <span style={{fontSize: '1.5rem', color: '#666', fontWeight: 400, marginTop: '-0.5rem'}}>:</span>
+      <FlippingNumber value={seconds} label="S" />
     </div>
   );
 };
@@ -36,91 +44,231 @@ export const CountdownTimer = () => {
 const FlippingNumber = ({ value, label }) => {
   const padded = value.toString().padStart(2, '0');
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div style={{ display: 'flex', gap: '0.1em' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center',
+      gap: '0.25rem'
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        gap: '0.1rem',
+        background: 'linear-gradient(145deg, #2a2a2a, #1a1a1a)',
+        padding: '0.25rem',
+        borderRadius: '0.375rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
+      }}>
         {padded.split('').map((digit, i) => (
           <FlipDigit key={i} digit={digit} />
         ))}
       </div>
-      <span style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.2em', letterSpacing: '0.1em', fontWeight: 500 }}>{label}</span>
+      <span style={{ 
+        fontSize: '0.6rem', 
+        color: '#888', 
+        letterSpacing: '0.05em', 
+        fontWeight: 600,
+        fontFamily: 'sans-serif'
+      }}>{label}</span>
     </div>
   );
 };
 
 const FlipDigit = ({ digit }) => {
-  const [displayDigit, setDisplayDigit] = useState(digit);
-  const [flipping, setFlipping] = useState(false);
+  const [currentDigit, setCurrentDigit] = useState(digit);
   const [nextDigit, setNextDigit] = useState(digit);
+  const [isFlipping, setIsFlipping] = useState(false);
 
   useEffect(() => {
-    if (digit !== displayDigit) {
+    if (digit !== currentDigit) {
       setNextDigit(digit);
-      setFlipping(true);
+      setIsFlipping(true);
+      
       const timeout = setTimeout(() => {
-        setFlipping(false);
-        setDisplayDigit(digit);
-      }, 500);
+        setCurrentDigit(digit);
+        setIsFlipping(false);
+      }, 300);
+      
       return () => clearTimeout(timeout);
     }
-  }, [digit, displayDigit]);
+  }, [digit, currentDigit]);
 
   return (
-    <span style={{
-      display: 'flex',
-      width: '1.2em',
-      height: '1.5em',
-      background: '#222',
-      color: '#fff',
-      borderRadius: '0.25em',
-      margin: '0 0.05em',
-      fontFamily: 'monospace',
-      fontSize: '1em',
-      boxShadow: '0 1px 4px #0002, 0 8px 18px 0 #0006', // desk shadow
+    <div style={{
       position: 'relative',
-      perspective: '80px',
-      overflow: 'hidden',
-      verticalAlign: 'middle',
-      transition: 'background 0.2s',
-      border: flipping ? '2px solid #3b82f6' : '2px solid #222',
-      alignItems: 'center',
-      justifyContent: 'center',
+      width: '1.5rem',
+      height: '2rem',
+      perspective: '300px',
+      fontFamily: 'monospace',
+      fontSize: '1.25rem',
+      fontWeight: 'bold'
     }}>
-      <span style={{
+      {/* Top half - shows bottom portion of current digit */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
         width: '100%',
-        height: '100%',
-        fontWeight: 700,
-        fontSize: '1.2em',
-        textAlign: 'center',
-        transform: flipping ? 'rotateX(90deg)' : 'rotateX(0deg)',
-        transition: 'transform 0.5s cubic-bezier(.4,2,.6,1)',
-        background: flipping ? '#3b82f6' : 'inherit',
-        color: flipping ? '#fff' : '#fff',
+        height: '50%',
+        background: 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)',
+        border: '1px solid #dee2e6',
+        borderBottom: 'none',
+        borderRadius: '0.25rem 0.25rem 0 0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        lineHeight: 1,
-      }}>{flipping ? displayDigit : nextDigit}</span>
-      {flipping && (
-        <span style={{
+        color: '#212529',
+        overflow: 'hidden',
+        zIndex: 3,
+        boxShadow: 'inset 0 -3px 6px rgba(0,0,0,0.15)'
+      }}>
+        <div style={{ 
+          position: 'absolute',
+          top: '0%',
+          left: 0,
+          width: '100%',
+          height: '200%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {currentDigit}
+        </div>
+      </div>
+
+      {/* Bottom half - shows top portion of current digit */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        width: '100%',
+        height: '50%',
+        background: 'linear-gradient(0deg, #f8f9fa 0%, #e9ecef 100%)',
+        border: '1px solid #dee2e6',
+        borderTop: 'none',
+        borderRadius: '0 0 0.25rem 0.25rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#212529',
+        overflow: 'hidden',
+        zIndex: 1,
+        boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.15)'
+      }}>
+        <div style={{ 
+          position: 'absolute',
+          top: '-100%',
+          left: 0,
+          width: '100%',
+          height: '200%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {currentDigit}
+        </div>
+      </div>
+
+      {/* Center line shadow for depth */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: 0,
+        width: '100%',
+        height: '1px',
+        background: 'linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 50%, transparent 100%)',
+        transform: 'translateY(-0.5px)',
+        zIndex: 5
+      }}></div>
+
+      {/* Flipping top half - shows bottom portion of next digit */}
+      {isFlipping && (
+        <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
-          height: '100%',
-          fontWeight: 700,
-          fontSize: '1.2em',
-          textAlign: 'center',
-          transform: 'rotateX(0deg)',
-          transition: 'none',
-          background: '#222',
-          color: '#fff',
+          height: '50%',
+          background: 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)',
+          border: '1px solid #dee2e6',
+          borderBottom: 'none',
+          borderRadius: '0.25rem 0.25rem 0 0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          lineHeight: 1,
-        }}>{nextDigit}</span>
+          color: '#212529',
+          overflow: 'hidden',
+          transformOrigin: 'bottom',
+          transform: 'rotateX(-90deg)',
+          animation: 'flipDown 300ms ease-in-out forwards',
+          zIndex: 4,
+          boxShadow: 'inset 0 -3px 6px rgba(0,0,0,0.15)'
+        }}>
+          <div style={{ 
+            position: 'absolute',
+            top: '0%',
+            left: 0,
+            width: '100%',
+            height: '200%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {nextDigit}
+          </div>
+        </div>
       )}
-    </span>
+
+      {/* Flipping bottom half - shows top portion of next digit */}
+      {isFlipping && (
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: '50%',
+          background: 'linear-gradient(0deg, #f8f9fa 0%, #e9ecef 100%)',
+          border: '1px solid #dee2e6',
+          borderTop: 'none',
+          borderRadius: '0 0 0.25rem 0.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#212529',
+          overflow: 'hidden',
+          transformOrigin: 'top',
+          transform: 'rotateX(90deg)',
+          animation: 'flipUp 300ms ease-in-out forwards',
+          animationDelay: '150ms',
+          zIndex: 2,
+          boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.15)'
+        }}>
+          <div style={{ 
+            position: 'absolute',
+            top: '-100%',
+            left: 0,
+            width: '100%',
+            height: '200%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {nextDigit}
+          </div>
+        </div>
+      )}
+
+      {/* Add keyframes for animations */}
+      <style>{`
+        @keyframes flipDown {
+          0% { transform: rotateX(0deg); }
+          100% { transform: rotateX(-90deg); }
+        }
+        @keyframes flipUp {
+          0% { transform: rotateX(90deg); }
+          100% { transform: rotateX(0deg); }
+        }
+      `}</style>
+    </div>
   );
 };
 
@@ -131,15 +279,16 @@ export const FlippingCountdownNZT = ({ children }) => (
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    padding: '2rem 1rem',
+    padding: '1.5rem 1rem',
     background: 'rgba(255,255,255,0.98)',
     borderRadius: '12px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
     border: '1px solid rgba(255,255,255,0.3)',
-    fontSize: '1.25rem',
+    fontSize: '1rem',
     color: '#374151',
     fontWeight: '500',
-    minHeight: '340px',
+    minHeight: '200px',
+    gap: '1rem'
   }}>
     {children}
   </div>
