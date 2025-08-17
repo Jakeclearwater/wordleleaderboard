@@ -286,7 +286,7 @@ const TopRightLogin = ({
                     padding: "10px 16px",
                     borderRadius: "8px",
                     border: "none",
-                    background: "#dc2626",
+                    background: "#b91c1c",
                     color: "white",
                     cursor: "pointer",
                     fontWeight: "600",
@@ -301,7 +301,6 @@ const TopRightLogin = ({
                   onMouseOut={e => e.target.style.background = "#dc2626"}
                   onClick={handleLogout}
                 >
-                  <span>🚪</span>
                   Logout
                 </button>
               </div>

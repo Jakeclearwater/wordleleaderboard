@@ -331,6 +331,18 @@ const InputForm = ({
         hardMode: hardMode, // Save hardMode boolean
       });
 
+      // Update state to show personal statistics immediately
+      setAlreadySubmittedToday(true);
+      setTodaysScore({
+        name: finalName,
+        guesses: isDNF ? 7 : finalGuesses,
+        date: formattedNZDate,
+        isoDate: isoDateTime,
+        dnf: isDNF,
+        wordleNumber: wordleNumber || null,
+        hardMode: hardMode
+      });
+
       // Reset form
       setGuesses("");
       setDidNotFinish(false);

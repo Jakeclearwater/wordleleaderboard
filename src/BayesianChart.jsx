@@ -83,6 +83,44 @@ const useStyles = createUseStyles({
       background: 'rgba(255, 255, 255, 0.98)',
     },
   },
+  playerMenuButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '4px 6px', // Match select padding
+    border: '1px solid #dee2e6', // Match select border
+    borderRadius: '4px', // Match select border radius
+    background: 'white', // Match select background
+    cursor: 'pointer',
+    fontSize: '13px', // Match select font size
+    fontWeight: '400', // Match select font weight
+    transition: 'all 0.2s ease',
+    position: 'relative',
+  },
+  playerMenuDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: '4px',
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid #e0e4e7',
+    borderRadius: '8px',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+    maxHeight: '300px',
+    overflowY: 'auto',
+    zIndex: 1000, // Reasonable z-index that works with the layout
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    padding: '8px',
+    minWidth: '120px', // Ensure minimum width to prevent wrapping
+    width: 'max-content', // Allow width to grow based on content
+  },
+  playerMenuContainer: {
+    position: 'relative',
+  },
   loading: {
     textAlign: 'center',
     padding: '4rem 2rem',
@@ -219,11 +257,26 @@ const BayesianChart = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dateData, setDateData] = useState({}); // Store dateData for tooltip access
+  const [isPlayerMenuOpen, setIsPlayerMenuOpen] = useState(false);
   
   // Load preferences from cookies
   const [timeRange, setTimeRange] = useState(() => getCookie('bayesian-time-range') || '1month');
   const [connectLines, setConnectLines] = useState(() => getCookie('bayesian-connect-lines') === 'true');
   const [allScoresData, setAllScoresData] = useState([]); // Store all scores for filtering
+
+  // Close player menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isPlayerMenuOpen && !event.target.closest(`.${classes.playerMenuContainer}`)) {
+        setIsPlayerMenuOpen(false);
+      }
+    };
+
+    if (isPlayerMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isPlayerMenuOpen, classes.playerMenuContainer]);
 
   // Save preferences to cookies when they change
   useEffect(() => {
@@ -621,25 +674,18 @@ const BayesianChart = () => {
   };
 
   // Track mouse position for portal tooltip
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const chartRef = useRef();
 
   // CustomTooltip using React portal
   const CustomTooltip = ({ active, payload, label, coordinate }) => {
-    useEffect(() => {
-      if (active && coordinate) {
-        // coordinate is relative to chart SVG, so get chart's bounding rect
-        const chartRect = chartRef.current?.getBoundingClientRect();
-        if (chartRect) {
-          setTooltipPos({
-            x: chartRect.left + coordinate.x + 10, // 10px offset
-            y: chartRect.top + coordinate.y - 10, // 10px offset up
-          });
-        }
-      }
-    }, [active, coordinate]);
+    if (!(active && payload && payload.length && coordinate)) return null;
 
-    if (!(active && payload && payload.length)) return null;
+    // Calculate position directly without using state to avoid re-renders
+    const chartRect = chartRef.current?.getBoundingClientRect();
+    if (!chartRect) return null;
+
+    const tooltipX = chartRect.left + coordinate.x - 320 - 10; // Position to left of cursor
+    const tooltipY = chartRect.top + coordinate.y - 10; // 10px offset up
 
     const tooltipContent = (
       <div style={{
@@ -651,14 +697,13 @@ const BayesianChart = () => {
         fontSize: '12px',
         color: '#333',
         fontFamily: 'inherit',
-        minWidth: '180px',
+        minWidth: '50px',
         position: 'fixed',
-        left: tooltipPos.x,
-        top: tooltipPos.y,
+        left: tooltipX,
+        top: tooltipY,
         zIndex: 2147483647,
         pointerEvents: 'auto',
-        maxWidth: '320px',
-        transition: 'left 0.05s, top 0.05s',
+        maxWidth: '120px',
       }}>
         {/* Date Header */}
         <div style={{
@@ -793,7 +838,7 @@ const BayesianChart = () => {
   return (
     <div className={classes.chartContainer}>
       <h2 className={classes.title}>
-        Bayesian Performance Analysis
+        Bayesian Performance Chart
       </h2>
       
       {/* Control Row */}
@@ -917,7 +962,7 @@ const BayesianChart = () => {
         </div>
 
         {/* Data Options */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           {/* Time Range Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
@@ -975,55 +1020,78 @@ const BayesianChart = () => {
               🔗 Contiguous
             </label>
           </div>
-        </div>
-      </div>
-      
-      <div className={classes.controls}>
-        <div style={{ 
-          marginBottom: '8px',
-          fontSize: '14px',
-          color: '#495057',
-          fontWeight: '500',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}>
-          🎯 Select Players:
-        </div>
-        <div className={classes.userSelector}>
-          {allUsers
-            .sort((a, b) => b.attempts - a.attempts)
-            .map((user, index) => {
-              const userColor = userColors[index % userColors.length];
-              const isSelected = selectedUsers.includes(user.name);
-              return (
-                <label
-                  key={user.name}
-                  className={`${classes.userCheckbox} ${isSelected ? classes.selectedUser : ''}`}
-                  style={{
-                    borderColor: isSelected ? userColor : '#e0e4e7',
-                    borderWidth: isSelected ? '2px' : '1px',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleUser(user.name)}
-                    style={{ 
-                      margin: 0,
-                      accentColor: userColor
-                    }}
-                  />
-                  <span style={{ 
-                    color: isSelected ? userColor : '#374151',
-                    fontWeight: isSelected ? '600' : '500',
-                    fontSize: '13px'
-                  }}>
-                    {user.name} ({user.attempts})
-                  </span>
-                </label>
-              );
-            })}
+
+          {/* Player Selection */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label style={{ 
+              fontSize: '13px',
+              color: '#495057',
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              🎯 Players:
+            </label>
+            <div className={classes.playerMenuContainer}>
+              <div 
+                className={classes.playerMenuButton}
+                onClick={() => setIsPlayerMenuOpen(!isPlayerMenuOpen)}
+              >
+                <span>
+                  {selectedUsers.length === 0 
+                    ? 'None' 
+                    : `${selectedUsers.length} selected`}
+                </span>
+                <span style={{ 
+                  transform: isPlayerMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }}>
+                  ▼
+                </span>
+              </div>
+              
+              {isPlayerMenuOpen && (
+                <div className={classes.playerMenuDropdown}>
+                  {allUsers
+                    .sort((a, b) => b.attempts - a.attempts)
+                    .map((user, index) => {
+                      const userColor = userColors[index % userColors.length];
+                      const isSelected = selectedUsers.includes(user.name);
+                      return (
+                        <label
+                          key={user.name}
+                          className={`${classes.userCheckbox} ${isSelected ? classes.selectedUser : ''}`}
+                          style={{
+                            borderColor: isSelected ? userColor : '#e0e4e7',
+                            borderWidth: isSelected ? '2px' : '1px',
+                            margin: 0,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleUser(user.name)}
+                            style={{ 
+                              margin: 0,
+                              accentColor: userColor
+                            }}
+                          />
+                          <span style={{ 
+                            color: isSelected ? userColor : '#374151',
+                            fontWeight: isSelected ? '600' : '500',
+                            fontSize: '13px'
+                          }}>
+                            {user.name} ({user.attempts})
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
