@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
-// import { BounceLoader } from 'react-spinners';
 
 const useStyles = createUseStyles({
   leaderboardContainer: {
@@ -692,7 +691,7 @@ const Leaderboard = ({ getCurrentGradient }) => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   🌅 Today's Leaders
-                  <span title="Shows the best average score for each player for today's Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged.">
+                  <span title="Shows the best average score for each player for today&apos;s Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged.">
                     🛈
                   </span>
                 </h2>
@@ -782,7 +781,7 @@ const Leaderboard = ({ getCurrentGradient }) => {
                       </div>
                     </div>
                     <div className={classes.scoreDisplay}>
-                      <span className={classes.scoreIcon}>{getScoreIcon(entry.bayesianAverage)}</span>
+                      <span className={classes.scoreIcon}>{getScoreIcon(entry.adjustedScore)}</span>
                       <span>{entry.adjustedScore.toFixed(2)}</span>
                     </div>
                   </li>
