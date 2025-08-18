@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { createUseStyles } from 'react-jss';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
 
 const useStyles = createUseStyles({
@@ -182,7 +182,7 @@ const useStyles = createUseStyles({
     border: '1px solid #ccc',
     borderRadius: '6px',
     boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-    fontSize: '13px',
+    fontSize: '11px',
     minWidth: '200px',
     zIndex: 2147483647,
     overflow: 'visible',
@@ -684,8 +684,8 @@ const BayesianChart = () => {
     const chartRect = chartRef.current?.getBoundingClientRect();
     if (!chartRect) return null;
 
-    const tooltipX = chartRect.left + coordinate.x - 320 - 10; // Position to left of cursor
-    const tooltipY = chartRect.top + coordinate.y - 10; // 10px offset up
+    const tooltipX = chartRect.left + coordinate.x - 140; // Position to left of cursor
+    const tooltipY = chartRect.top + coordinate.y; // 10px offset up
 
     const tooltipContent = (
       <div style={{
@@ -697,13 +697,13 @@ const BayesianChart = () => {
         fontSize: '12px',
         color: '#333',
         fontFamily: 'inherit',
-        minWidth: '50px',
+        minWidth: '155px',
         position: 'fixed',
         left: tooltipX,
         top: tooltipY,
         zIndex: 2147483647,
         pointerEvents: 'auto',
-        maxWidth: '120px',
+        maxWidth: '170px',
       }}>
         {/* Date Header */}
         <div style={{
