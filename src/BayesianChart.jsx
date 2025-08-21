@@ -256,12 +256,12 @@ const BayesianChart = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dateData, setDateData] = useState({}); // Store dateData for tooltip access
   const [isPlayerMenuOpen, setIsPlayerMenuOpen] = useState(false);
   
   // Load preferences from cookies
   const [timeRange, setTimeRange] = useState(() => getCookie('bayesian-time-range') || '1month');
   const [connectLines, setConnectLines] = useState(() => getCookie('bayesian-connect-lines') === 'true');
+  const [dataType, setDataType] = useState(() => getCookie('bayesian-data-type') || 'bayesian');
   const [allScoresData, setAllScoresData] = useState([]); // Store all scores for filtering
 
   // Close player menu when clicking outside
@@ -288,6 +288,10 @@ const BayesianChart = () => {
   }, [connectLines]);
 
   useEffect(() => {
+    setCookie('bayesian-data-type', dataType);
+  }, [dataType]);
+
+  useEffect(() => {
     fetchAllDataAndProcess();
   }, []);
 
@@ -304,6 +308,13 @@ const BayesianChart = () => {
       processDataForTimeRange();
     }
   }, [connectLines]);
+
+  useEffect(() => {
+    // Reprocess data when dataType changes
+    if (allScoresData.length > 0) {
+      processDataForTimeRange();
+    }
+  }, [dataType]);
 
   const fetchAllDataAndProcess = async () => {
     setLoading(true);
@@ -405,11 +416,10 @@ const BayesianChart = () => {
     const filteredScores = getFilteredScoresByTimeRange(allScores);
     
     // Calculate Bayesian data over time
-    const processedData = calculateBayesianOverTime(filteredScores, connectLines);
+    const processedData = calculateBayesianOverTime(filteredScores, connectLines, dataType);
     
     setChartData(processedData.chartData);
     setAllUsers(processedData.users);
-    setDateData(processedData.dateData); // Store dateData for tooltip access
     
     // Update selected users if needed (maintain selection if users still exist)
     setSelectedUsers(prev => {
@@ -428,7 +438,7 @@ const BayesianChart = () => {
     });
   };
 
-  const calculateBayesianOverTime = (scores, shouldConnectLines = false) => {
+  const calculateBayesianOverTime = (scores, shouldConnectLines = false, useDataType = 'bayesian') => {
     // Helper function to get the effective date (same as in getFilteredScoresByTimeRange)
     const getEffectiveDate = (score) => {
       if (score.isoDate) {
@@ -575,8 +585,14 @@ const BayesianChart = () => {
           const daysSinceLastPlay = Math.floor((currentDate - lastPlayDate) / (24 * 60 * 60 * 1000));
           const recencyFactor = 1 + (daysSinceLastPlay / R);
           
-          // Calculate final score
-          const finalScore = (mostRecentData.bayesAvg * recencyFactor) - mostRecentData.attemptsBonus;
+          // Calculate final score based on data type
+          let finalScore;
+          if (useDataType === 'raw') {
+            finalScore = mostRecentData.actualAverage; // Use raw average directly
+          } else {
+            // Use Bayesian calculation
+            finalScore = (mostRecentData.bayesAvg * recencyFactor) - mostRecentData.attemptsBonus;
+          }
           
           // Update or create entry for this date
           if (!dateData[currentDateStr][userName]) {
@@ -597,24 +613,32 @@ const BayesianChart = () => {
     // Convert to chart format - handle both contiguous and broken line modes
     const chartData = [];
     
-    allDates.forEach((date, dateIndex) => {
+    allDates.forEach((date) => {
       const dayData = dateData[date];
       
-      // Calculate average of all users' Bayesian scores for this date
-      const userBayesianScores = [];
+      // Calculate average of all users' scores for this date
+      const userScores = [];
+      const userRawScores = [];
       Array.from(users).forEach(userName => {
         if (dayData[userName] && dayData[userName].finalScore) {
-          userBayesianScores.push(dayData[userName].finalScore);
+          userScores.push(dayData[userName].finalScore);
+          userRawScores.push(dayData[userName].actualAverage);
         }
       });
       
-      const bayesianGlobalAvg = userBayesianScores.length > 0 
-        ? userBayesianScores.reduce((sum, score) => sum + score, 0) / userBayesianScores.length
-        : dayData.globalAverage; // Fallback to raw average if no Bayesian scores
+      let calculatedGlobalAvg;
+      if (userScores.length > 0) {
+        calculatedGlobalAvg = userScores.reduce((sum, score) => sum + score, 0) / userScores.length;
+      } else {
+        // Fallback based on data type
+        calculatedGlobalAvg = useDataType === 'raw' 
+          ? dayData.globalAverage // Raw global average
+          : dayData.globalAverage; // For now, same fallback - could be enhanced
+      }
       
       const result = { 
         date: dayData.date,
-        globalAverage: bayesianGlobalAvg
+        globalAverage: calculatedGlobalAvg
       };
       
       if (shouldConnectLines) {
@@ -731,7 +755,7 @@ const BayesianChart = () => {
               fontSize: '11px',
               fontWeight: '600'
             }}>
-              🌍 Global Bayesian Average
+              🌍 Global {dataType === 'bayesian' ? 'Bayesian' : 'Raw'} Average
             </div>
             <div style={{
               color: '#333',
@@ -779,7 +803,9 @@ const BayesianChart = () => {
                 alignItems: 'center',
                 marginBottom: '2px'
               }}>
-                <span style={{ color: '#666', fontSize: '11px' }}>📊 Bayesian Score:</span>
+                <span style={{ color: '#666', fontSize: '11px' }}>
+                  📊 {dataType === 'bayesian' ? 'Bayesian Score' : 'Raw Average'}:
+                </span>
                 <span style={{ color: '#333', fontSize: '11px', fontWeight: '600' }}>
                   {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
                 </span>
@@ -825,7 +851,7 @@ const BayesianChart = () => {
   if (loading) {
     return (
       <div className={classes.chartContainer}>
-        <h2 className={classes.title}>Bayesian Chart</h2>
+        <h2 className={classes.title}>{dataType === 'bayesian' ? 'Bayesian' : 'Raw Average'} Chart</h2>
         <div className={classes.loading}>
           <div className={classes.loadingSpinner}></div>
           <div className={classes.loadingText}>Loading chart data...</div>
@@ -838,7 +864,7 @@ const BayesianChart = () => {
   return (
     <div className={classes.chartContainer}>
       <h2 className={classes.title}>
-        Bayesian Performance Chart
+        Performance Charts
       </h2>
       
       {/* Control Row */}
@@ -999,6 +1025,37 @@ const BayesianChart = () => {
             </select>
           </div>
 
+          {/* Data Type Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label style={{ 
+              fontSize: '13px',
+              color: '#495057',
+              fontWeight: '500',
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              📊 Data:
+            </label>
+            <select 
+              value={dataType} 
+              onChange={(e) => setDataType(e.target.value)}
+              style={{ 
+                padding: '4px 6px', 
+                fontSize: '13px', 
+                borderRadius: '4px', 
+                border: '1px solid #dee2e6',
+                backgroundColor: 'white',
+                fontWeight: '400',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="bayesian">Bayesian Average</option>
+              <option value="raw">Raw Average</option>
+            </select>
+          </div>
+
           {/* Connect Lines Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
@@ -1113,12 +1170,12 @@ const BayesianChart = () => {
           />
           <YAxis 
             domain={[3, 7]}
-            label={{ value: 'Bayesian Score', angle: -90, position: 'insideLeft' }}
+            label={{ value: dataType === 'bayesian' ? 'Bayesian Score' : 'Raw Average', angle: -90, position: 'insideLeft' }}
             tickFormatter={(value) => value.toFixed(1)}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ position: 'relative', zIndex: 1 }} />
-          {/* Bayesian Global Average Line - dashed */}
+          {/* Global Average Line - dashed */}
           <Line
             type="monotone"
             dataKey="globalAverage"
@@ -1126,10 +1183,10 @@ const BayesianChart = () => {
             strokeWidth={2}
             strokeDasharray="5 5"
             dot={false}
-            name="Bayesian Global Average"
+            name={`${dataType === 'bayesian' ? 'Bayesian' : 'Raw'} Global Average`}
           />
           {/* Individual User Lines */}
-          {selectedUsers.map((userName, index) => (
+          {selectedUsers.map((userName) => (
             <Line
               key={userName}
               type="monotone"
@@ -1170,11 +1227,11 @@ const BayesianChart = () => {
           paddingLeft: '16px',
           lineHeight: '1.5'
         }}>
-          <li>📈 Shows how each player's Bayesian score evolves over time</li>
+          <li>📈 Shows how each player&apos;s {dataType === 'bayesian' ? 'Bayesian score' : 'raw average'} evolves over time</li>
           <li>🎯 Lower scores are better (representing fewer average guesses)</li>
-          <li>🧮 All lines use Bayesian scoring with recency penalty and attempts bonus</li>
-          <li>🌍 Dashed line: Average of all players' Bayesian scores for each date</li>
-          <li>🔗 Toggle "Contiguous" to connect/break lines on missing days</li>
+          <li>🧮 {dataType === 'bayesian' ? 'All lines use Bayesian scoring with recency penalty and attempts bonus' : 'All lines show simple averages of actual scores'}</li>
+          <li>🌍 Dashed line: Average of all players&apos; {dataType === 'bayesian' ? 'Bayesian scores' : 'raw averages'} for each date</li>
+          <li>🔗 Toggle &quot;Contiguous&quot; to connect/break lines on missing days</li>
           <li>⏰ Use time range selector to focus on specific periods</li>
         </ul>
       </div>
