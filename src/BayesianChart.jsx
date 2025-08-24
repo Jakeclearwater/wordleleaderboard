@@ -851,7 +851,6 @@ const BayesianChart = () => {
   if (loading) {
     return (
       <div className={classes.chartContainer}>
-        <h2 className={classes.title}>{dataType === 'bayesian' ? 'Bayesian' : 'Raw Average'} Chart</h2>
         <div className={classes.loading}>
           <div className={classes.loadingSpinner}></div>
           <div className={classes.loadingText}>Loading chart data...</div>
@@ -863,10 +862,6 @@ const BayesianChart = () => {
 
   return (
     <div className={classes.chartContainer}>
-      <h2 className={classes.title}>
-        Performance Charts
-      </h2>
-      
       {/* Control Row */}
       <div style={{ 
         display: 'flex', 

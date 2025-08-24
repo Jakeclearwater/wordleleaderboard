@@ -2,6 +2,27 @@ import { createUseStyles } from "react-jss";
 
 const useStyles = createUseStyles({
 
+    header: {
+        textAlign: 'center',
+        marginBottom: 'var(--space-8)',
+        position: 'relative',
+    },
+    
+    headerTitle: {
+        fontSize: 'clamp(2rem, 5vw, 3rem)',
+        fontWeight: '800',
+        color: 'var(--text-primary, #1f2937)',
+        margin: '0 0 var(--space-3) 0',
+        letterSpacing: '-0.02em',
+    },
+    
+    headerSubtitle: {
+        fontSize: '1.2rem',
+        color: 'var(--text-secondary, #6b7280)',
+        fontWeight: '400',
+        margin: 0,
+    },
+
     todaysScore: {
         marginTop: "1.5rem",
         fontSize: "1.1rem",
@@ -205,6 +226,16 @@ const useStyles = createUseStyles({
         transition: "all 0.2s ease-out",
         gap: "0.25rem",
     },
+    
+    formContentArea: {
+        minHeight: "160px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        gap: "1rem",
+        transition: "all 0.3s ease",
+    },
+    
     input: {
         padding: "12px 16px",
         borderRadius: "8px",

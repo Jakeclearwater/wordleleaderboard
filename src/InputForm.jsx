@@ -460,6 +460,12 @@ const InputForm = ({
 
           {activeTab === "Score Entry" && (
             <div className={classes.activeTab}>
+              <div className={classes.header}>
+                <h1 className={classes.headerTitle}>Score Entry</h1>
+                <p className={classes.headerSubtitle}>
+                  Submit your daily Wordle results and track your progress
+                </p>
+              </div>
               <div className={classes.innerContentCard}>
                 {alreadySubmittedToday ? (
                   <PersonalStatistics 
@@ -493,52 +499,51 @@ const InputForm = ({
                         </button>
                       </div>
                     </div>
-                    {!pasteWordle && (
-                      <>
-                        <div className={classes.formGroup}>
-                          <label htmlFor="guesses">Enter your guesses (1-6):</label>
-                          <input
-                            id="guesses"
-                            type="number"
-                            value={guesses}
-                            onChange={e => setGuesses(e.target.value)}
-                            min="1"
-                            max="6"
-                            required={!didNotFinish}
-                            className={classes.input}
-                          />
-                        </div>
-                        <div className={classes.checkboxGroup}>
-                          <label className={classes.checkboxWrapper}>
+                    <div className={classes.formContentArea}>
+                      {!pasteWordle && (
+                        <>
+                          <div className={classes.formGroup}>
+                            <label htmlFor="guesses">Enter your guesses (1-6):</label>
                             <input
-                              type="checkbox"
-                              checked={didNotFinish}
-                              onChange={e => setDidNotFinish(e.target.checked)}
-                              className={classes.checkbox}
+                              id="guesses"
+                              type="number"
+                              value={guesses}
+                              onChange={e => setGuesses(e.target.value)}
+                              min="1"
+                              max="6"
+                              required={!didNotFinish}
+                              className={classes.input}
                             />
-                            <span style={{ marginLeft: "8px" }}>Did Not Finish (DNF)</span>
-                          </label>
-                        </div>
-                      </>
-                    )}
-                    {pasteWordle && (
-                      <>
-                        <div className={classes.formGroup}>
-                          <label htmlFor="wordleResult">Paste your Wordle result:</label>
-                          <textarea
-                            id="wordleResult"
-                            value={wordleResult}
-                            onChange={e => setWordleResult(e.target.value)}
-                            className={classes.textarea}
-                            placeholder={`Paste your Wordle result here, for example:
+                          </div>
+                          <div className={classes.checkboxGroup}>
+                            <label className={classes.checkboxWrapper}>
+                              <input
+                                type="checkbox"
+                                checked={didNotFinish}
+                                onChange={e => setDidNotFinish(e.target.checked)}
+                                className={classes.checkbox}
+                              />
+                              <span style={{ marginLeft: "8px" }}>Did Not Finish (DNF)</span>
+                            </label>
+                          </div>
+                        </>
+                      )}
+                      {pasteWordle && (
+                        <>
+                          <div className={classes.formGroup}>
+                            <label htmlFor="wordleResult">Paste your Wordle result:</label>
+                            <textarea
+                              id="wordleResult"
+                              value={wordleResult}
+                              onChange={e => setWordleResult(e.target.value)}
+                              className={classes.textarea}
+                              placeholder={`Paste your Wordle result here:
 
-Wordle 1,495 6/6
+Wordle 1,234 4/6
 
 ⬛🟨🟨🟨⬛
 🟨⬛🟨⬛🟨
 ⬛🟩🟩🟩⬛
-⬛🟩🟩🟩🟩
-⬛🟩🟩🟩🟩
 🟩🟩🟩🟩🟩`}
                             style={{
                               backgroundColor: "white",
@@ -548,6 +553,7 @@ Wordle 1,495 6/6
                         </div>
                       </>
                     )}
+                    </div>
                     <button
                       type="submit"
                       className={classes.button}
@@ -578,20 +584,39 @@ Wordle 1,495 6/6
           )}
           {activeTab === "Chart" && (
             <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
+              <div className={classes.header}>
+                <h1 className={classes.headerTitle}>Performance Charts</h1>
+                <p className={classes.headerSubtitle}>
+                  Analyze your Wordle performance trends over time
+                </p>
+              </div>
               <BayesianChart />
             </div>
           )}
           {activeTab === "Wordle Game" && (
-            <div className={classes.activeTab}>
-              <div className={classes.innerContentCard}>
-                <div style={{
-                  fontSize: "3rem",
-                  marginBottom: "1rem"
-                }}>
-
-                  🎯
-                </div>
-                <p className={classes.greyParagraph} style={{ fontSize: "1.5rem", fontWeight: "600", color: "black" }}>Play Today's Wordle</p>
+            <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
+              <div className={classes.header}>
+                <h1 className={classes.headerTitle}>Today's Wordle</h1>
+                <p className={classes.headerSubtitle}>
+                  Play the official New York Times Wordle game
+                </p>
+              </div>
+              <div style={{ 
+                display: "flex", 
+                flexDirection: "column", 
+                alignItems: "center", 
+                justifyContent: "center",
+                textAlign: "center",
+                gap: "2rem",
+                flexGrow: 1
+              }}>
+                <div className={classes.innerContentCard}>
+                  <div style={{
+                    fontSize: "3rem",
+                    marginBottom: "1rem"
+                  }}>
+                    🎯
+                  </div>
                 <p className={classes.greyParagraph}>
                   The New York Times Wordle game cannot be embedded directly. Click the button below to open Wordle in a new tab.
                 </p>
@@ -623,6 +648,7 @@ Wordle 1,495 6/6
                 <div className={classes.greyParagraphSubText}>
                   After playing, come back here to submit your score!
                 </div>
+              </div>
               </div>
             </div>
           )}
