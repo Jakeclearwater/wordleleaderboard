@@ -49,7 +49,7 @@ const backgroundThemes = {
     gradient: 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)'
   },
   caruba: {
-    name: '🌴 Caruba Jungle',
+    name: '🌴 Jamaican Jungle',
     gradient: 'linear-gradient(135deg, #6aaa64 0%, #c9b458 100%)'
   },
   midnight: {

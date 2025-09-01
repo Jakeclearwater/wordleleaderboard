@@ -590,7 +590,7 @@ Wordle 1,234 4/6
                   Analyze your Wordle performance trends over time
                 </p>
               </div>
-              <BayesianChart />
+              <BayesianChart getCurrentGradient={getCurrentGradient} />
             </div>
           )}
           {activeTab === "Wordle Game" && (
