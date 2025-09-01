@@ -4,6 +4,7 @@ import { createUseStyles } from 'react-jss';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
+import PropTypes from 'prop-types';
 
 const useStyles = createUseStyles({
   chartContainer: {
@@ -19,10 +20,21 @@ const useStyles = createUseStyles({
     boxSizing: 'border-box',
     transition: 'all 0.3s ease',
     overflow: 'visible',
+    position: 'relative',
     '&:hover': {
       transform: 'translateY(-2px)',
       boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
     },
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '4px',
+      background: props => props.gradient,
+      borderRadius: '16px 16px 0 0',
+    }
   },
   title: {
     fontSize: '24px',
@@ -250,8 +262,8 @@ const setCookie = (name, value, days = 365) => {
   document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
 };
 
-const BayesianChart = () => {
-  const classes = useStyles();
+const BayesianChart = ({ getCurrentGradient }) => {
+  const classes = useStyles({ gradient: getCurrentGradient() });
   const [chartData, setChartData] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -1232,6 +1244,10 @@ const BayesianChart = () => {
       </div>
     </div>
   );
+};
+
+BayesianChart.propTypes = {
+  getCurrentGradient: PropTypes.func.isRequired,
 };
 
 export default BayesianChart;
