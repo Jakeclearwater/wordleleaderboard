@@ -622,7 +622,10 @@ Wordle 1,234 4/6
                 </p>
                 <br />
                 <button
-                  onClick={() => window.open('https://www.nytimes.com/games/wordle', '_blank', 'noopener,noreferrer')}
+                  onClick={() => {
+                    window.open('https://www.nytimes.com/games/wordle', '_blank', 'noopener,noreferrer');
+                    setActiveTab('Score Entry');
+                  }}
                   className={classes.playButtonStyle}
                   style={{
                     background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
