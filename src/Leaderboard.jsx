@@ -568,8 +568,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
           };
         }).sort((a, b) => b.attempts - a.attempts);
 
-        // Wooden spoon leaderboard (most DNFs this week)
-        const woodspoonData = weeklyScores.reduce((acc, score) => {
+        // Wooden spoon leaderboard (most DNFs all time)
+        const woodspoonData = allTimeScores.reduce((acc, score) => {
           if (!acc[score.name]) {
             acc[score.name] = { totalDNFs: 0, attempts: 0 };
           }
@@ -585,10 +585,11 @@ const Leaderboard = ({ getCurrentGradient }) => {
           .map(name => ({
             name,
             totalDNFs: woodspoonData[name].totalDNFs,
-            attempts: woodspoonData[name].attempts
+            attempts: woodspoonData[name].attempts,
+            percentage: (woodspoonData[name].totalDNFs / woodspoonData[name].attempts) * 100
           }))
           .filter(entry => entry.totalDNFs > 0)
-          .sort((a, b) => b.totalDNFs - a.totalDNFs);
+          .sort((a, b) => b.percentage - a.percentage);
 
         setDailyLeaderboard(dailyLeaderboardArray);
         setWeeklyLeaderboard(weeklyLeaderboardArray);
@@ -859,14 +860,14 @@ const Leaderboard = ({ getCurrentGradient }) => {
                 <div className={classes.cardHeader}>
                   <h2 className={classes.cardTitle}>
                     🥄 Wooden Spoon
-                    <span title="Shows players with the most DNFs (Did Not Finish, scored as 7) this week. Only games from the 5 most recent weekdays are counted.">
+                    <span title="Shows players with the most DNFs (Did Not Finish, scored as 7) of all time. All games ever played are counted.">
                       🛈
                     </span>
                   </h2>
-                  <p className={classes.cardSubtitle}>Most DNFs this week</p>
+                  <p className={classes.cardSubtitle}>Most DNFs all time</p>
                 </div>
                 <ul className={classes.leaderboardList}>
-                  {woodspoonLeaderboard.slice(0, 5).map((entry, index) => (
+                  {woodspoonLeaderboard.slice(0, 20).map((entry, index) => (
                     <li key={index} className={classes.leaderboardItem}>
                       <div className={classes.rank}>
                         🥄
