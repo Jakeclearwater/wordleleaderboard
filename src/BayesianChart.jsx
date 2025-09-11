@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { collection, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
 import PropTypes from 'prop-types';
+import wordleLogo from './assets/wordle.png';
 
 const useStyles = createUseStyles({
   chartContainer: {
@@ -187,6 +188,14 @@ const useStyles = createUseStyles({
   '@keyframes spin': {
     '0%': { transform: 'rotate(0deg)' },
     '100%': { transform: 'rotate(360deg)' },
+  },
+  spinningLogo: {
+    width: '120px',
+    height: 'auto',
+    marginBottom: '1rem',
+    display: 'inline-block',
+    animation: '$spin 2s infinite linear',
+    transformOrigin: 'center',
   },
   customTooltip: {
     backgroundColor: 'white !important',
@@ -864,7 +873,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
     return (
       <div className={classes.chartContainer}>
         <div className={classes.loading}>
-          <div className={classes.loadingSpinner}></div>
+          <img src={wordleLogo} alt="Wordle" className={classes.spinningLogo} />
           <div className={classes.loadingText}>Loading chart data...</div>
           <div className={classes.loadingSubtext}>Analyzing player performance</div>
         </div>
