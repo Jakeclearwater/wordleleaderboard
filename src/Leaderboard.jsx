@@ -422,11 +422,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
             {/* Daily Leaderboard */}
             <div className={classes.leaderboardCard}>
               <div className={classes.cardHeader}>
-                <h2 className={classes.cardTitle}>
+                <h2 className={classes.cardTitle} title={"Shows the best average score for each player for today's Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged."}>
                   🌅 Today's Leaders
-                  <span className={classes.infoIcon} title="Shows the best average score for each player for today&apos;s Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged.">
-                    ℹ️
-                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Best performers today</p>
               </div>
@@ -461,11 +458,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
             {/* Weekly Leaderboard */}
             <div className={classes.leaderboardCard}>
               <div className={classes.cardHeader}>
-                <h2 className={classes.cardTitle}>
+                <h2 className={classes.cardTitle} title={"Shows the best average score for each player over the 5 most recent weekdays (Mon-Fri). For each day, only the best score is counted. Missing days are scored as DNF (7). Only played days are shown as games."}>
                   📅 This Week
-                  <span className={classes.infoIcon} title="Shows the best average score for each player over the 5 most recent weekdays (Mon-Fri). For each day, only the best score is counted. Missing days are scored as DNF (7). Only played days are shown as games.">
-                    ℹ️
-                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>5-day performance (Mon-Fri)</p>
               </div>
@@ -493,11 +487,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
             {/* All-Time Leaderboard */}
             <div className={classes.leaderboardCard}>
               <div className={classes.cardHeader}>
-                <h2 className={classes.cardTitle}>
+                <h2 className={classes.cardTitle} title={"Ranks players by Bayesian average: combines your actual average, a global average prior, and a recency penalty (scores 'rot' if you are inactive). Minimum 3 games required. Lower scores are better."}>
                   🏆 All-Time Champions
-                  <span className={classes.infoIcon} title="Ranks players by Bayesian average: combines your actual average, a global average prior, and a recency penalty (scores 'rot' if you are inactive). Minimum 3 games required. Lower scores are better.">
-                    ℹ️
-                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Bayesian-adjusted rankings</p>
               </div>
@@ -525,11 +516,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
             {/* Raw Average Leaderboard */}
             <div className={classes.leaderboardCard}>
               <div className={classes.cardHeader}>
-                <h2 className={classes.cardTitle}>
+                <h2 className={classes.cardTitle} title={"Shows the raw average score for each player with at least 5 games. No Bayesian adjustment or recency penalty. DNF (Did Not Finish) is scored as 7."}>
                   📈 Pure Averages
-                  <span className={classes.infoIcon} title="Shows the raw average score for each player with at least 5 games. No Bayesian adjustment or recency penalty. DNF (Did Not Finish) is scored as 7.">
-                    ℹ️
-                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Raw averages (5+ games)</p>
               </div>
@@ -557,11 +545,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
             {/* Most Active Players */}
             <div className={classes.leaderboardCard}>
               <div className={classes.cardHeader}>
-                <h2 className={classes.cardTitle}>
+                <h2 className={classes.cardTitle} title={"Lists players by total games played. Shows their average score. All games count, including DNFs (scored as 7)."}>
                   🚀 Most Active
-                  <span className={classes.infoIcon} title="Lists players by total games played. Shows their average score. All games count, including DNFs (scored as 7).">
-                    ℹ️
-                  </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Players by total games</p>
               </div>
@@ -590,11 +575,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
             {woodspoonLeaderboard.length > 0 && (
               <div className={classes.leaderboardCard}>
                 <div className={classes.cardHeader}>
-                  <h2 className={classes.cardTitle}>
+                  <h2 className={classes.cardTitle} title={"Shows players with the most DNFs (Did Not Finish, scored as 7) of all time. All games ever played are counted."}>
                     🥄 Wooden Spoon
-                    <span className={classes.infoIcon} title="Shows players with the most DNFs (Did Not Finish, scored as 7) of all time. All games ever played are counted.">
-                      ℹ️
-                    </span>
                   </h2>
                   <p className={classes.cardSubtitle}>Most DNFs all time</p>
                 </div>
