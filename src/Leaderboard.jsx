@@ -1,285 +1,17 @@
 import { useEffect, useState } from 'react';
-import { createUseStyles } from 'react-jss';
 import { collection, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
-
-const useStyles = createUseStyles({
-  leaderboardContainer: {
-    padding: '0',
-    width: '100%',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 'var(--space-8)',
-  },
-  
-  header: {
-    textAlign: 'center',
-    marginBottom: 'var(--space-8)',
-    position: 'relative',
-  },
-  
-  headerTitle: {
-    fontSize: 'clamp(2rem, 5vw, 3rem)',
-    fontWeight: '800',
-    color: 'var(--text-primary, #1f2937)',
-    margin: '0 0 var(--space-3) 0',
-    letterSpacing: '-0.02em',
-    // Remove gradient text effect for better visibility
-    // background: 'var(--gradient-hero)',
-    // backgroundClip: 'text',
-    // WebkitBackgroundClip: 'text',
-    // WebkitTextFillColor: 'transparent',
-    // textFillColor: 'transparent',
-  },
-  
-  headerSubtitle: {
-    fontSize: '1.2rem',
-    color: 'var(--text-secondary, #6b7280)',
-    fontWeight: '400',
-    margin: 0,
-  },
-  
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: 'var(--space-6)',
-    marginBottom: 'var(--space-8)',
-    '@media (max-width: 768px)': {
-      gridTemplateColumns: '1fr',
-      gap: 'var(--space-4)',
-    },
-  },
-  
-  dancingCat: {
-    fontSize: '5rem',
-    lineHeight: '1',
-    marginBottom: '1rem',
-    display: 'inline-block',
-    animation: '$catDance 1.2s infinite linear',
-    transformOrigin: '50% 60%',
-  },
-  
-  '@keyframes catDance': {
-    '0%': { transform: 'rotate(-20deg) scale(1)' },
-    '20%': { transform: 'rotate(20deg) scale(1.1)' },
-    '40%': { transform: 'rotate(-20deg) scale(1.05)' },
-    '60%': { transform: 'rotate(20deg) scale(1.1)' },
-    '80%': { transform: 'rotate(-20deg) scale(1)' },
-    '100%': { transform: 'rotate(-20deg) scale(1)' },
-  },
-  
-  statCard: {
-    background: 'var(--card-bg, #ffffff)',
-    borderRadius: 'var(--radius-2xl, 1rem)',
-    padding: 'var(--space-8, 2rem)',
-    boxShadow: 'var(--shadow-medium, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06))',
-    border: '1px solid var(--border-light, #e5e7eb)',
-    position: 'relative',
-    overflow: 'hidden',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    '&:hover': {
-      transform: 'translateY(-4px)',
-      boxShadow: 'var(--shadow-large, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05))',
-    },
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '4px',
-      background: props => props.gradient,
-    }
-  },
-  
-  statCardHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'var(--space-3)',
-    marginBottom: 'var(--space-4)',
-  },
-  
-  statIcon: {
-    fontSize: '1.5rem',
-    padding: 'var(--space-3, 0.75rem)',
-    borderRadius: 'var(--radius-lg, 0.5rem)',
-    background: 'rgba(106, 170, 100, 0.1)',
-    color: 'var(--wordle-green, #6aaa64)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: '48px',
-    minHeight: '48px',
-  },
-  
-  statTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: 'var(--text-primary, #1f2937)',
-    margin: 0,
-  },
-  
-  statValue: {
-    fontSize: '2rem',
-    fontWeight: '700',
-    color: 'var(--wordle-green, #6aaa64)',
-    margin: '0 0 var(--space-2) 0',
-    lineHeight: 1,
-  },
-  
-  statSubtitle: {
-    fontSize: '0.9rem',
-    color: 'var(--text-secondary, #6b7280)',
-    margin: 0,
-  },
-  
-  leaderboardGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-    gap: 'var(--space-6)',
-    '@media (max-width: 768px)': {
-      gridTemplateColumns: '1fr',
-      gap: 'var(--space-4)',
-    },
-  },
-  
-  leaderboardCard: {
-    background: 'var(--card-bg, #ffffff)',
-    borderRadius: 'var(--radius-2xl, 1rem)',
-    boxShadow: 'var(--shadow-medium, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06))',
-    border: '1px solid var(--border-light, #e5e7eb)',
-    overflow: 'hidden',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    '&:hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: 'var(--shadow-large, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05))',
-    }
-  },
-  
-  cardHeader: {
-    padding: 'var(--space-6, 1.5rem) var(--space-6, 1.5rem) var(--space-4, 1rem)',
-    borderBottom: '1px solid var(--border-light, #e5e7eb)',
-    background: 'linear-gradient(135deg, rgba(106, 170, 100, 0.05) 0%, rgba(201, 180, 88, 0.05) 100%)',
-  },
-  
-  cardTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: 'var(--text-primary, #1f2937)',
-    margin: '0 0 var(--space-1, 0.25rem) 0',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'var(--space-2, 0.5rem)',
-  },
-  
-  cardSubtitle: {
-    fontSize: '0.9rem',
-    color: 'var(--text-secondary, #6b7280)',
-    margin: 0,
-  },
-  
-  leaderboardList: {
-    listStyleType: 'none',
-    padding: 0,
-    margin: 0,
-    maxHeight: '400px',
-    overflowY: 'auto',
-  },
-  
-  leaderboardItem: {
-    padding: 'var(--space-4, 1rem) var(--space-6, 1.5rem)',
-    borderBottom: '1px solid var(--border-light, #e5e7eb)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'var(--space-4, 1rem)',
-    transition: 'all 0.2s ease',
-    background: 'transparent',
-    '&:hover': {
-      background: 'rgba(106, 170, 100, 0.05)',
-    },
-    '&:last-child': {
-      borderBottom: 'none',
-    },
-  },
-  
-  rank: {
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    color: 'var(--text-secondary, #6b7280)',
-    minWidth: '32px',
-    textAlign: 'center',
-  },
-  
-  rankFirst: {
-    color: '#FFD700',
-    fontSize: '1.3rem',
-  },
-  
-  rankSecond: {
-    color: '#C0C0C0',
-    fontSize: '1.2rem',
-  },
-  
-  rankThird: {
-    color: '#CD7F32',
-    fontSize: '1.15rem',
-  },
-  
-  playerInfo: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 'var(--space-1, 0.25rem)',
-  },
-  
-  playerName: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: 'var(--text-primary, #1f2937)',
-    margin: 0,
-  },
-  
-  playerStats: {
-    fontSize: '0.85rem',
-    color: 'var(--text-secondary, #6b7280)',
-    margin: 0,
-  },
-  
-  scoreDisplay: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 'var(--space-2, 0.5rem)',
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: 'var(--text-primary, #1f2937)',
-  },
-  
-  scoreIcon: {
-    fontSize: '1.2rem',
-  },
-  
-  loading: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '200px',
-    gap: 'var(--space-4, 1rem)',
-  },
-  
-  loadingText: {
-    fontSize: '1.1rem',
-    color: 'var(--text-secondary, #6b7280)',
-    fontWeight: '500',
-  },
-});
+import useStyles from "./useStyles";
+import wordleLogo from './assets/wordle.png';
 
 const Leaderboard = ({ getCurrentGradient }) => {
-  // Pass dynamic gradient into JSS props
-  const classes = useStyles({ gradient: getCurrentGradient() });
+  const classes = useStyles();
+  
+  // Set the gradient as a CSS custom property
+  useEffect(() => {
+    document.documentElement.style.setProperty('--dynamic-gradient', getCurrentGradient());
+  }, [getCurrentGradient]);
+
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
@@ -643,7 +375,7 @@ const Leaderboard = ({ getCurrentGradient }) => {
     <div className={classes.leaderboardContainer}>
       {loading ? (
         <div className={classes.loading}>
-          <div className={classes.dancingCat} style={{ fontSize: '5rem', lineHeight: '1', marginBottom: '1rem' }}>🐱</div>
+          <img src={wordleLogo} alt="Wordle" className={classes.spinningLogo} />
           <div className={classes.loadingText}>Loading leaderboards...</div>
         </div>
       ) : (
@@ -692,8 +424,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   🌅 Today's Leaders
-                  <span title="Shows the best average score for each player for today&apos;s Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged.">
-                    🛈
+                  <span className={classes.infoIcon} title="Shows the best average score for each player for today&apos;s Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged.">
+                    ℹ️
                   </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Best performers today</p>
@@ -731,8 +463,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   📅 This Week
-                  <span title="Shows the best average score for each player over the 5 most recent weekdays (Mon-Fri). For each day, only the best score is counted. Missing days are scored as DNF (7). Only played days are shown as games.">
-                    🛈
+                  <span className={classes.infoIcon} title="Shows the best average score for each player over the 5 most recent weekdays (Mon-Fri). For each day, only the best score is counted. Missing days are scored as DNF (7). Only played days are shown as games.">
+                    ℹ️
                   </span>
                 </h2>
                 <p className={classes.cardSubtitle}>5-day performance (Mon-Fri)</p>
@@ -763,8 +495,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   🏆 All-Time Champions
-                  <span title="Ranks players by Bayesian average: combines your actual average, a global average prior, and a recency penalty (scores 'rot' if you are inactive). Minimum 3 games required. Lower scores are better.">
-                    🛈
+                  <span className={classes.infoIcon} title="Ranks players by Bayesian average: combines your actual average, a global average prior, and a recency penalty (scores 'rot' if you are inactive). Minimum 3 games required. Lower scores are better.">
+                    ℹ️
                   </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Bayesian-adjusted rankings</p>
@@ -795,8 +527,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   📈 Pure Averages
-                  <span title="Shows the raw average score for each player with at least 5 games. No Bayesian adjustment or recency penalty. DNF (Did Not Finish) is scored as 7.">
-                    🛈
+                  <span className={classes.infoIcon} title="Shows the raw average score for each player with at least 5 games. No Bayesian adjustment or recency penalty. DNF (Did Not Finish) is scored as 7.">
+                    ℹ️
                   </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Raw averages (5+ games)</p>
@@ -827,8 +559,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
               <div className={classes.cardHeader}>
                 <h2 className={classes.cardTitle}>
                   🚀 Most Active
-                  <span title="Lists players by total games played. Shows their average score. All games count, including DNFs (scored as 7).">
-                    🛈
+                  <span className={classes.infoIcon} title="Lists players by total games played. Shows their average score. All games count, including DNFs (scored as 7).">
+                    ℹ️
                   </span>
                 </h2>
                 <p className={classes.cardSubtitle}>Players by total games</p>
@@ -860,8 +592,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
                 <div className={classes.cardHeader}>
                   <h2 className={classes.cardTitle}>
                     🥄 Wooden Spoon
-                    <span title="Shows players with the most DNFs (Did Not Finish, scored as 7) of all time. All games ever played are counted.">
-                      🛈
+                    <span className={classes.infoIcon} title="Shows players with the most DNFs (Did Not Finish, scored as 7) of all time. All games ever played are counted.">
+                      ℹ️
                     </span>
                   </h2>
                   <p className={classes.cardSubtitle}>Most DNFs all time</p>

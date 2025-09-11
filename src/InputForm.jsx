@@ -4,11 +4,12 @@ import { firestore } from "./firebase"; // Adjust the import path as necessary
 import { sendResultToTeams } from "./sendResultToTeams";
 import Leaderboard from "./Leaderboard";
 import BayesianChart from "./BayesianChart";
-import { FlippingCountdownNZT, CountdownTimer } from "./FlippingCountdownNZT";
 import TopRightLogin from "./TopRightLogin";
 import { Confetti } from "./Confetti";
 import TabBar from "./TabBar";
 import PersonalStatistics from "./PersonalStatistics";
+import useStyles from "./useStyles";
+import wordleLogo from './assets/wordle.png';
 
 // Cookie helpers
 const getCookie = (name) => {
@@ -22,8 +23,6 @@ const setCookie = (name, value, days = 365) => {
   expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
   document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
 };
-
-import useStyles from "./useStyles";
 
 // Restore TABS for tab navigation
 const TABS = ["Wordle Game", "Score Entry", "Leaderboard", "Chart"];
@@ -557,7 +556,7 @@ Wordle 1,234 4/6
                     <button
                       type="submit"
                       className={classes.button}
-                      style={{ background: getCurrentGradient(), transition: 'all 0.2s ease' }}
+                      style={{ background: getCurrentGradient(), transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
                       disabled={loading || !isFormValid()}
                       onMouseOver={e => {
                         e.target.style.filter = 'brightness(1.1)';
@@ -570,7 +569,14 @@ Wordle 1,234 4/6
                         e.target.style.boxShadow = '';
                       }}
                     >
-                      {loading ? "Submitting..." : "Submit Score"}
+                      {loading ? (
+                        <>
+                          <img src={wordleLogo} alt="Submitting" className={classes.spinningLogo ? classes.spinningLogo : ''} style={{ width: 28, height: 'auto' }} />
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        "Submit Score"
+                      )}
                     </button>
                   </form>
                 )}

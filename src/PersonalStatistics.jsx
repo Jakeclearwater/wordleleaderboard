@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
+import useStyles from './useStyles';
+import wordleLogo from './assets/wordle.png';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
 import { FlippingCountdownNZT, CountdownTimer } from './FlippingCountdownNZT';
 
-const useStyles = createUseStyles({
+const useLocalStyles = createUseStyles({
   statisticsContainer: {
     display: 'flex',
     flexDirection: 'column',
@@ -170,7 +172,8 @@ const PersonalStatistics = ({ username, todaysScore, getCurrentGradient }) => {
   const colorMatch = gradientString.match(/#[0-9a-fA-F]{6}/);
   const todayBarColor = colorMatch ? colorMatch[0] : '#667eea';
   
-  const classes = useStyles({ todayBarColor });
+  const shared = useStyles();
+  const classes = useLocalStyles({ todayBarColor });
   const [statistics, setStatistics] = useState({
     played: 0,
     winPercentage: 0,
@@ -304,7 +307,8 @@ const PersonalStatistics = ({ username, todaysScore, getCurrentGradient }) => {
   if (loading) {
     return (
       <div className={classes.statisticsContainer}>
-        <div>Loading statistics...</div>
+        <img src={wordleLogo} alt="Loading" className={shared.spinningLogo} />
+        <div className={shared.loadingText}>Loading statistics...</div>
       </div>
     );
   }
