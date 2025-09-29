@@ -548,8 +548,12 @@ const BayesianChart = ({ getCurrentGradient }) => {
       
       // Update global average for this date and all future dates
       const currentDateIndex = allDates.indexOf(date);
+      // If the effective date doesn't exist in the generated range, skip safely
+      if (currentDateIndex === -1) return; // skip this score
       for (let i = currentDateIndex; i < allDates.length; i++) {
-        dateData[allDates[i]].globalAverage = currentGlobalAvg;
+        const key = allDates[i];
+        if (!dateData[key]) continue;
+        dateData[key].globalAverage = currentGlobalAvg;
       }
 
       users.add(name);
@@ -592,7 +596,8 @@ const BayesianChart = ({ getCurrentGradient }) => {
         for (let i = 0; i < allDates.length; i++) {
           const checkDate = allDates[i];
           if (checkDate > currentDateStr) break; // Don't look into the future
-          
+          // guard against missing dateData entries
+          if (!dateData[checkDate]) continue;
           if (dateData[checkDate][userName]) {
             mostRecentPlayDate = checkDate;
             mostRecentData = dateData[checkDate][userName];
