@@ -12,7 +12,8 @@ import {
   getDoc, 
   addDoc, 
   updateDoc, 
-  deleteDoc, 
+  deleteDoc,
+  deleteField,
   query, 
   where, 
   orderBy, 
@@ -773,6 +774,152 @@ class WordleLeaderboardDBA {
     }
   }
 
+  // Remove legacy 'date' field from all documents
+  async removeLegacyDateField(collectionName = 'scores', dryRun = true) {
+    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Remove Legacy Date Field from ${collectionName} ===`);
+    
+    try {
+      const allDocsQuery = collection(this.db, collectionName);
+      const snapshot = await getDocs(allDocsQuery);
+      
+      if (snapshot.empty) {
+        console.log('No documents found in collection.');
+        return 0;
+      }
+
+      console.log(`Total documents in collection: ${snapshot.size}`);
+      
+      const documentsWithLegacyDate = [];
+      const documentsWithIsoDate = [];
+      const documentsWithoutDates = [];
+      
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const hasDate = data.hasOwnProperty('date');
+        const hasIsoDate = data.hasOwnProperty('isoDate');
+        
+        if (hasDate && hasIsoDate) {
+          documentsWithLegacyDate.push({
+            id: docSnap.id,
+            name: data.name,
+            date: data.date,
+            isoDate: data.isoDate,
+            guesses: data.guesses
+          });
+        } else if (hasDate && !hasIsoDate) {
+          console.warn(`⚠️  Document ${docSnap.id} has 'date' but NO 'isoDate' - needs migration first!`);
+          documentsWithoutDates.push({
+            id: docSnap.id,
+            name: data.name,
+            date: data.date
+          });
+        } else if (!hasDate && hasIsoDate) {
+          documentsWithIsoDate.push(docSnap.id);
+        }
+      });
+
+      console.log('\n=== Summary ===');
+      console.log(`✓ Documents with isoDate only (clean): ${documentsWithIsoDate.length}`);
+      console.log(`⚠️  Documents with BOTH date & isoDate (needs cleanup): ${documentsWithLegacyDate.length}`);
+      console.log(`❌ Documents with date but NO isoDate (needs migration): ${documentsWithoutDates.length}`);
+
+      if (documentsWithoutDates.length > 0) {
+        console.log('\n⚠️  WARNING: Some documents need date migration first!');
+        console.log('Run this command first:');
+        console.log(`  node dba-script.js convert-dates ${collectionName} --execute`);
+        console.log('\nDocuments needing migration:');
+        documentsWithoutDates.forEach(doc => {
+          console.log(`  - ${doc.id}: ${doc.name} (date: ${doc.date})`);
+        });
+        return 0;
+      }
+
+      if (documentsWithLegacyDate.length === 0) {
+        console.log('\n✅ No documents need cleanup. All documents either:');
+        console.log('   - Have isoDate only (modern format)');
+        console.log('   - Have no date fields at all');
+        return 0;
+      }
+
+      console.log(`\n=== Documents to Clean (${documentsWithLegacyDate.length}) ===`);
+      documentsWithLegacyDate.forEach((doc, index) => {
+        if (index < 10 || !dryRun) {
+          // Show first 10 in dry run, all in execute mode
+          console.log(`${index + 1}. Document ID: ${doc.id}`);
+          console.log(`   Name: ${doc.name}, Guesses: ${doc.guesses}`);
+          console.log(`   Legacy date: ${doc.date}`);
+          console.log(`   ISO date: ${doc.isoDate}`);
+          
+          // Verify they match
+          const derivedDate = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Pacific/Auckland',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).format(new Date(doc.isoDate));
+          
+          if (derivedDate === doc.date) {
+            console.log(`   ✓ Dates match - safe to remove legacy field`);
+          } else {
+            console.log(`   ⚠️  WARNING: Dates don't match! Derived: ${derivedDate}`);
+          }
+          console.log('---');
+        }
+      });
+
+      if (documentsWithLegacyDate.length > 10 && dryRun) {
+        console.log(`... and ${documentsWithLegacyDate.length - 10} more documents`);
+      }
+
+      if (!dryRun) {
+        console.log('\n=== Removing Legacy Date Fields ===');
+        let batch = writeBatch(this.db);
+        let batchCount = 0;
+        let totalBatches = 0;
+
+        for (const docInfo of documentsWithLegacyDate) {
+          const docRef = doc(this.db, collectionName, docInfo.id);
+          
+          // Use deleteField() to remove the 'date' field
+          batch.update(docRef, {
+            date: deleteField()
+          });
+          
+          batchCount++;
+
+          // Firestore batch limit is 500 operations
+          if (batchCount === 500) {
+            await batch.commit();
+            totalBatches++;
+            console.log(`  Committed batch ${totalBatches} (${batchCount} documents)`);
+            // Create a new batch for the next set of documents
+            batch = writeBatch(this.db);
+            batchCount = 0;
+          }
+        }
+
+        // Commit remaining documents
+        if (batchCount > 0) {
+          await batch.commit();
+          totalBatches++;
+          console.log(`  Committed final batch (${batchCount} documents)`);
+        }
+
+        console.log(`\n✓ Successfully removed legacy 'date' field from ${documentsWithLegacyDate.length} documents`);
+        console.log(`  Total batches: ${totalBatches}`);
+      } else {
+        console.log('\n=== This was a DRY RUN ===');
+        console.log('No changes were made. To actually remove the legacy date field, use:');
+        console.log(`  node dba-script.js remove-legacy-date ${collectionName} --execute`);
+      }
+
+      return documentsWithLegacyDate.length;
+    } catch (error) {
+      console.error('Error removing legacy date field:', error.message);
+      throw error;
+    }
+  }
+
   // Conditional bulk update - update multiple documents that match a condition
   async conditionalUpdate(collectionName, field, operator, value, updateData, dryRun = true) {
     console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Conditional Update: ${collectionName} where ${field} ${operator} ${value} ===`);
@@ -847,6 +994,7 @@ Commands:
   delete <collection> <docId>          - Delete a document
   count <collection>                   - Count documents in a collection
   convert-dates [collection] [--execute] - Convert legacy date strings to ISO format (midnight UTC for legacy records)
+  remove-legacy-date [collection] [--execute] - Remove redundant 'date' field from all documents (keeps isoDate)
   find-date-errors [collection] [--export] - Find potential date errors and optionally export to files
   fix-names [collection] [--execute]   - Fix problematic names (dry run by default)
   help                                 - Show this help
@@ -865,6 +1013,8 @@ Examples:
   node dba-script.js delete scores abc123
   node dba-script.js count scores
   node dba-script.js convert-dates scores --execute
+  node dba-script.js remove-legacy-date scores
+  node dba-script.js remove-legacy-date scores --execute
   node dba-script.js find-date-errors scores
   node dba-script.js find-date-errors scores --export
   node dba-script.js find-emoji-names scores
@@ -1004,6 +1154,12 @@ async function main() {
         const convertCollection = args[1] || 'scores';
         const convertExecute = args.includes('--execute');
         await dba.convertDatesToISO(convertCollection, !convertExecute);
+        break;
+
+      case 'remove-legacy-date':
+        const removeLegacyCollection = args[1] || 'scores';
+        const removeLegacyExecute = args.includes('--execute');
+        await dba.removeLegacyDateField(removeLegacyCollection, !removeLegacyExecute);
         break;
 
       case 'find-date-errors':
