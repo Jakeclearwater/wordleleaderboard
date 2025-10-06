@@ -63,7 +63,8 @@ const InputForm = ({
 
   useEffect(() => {
     const checkAlreadySubmitted = async () => {
-      if (!username) {
+      // Only check if user is logged in (not during typing in login form)
+      if (!username || !isLoggedIn) {
         setAlreadySubmittedToday(false);
         setTodaysScore(null);
         return;
@@ -103,7 +104,7 @@ const InputForm = ({
       }
     };
     checkAlreadySubmitted();
-  }, [username, activeTab]);
+  }, [username, activeTab, isLoggedIn]);
 
   const handleLogin = (e) => {
     e.preventDefault();

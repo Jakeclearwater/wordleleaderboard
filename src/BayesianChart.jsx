@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { createUseStyles } from 'react-jss';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -312,32 +312,8 @@ const BayesianChart = ({ getCurrentGradient }) => {
     setCookie('bayesian-data-type', dataType);
   }, [dataType]);
 
-  useEffect(() => {
-    fetchAllDataAndProcess();
-  }, []);
-
-  useEffect(() => {
-    // Reprocess data when time range changes
-    if (allScoresData.length > 0) {
-      processDataForTimeRange();
-    }
-  }, [timeRange]);
-
-  useEffect(() => {
-    // Reprocess data when connectLines setting changes
-    if (allScoresData.length > 0) {
-      processDataForTimeRange();
-    }
-  }, [connectLines]);
-
-  useEffect(() => {
-    // Reprocess data when dataType changes
-    if (allScoresData.length > 0) {
-      processDataForTimeRange();
-    }
-  }, [dataType]);
-
-  const fetchAllDataAndProcess = async () => {
+  // Memoized function to fetch all data - only defined once
+  const fetchAllDataAndProcess = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch all scores (we'll sort and filter on client side for better timezone handling)
@@ -347,18 +323,28 @@ const BayesianChart = ({ getCurrentGradient }) => {
 
       setAllScoresData(allScores);
       
-      // Process data for default time range
-      processDataWithScores(allScores);
+      // Process data for default time range - will be handled by separate useEffect
+      // Don't call processDataWithScores here to avoid race conditions
     } catch (error) {
       console.error('Error fetching data for chart:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty deps - this function doesn't depend on any state/props
 
-  const processDataForTimeRange = () => {
-    processDataWithScores(allScoresData);
-  };
+  // Fetch data only once on mount
+  useEffect(() => {
+    fetchAllDataAndProcess();
+  }, [fetchAllDataAndProcess]);
+
+  // Reprocess data when timeRange, connectLines, dataType, or allScoresData changes
+  useEffect(() => {
+    // Only process if we have data
+    if (allScoresData.length > 0) {
+      processDataWithScores(allScoresData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange, connectLines, dataType, allScoresData]);
 
   const getFilteredScoresByTimeRange = (scores) => {
     // Helper function to get the effective date from a score record
@@ -373,10 +359,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
           month: '2-digit',
           day: '2-digit'
         }).format(isoDate);
-      } else {
-        // No isoDate - ignore this record
-        return null;
       }
+      // No isoDate - ignore this record
+      return null;
     };
 
     // Filter out scores without isoDate first
@@ -471,10 +456,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
           month: '2-digit',
           day: '2-digit'
         }).format(isoDate);
-      } else {
-        // Fallback - this shouldn't happen since we filter out non-isoDate records
-        return score.date;
       }
+      // No isoDate - skip this record
+      return null;
     };
 
     // Sort scores by effective date

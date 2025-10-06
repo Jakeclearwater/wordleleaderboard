@@ -185,7 +185,10 @@ const PersonalStatistics = ({ username, todaysScore, getCurrentGradient }) => {
 
   useEffect(() => {
     const fetchUserStatistics = async () => {
-      if (!username) return;
+      if (!username) {
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       try {
@@ -214,7 +217,7 @@ const PersonalStatistics = ({ username, todaysScore, getCurrentGradient }) => {
               day: '2-digit'
             }).format(new Date(score.isoDate));
           }
-          return score.date;
+          return null; // No date available
         };
 
         userScores.sort((a, b) => {

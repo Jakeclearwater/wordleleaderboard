@@ -26,6 +26,25 @@ const TopRightLogin = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Close settings dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside the settings container
+      const settingsContainer = event.target.closest('[data-settings-container]');
+      if (showSettings && !settingsContainer) {
+        setShowSettings(false);
+      }
+    };
+
+    if (showSettings) {
+      // Add a small delay to prevent immediate closing when opening
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 0);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showSettings, setShowSettings]);
+
   return (
   <div style={{
     position: "fixed",
@@ -51,7 +70,7 @@ const TopRightLogin = ({
           {isMobile ? username : `Welcome, ${username}`}
         </span>
         {/* Settings Button */}
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative" }} data-settings-container>
           <button
             style={{
               width: isMobile ? "24px" : "28px",
