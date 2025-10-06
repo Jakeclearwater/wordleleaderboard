@@ -78,19 +78,36 @@ const InputForm = ({
         day: '2-digit'
       }).format(now);
       const formattedNZDate = nzTime;
-      // Query Firestore for scores by this user for today
+      // Query Firestore for scores by this user (client-side filter by derived date)
       try {
         const { getDocs, query, where, collection } = await import('firebase/firestore');
-        const q = query(collection(firestore, "scores"), where("name", "==", username.trim()), where("date", "==", formattedNZDate));
+        const q = query(collection(firestore, "scores"), where("name", "==", username.trim()));
         const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
+        
+        // Filter to today's submissions by deriving date from isoDate
+        const todayScores = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.isoDate) {
+            const derivedDate = new Intl.DateTimeFormat('en-CA', {
+              timeZone: 'Pacific/Auckland',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).format(new Date(data.isoDate));
+            if (derivedDate === formattedNZDate) {
+              todayScores.push(data);
+            }
+          }
+        });
+        
+        if (todayScores.length > 0) {
           setAlreadySubmittedToday(true);
           // Get the best score for today (lowest guesses)
-          let bestScore = null;
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            if (!bestScore || data.guesses < bestScore.guesses) {
-              bestScore = data;
+          let bestScore = todayScores[0];
+          todayScores.forEach(score => {
+            if (score.guesses < bestScore.guesses) {
+              bestScore = score;
             }
           });
           setTodaysScore(bestScore);
