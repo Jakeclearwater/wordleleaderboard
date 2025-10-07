@@ -1,254 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import { createUseStyles } from 'react-jss';
+import useStyles from './useStyles';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
 import PropTypes from 'prop-types';
 import wordleLogo from './assets/wordle.png';
-
-const useStyles = createUseStyles({
-  chartContainer: {
-    padding: '2rem',
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '16px',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    margin: '0',
-    maxWidth: '100%',
-    width: '100%',
-    boxSizing: 'border-box',
-    transition: 'all 0.3s ease',
-    overflow: 'visible',
-    position: 'relative',
-    '&:hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
-    },
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '4px',
-      background: props => props.gradient,
-      borderRadius: '16px 16px 0 0',
-    }
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: '2rem',
-    textAlign: 'center',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-  },
-  controls: {
-    marginBottom: '1.5rem',
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '1rem',
-    alignItems: 'center',
-    padding: '1rem',
-    background: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '12px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-  },
-  userSelector: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '0.75rem',
-    marginTop: '1rem',
-  },
-  userCheckbox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 12px',
-    border: '1px solid #e0e4e7',
-    borderRadius: '8px',
-    background: 'rgba(255, 255, 255, 0.9)',
-    backdropFilter: 'blur(10px)',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500',
-    transition: 'all 0.2s ease',
-    '&:hover': {
-      background: 'rgba(255, 255, 255, 0.95)',
-      transform: 'translateY(-1px)',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    },
-  },
-  selectedUser: {
-    background: 'rgba(255, 255, 255, 0.95)',
-    fontWeight: '600',
-    '&:hover': {
-      background: 'rgba(255, 255, 255, 0.98)',
-    },
-  },
-  playerMenuButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '4px 6px', // Match select padding
-    border: '1px solid #dee2e6', // Match select border
-    borderRadius: '4px', // Match select border radius
-    background: 'white', // Match select background
-    cursor: 'pointer',
-    fontSize: '13px', // Match select font size
-    fontWeight: '400', // Match select font weight
-    transition: 'all 0.2s ease',
-    position: 'relative',
-  },
-  playerMenuDropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    marginTop: '4px',
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid #e0e4e7',
-    borderRadius: '8px',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-    maxHeight: '300px',
-    overflowY: 'auto',
-    zIndex: 1000, // Reasonable z-index that works with the layout
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-    padding: '8px',
-    minWidth: '120px', // Ensure minimum width to prevent wrapping
-    width: 'max-content', // Allow width to grow based on content
-  },
-  playerMenuContainer: {
-    position: 'relative',
-  },
-  loading: {
-    textAlign: 'center',
-    padding: '4rem 2rem',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '1.5rem',
-    minHeight: '60vh',
-    justifyContent: 'center',
-  },
-  loadingSpinner: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    animation: '$spin 1.5s linear infinite',
-    position: 'relative',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: '6px',
-      left: '6px',
-      right: '6px',
-      bottom: '6px',
-      borderRadius: '50%',
-      background: 'rgba(255, 255, 255, 0.95)',
-    },
-    '&::after': {
-      content: '"📊"',
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      fontSize: '20px',
-      zIndex: 1,
-    },
-  },
-  loadingText: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#333',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
-  },
-  loadingSubtext: {
-    fontSize: '14px',
-    color: '#666',
-    fontWeight: '400',
-  },
-  '@keyframes spin': {
-    '0%': { transform: 'rotate(0deg)' },
-    '100%': { transform: 'rotate(360deg)' },
-  },
-  spinningLogo: {
-    width: '120px',
-    height: 'auto',
-    marginBottom: '1rem',
-    display: 'inline-block',
-    animation: '$spin 2s infinite linear',
-    transformOrigin: 'center',
-  },
-  customTooltip: {
-    backgroundColor: 'white !important',
-    padding: '12px',
-    border: '1px solid #ccc',
-    borderRadius: '6px',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-    fontSize: '11px',
-    minWidth: '200px',
-    zIndex: 2147483647,
-    overflow: 'visible',
-    position: 'fixed',
-    color: '#333 !important',
-    pointerEvents: 'auto',
-    '& *': {
-      color: '#333 !important',
-    },
-    '& p': {
-      color: '#333 !important',
-    },
-    '& span': {
-      color: '#666 !important',
-    },
-  },
-  tooltipTitle: {
-    margin: '0 0 8px 0',
-    fontWeight: 'bold',
-    fontSize: '14px',
-    color: '#333 !important',
-  },
-  tooltipGlobal: {
-    margin: '2px 0',
-    color: '#333 !important',
-    fontSize: '13px',
-  },
-  tooltipUserContainer: {
-    margin: '4px 0',
-    padding: '4px',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '4px',
-  },
-  tooltipUserName: {
-    margin: '0',
-    color: '#333 !important',
-    fontSize: '13px',
-    fontWeight: '500',
-  },
-  tooltipUserData: {
-    margin: '1px 0',
-    fontSize: '12px',
-    color: '#666 !important',
-  },
-});
+import dropdownArrow from './assets/dropdown-arrow.svg';
 
 // Color palette for different users
 const userColors = [
@@ -288,7 +46,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
   // Close player menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isPlayerMenuOpen && !event.target.closest(`.${classes.playerMenuContainer}`)) {
+      if (isPlayerMenuOpen && !event.target.closest(`.${classes.bayesianPlayerMenuContainer}`)) {
         setIsPlayerMenuOpen(false);
       }
     };
@@ -297,7 +55,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isPlayerMenuOpen, classes.playerMenuContainer]);
+  }, [isPlayerMenuOpen, classes.bayesianPlayerMenuContainer]);
 
   // Save preferences to cookies when they change
   useEffect(() => {
@@ -367,34 +125,54 @@ const BayesianChart = ({ getCurrentGradient }) => {
     // Filter out scores without isoDate first
     const validScores = scores.filter(score => score.isoDate);
 
+    // Get current date in NZ timezone for consistent comparison
     const now = new Date();
-    let startDate;
+    const nzNow = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Pacific/Auckland',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now);
+    
+    let startDateStr;
 
     switch (timeRange) {
-      case '1week':
-        startDate = new Date();
-        startDate.setDate(now.getDate() - 7);
+      case '1week': {
+        const date = new Date(nzNow);
+        date.setDate(date.getDate() - 7);
+        startDateStr = date.toISOString().split('T')[0];
         break;
-      case '2weeks':
-        startDate = new Date();
-        startDate.setDate(now.getDate() - 14);
+      }
+      case '2weeks': {
+        const date = new Date(nzNow);
+        date.setDate(date.getDate() - 14);
+        startDateStr = date.toISOString().split('T')[0];
         break;
-      case '1month':
-        startDate = new Date();
-        startDate.setMonth(now.getMonth() - 1);
+      }
+      case '1month': {
+        const date = new Date(nzNow);
+        date.setMonth(date.getMonth() - 1);
+        startDateStr = date.toISOString().split('T')[0];
         break;
-      case '3months':
-        startDate = new Date();
-        startDate.setMonth(now.getMonth() - 3);
+      }
+      case '3months': {
+        const date = new Date(nzNow);
+        date.setMonth(date.getMonth() - 3);
+        startDateStr = date.toISOString().split('T')[0];
         break;
-      case '6months':
-        startDate = new Date();
-        startDate.setMonth(now.getMonth() - 6);
+      }
+      case '6months': {
+        const date = new Date(nzNow);
+        date.setMonth(date.getMonth() - 6);
+        startDateStr = date.toISOString().split('T')[0];
         break;
-      case '1year':
-        startDate = new Date();
-        startDate.setFullYear(now.getFullYear() - 1);
+      }
+      case '1year': {
+        const date = new Date(nzNow);
+        date.setFullYear(date.getFullYear() - 1);
+        startDateStr = date.toISOString().split('T')[0];
         break;
+      }
       case 'all':
       default:
         return validScores.sort((a, b) => {
@@ -404,7 +182,6 @@ const BayesianChart = ({ getCurrentGradient }) => {
         }); // Return all valid scores sorted by effective date
     }
 
-    const startDateStr = startDate.toISOString().split('T')[0];
     return validScores
       .filter(score => {
         const effectiveDate = getEffectiveDate(score);
@@ -471,15 +248,20 @@ const BayesianChart = ({ getCurrentGradient }) => {
     if (sortedScores.length === 0) return { chartData: [], users: [] };
     
     // Get date range using effective dates
-    const firstDate = new Date(getEffectiveDate(sortedScores[0]));
-    const lastDate = new Date(getEffectiveDate(sortedScores[sortedScores.length - 1]));
+    const firstDateStr = getEffectiveDate(sortedScores[0]);
+    const lastDateStr = getEffectiveDate(sortedScores[sortedScores.length - 1]);
     
-    // Create complete date range
+    // Create complete date range - use Date.UTC to avoid timezone issues
     const allDates = [];
+    const [firstYear, firstMonth, firstDay] = firstDateStr.split('-').map(Number);
+    const [lastYear, lastMonth, lastDay] = lastDateStr.split('-').map(Number);
+    const firstDate = new Date(Date.UTC(firstYear, firstMonth - 1, firstDay));
+    const lastDate = new Date(Date.UTC(lastYear, lastMonth - 1, lastDay));
+    
     const currentDate = new Date(firstDate);
     while (currentDate <= lastDate) {
       allDates.push(currentDate.toISOString().split('T')[0]);
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
     }
     
     // Calculate the final global mean from ALL scores (for Bayesian prior consistency)
@@ -860,18 +642,18 @@ const BayesianChart = ({ getCurrentGradient }) => {
 
   if (loading) {
     return (
-      <div className={classes.chartContainer}>
-        <div className={classes.loading}>
-          <img src={wordleLogo} alt="Wordle" className={classes.spinningLogo} />
-          <div className={classes.loadingText}>Loading chart data...</div>
-          <div className={classes.loadingSubtext}>Analyzing player performance</div>
+      <div className={classes.bayesianChartContainer}>
+        <div className={classes.bayesianLoading}>
+          <img src={wordleLogo} alt="Wordle" className={classes.bayesianSpinningLogo} />
+          <div className={classes.bayesianLoadingText}>Loading chart data...</div>
+          <div className={classes.bayesianLoadingSubtext}>Analyzing player performance</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={classes.chartContainer}>
+    <div className={classes.bayesianChartContainer}>
       {/* Control Row */}
       <div style={{ 
         display: 'flex', 
@@ -897,99 +679,134 @@ const BayesianChart = ({ getCurrentGradient }) => {
           }}>
             👥 Quick Select:
           </span>
-          <button 
-            onClick={() => selectTopUsers(3)} 
-            style={{ 
+          {(() => {
+            const isSelected3 = selectedUsers.length === 3;
+            const isSelected5 = selectedUsers.length === 5;
+            const isSelected10 = selectedUsers.length === 10;
+            const isClearSelected = selectedUsers.length === 0;
+            
+            const baseButtonStyle = {
               padding: '4px 8px',
               fontSize: '13px',
-              border: '1px solid #dee2e6',
               borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '400',
+              transition: 'all 0.2s ease'
+            };
+            
+            const selectedStyle = {
+              backgroundColor: '#6aaa64',
+              color: 'white',
+              border: '1px solid #6aaa64'
+            };
+            
+            const defaultStyle = {
               backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
-          >
-            Top 3
-          </button>
-          <button 
-            onClick={() => selectTopUsers(5)} 
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
+              color: 'black',
+              border: '1px solid #dee2e6'
+            };
+            
+            const clearSelectedStyle = {
+              backgroundColor: '#6aaa64',
+              color: 'white',
+              border: '1px solid #6aaa64'
+            };
+            
+            const clearDefaultStyle = {
               backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
-          >
-            Top 5
-          </button>
-          <button 
-            onClick={() => selectTopUsers(10)} 
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
-          >
-            Top 10
-          </button>
-          <button 
-            onClick={() => setSelectedUsers([])}
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dc3545',
-              borderRadius: '4px',
-              backgroundColor: '#fff5f5',
-              color: '#dc3545',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#f8d7da';
-              e.target.style.borderColor = '#b02a37';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#fff5f5';
-              e.target.style.borderColor = '#dc3545';
-            }}
-          >
-            🗑️ Clear
-          </button>
+              color: 'black',
+              border: '1px solid #dee2e6'
+            };
+            
+            return (
+              <>
+                <button 
+                  onClick={() => selectTopUsers(3)} 
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isSelected3 ? selectedStyle : defaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected3) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected3) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  Top 3
+                </button>
+                <button 
+                  onClick={() => selectTopUsers(5)} 
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isSelected5 ? selectedStyle : defaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected5) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected5) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  Top 5
+                </button>
+                <button 
+                  onClick={() => selectTopUsers(10)} 
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isSelected10 ? selectedStyle : defaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected10) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected10) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  Top 10
+                </button>
+                <button 
+                  onClick={() => setSelectedUsers([])}
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isClearSelected ? clearSelectedStyle : clearDefaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isClearSelected) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isClearSelected) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  🗑️ Clear
+                </button>
+              </>
+            );
+          })()}
         </div>
 
         {/* Data Options */}
@@ -1017,7 +834,12 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 border: '1px solid #dee2e6',
                 backgroundColor: 'white',
                 fontWeight: '400',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                appearance: 'none',
+                backgroundImage: `url('${dropdownArrow}')`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+                backgroundSize: '12px'
               }}
             >
               <option value="1week">Last Week</option>
@@ -1053,7 +875,12 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 border: '1px solid #dee2e6',
                 backgroundColor: 'white',
                 fontWeight: '400',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                appearance: 'none',
+                backgroundImage: `url('${dropdownArrow}')`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+                backgroundSize: '12px'
               }}
             >
               <option value="bayesian">Bayesian Average</option>
@@ -1096,9 +923,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
             }}>
               🎯 Players:
             </label>
-            <div className={classes.playerMenuContainer}>
+            <div className={classes.bayesianPlayerMenuContainer}>
               <div 
-                className={classes.playerMenuButton}
+                className={classes.bayesianPlayerMenuButton}
                 onClick={() => setIsPlayerMenuOpen(!isPlayerMenuOpen)}
               >
                 <span>
@@ -1115,7 +942,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
               </div>
               
               {isPlayerMenuOpen && (
-                <div className={classes.playerMenuDropdown}>
+                <div className={classes.bayesianPlayerMenuDropdown}>
                   {allUsers
                     .sort((a, b) => b.attempts - a.attempts)
                     .map((user, index) => {
@@ -1124,7 +951,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
                       return (
                         <label
                           key={user.name}
-                          className={`${classes.userCheckbox} ${isSelected ? classes.selectedUser : ''}`}
+                          className={`${classes.bayesianUserCheckbox} ${isSelected ? classes.bayesianSelectedUser : ''}`}
                           style={{
                             borderColor: isSelected ? userColor : '#e0e4e7',
                             borderWidth: isSelected ? '2px' : '1px',

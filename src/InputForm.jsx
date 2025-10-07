@@ -341,7 +341,6 @@ const InputForm = ({
       await addDoc(collection(firestore, "scores"), {
         name: finalName,
         guesses: isDNF ? 7 : finalGuesses,
-        date: formattedNZDate,
         isoDate: isoDateTime,
         dnf: isDNF,
         wordleNumber: wordleNumber || null,
@@ -353,7 +352,6 @@ const InputForm = ({
       setTodaysScore({
         name: finalName,
         guesses: isDNF ? 7 : finalGuesses,
-        date: formattedNZDate,
         isoDate: isoDateTime,
         dnf: isDNF,
         wordleNumber: wordleNumber || null,
