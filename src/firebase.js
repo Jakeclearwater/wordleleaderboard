@@ -1,6 +1,6 @@
 // src/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 
 // Import environment variables
 const firebaseConfig = {
@@ -13,7 +13,22 @@ const firebaseConfig = {
     measurementId: import.meta.env.VITE_MEASUREMENT_ID
 };
 
+// Disable Firebase analytics and performance monitoring
+if (typeof window !== 'undefined') {
+    // Disable Analytics data collection
+    window['ga-disable-' + firebaseConfig.measurementId] = true;
+    
+    // Set Firebase Analytics to not collect data
+    window.FIREBASE_APPCHECK_DEBUG_TOKEN = false;
+}
+
 const app = initializeApp(firebaseConfig);
-const firestore = getFirestore(app);
+
+// Initialize Firestore with settings to reduce network traffic and metrics
+const firestore = initializeFirestore(app, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED, // Unlimited cache to reduce network calls
+    experimentalForceLongPolling: false, // Use WebChannel for better performance
+    experimentalAutoDetectLongPolling: true, // Auto-detect best connection method
+});
 
 export { firestore };

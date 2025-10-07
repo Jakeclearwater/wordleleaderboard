@@ -2,18 +2,14 @@ import { useState, useEffect } from 'react';
 import InputForm from './InputForm';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
+import githubLogo from './assets/github-logo.svg';
+import versionInfo from './version.json';
 
-// Function to get the current date and time in ddmmyyhhmmss format
-const getBuildDateVersion = () => {
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-  const year = String(now.getFullYear()).slice(-2); // Last two digits of the year
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-
-  return `${day}${month}${year}${hours}${minutes}${seconds}`;
+// Get static version info from build time
+const getAppVersion = () => {
+  const date = new Date(versionInfo.buildTime);
+  const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  return `v${versionInfo.version} (${versionInfo.commit}) ${formattedDate}`;
 };
 
 // Cookie helper functions
@@ -114,7 +110,7 @@ const App = () => {
   };
   const classes = useStyles();
   const wordle = "ITWORDLE";
-  const appVersion = getBuildDateVersion();
+  const appVersion = getAppVersion();
   const classNames = ["green", "yellow"];
 
   const wordleSpans = wordle.split('').map((char, index) => (
@@ -138,7 +134,12 @@ const App = () => {
       <div id="backgroundOverlay" className={classes.overlay}></div>
 
       <div className={classes.container}>
-        <p><span className={classes.versionInfo}>Build: {appVersion}</span></p>
+        <div className={classes.header}>
+          <span className={classes.versionInfo}>Build: {appVersion}</span>
+          <a href="https://github.com/Jakeclearwater/wordleleaderboard" target="_blank" rel="noopener noreferrer" className={classes.githubLink}>
+            <img src={githubLogo} alt="GitHub" className={classes.githubLogo} />
+          </a>
+        </div>
         <h1 className={classes.title}>{wordleSpans}</h1>
         <InputForm 
           backgroundThemes={backgroundThemes}
@@ -189,12 +190,28 @@ const useStyles = createUseStyles({
     pointerEvents: 'none',
   },
   versionInfo: {
+    color: 'white',
+    fontSize: '0.8rem',
+    fontFamily: 'monospace',
+  },
+  githubLink: {
+    color: 'white',
+    marginLeft: '1rem',
+    '&:hover': {
+      opacity: 0.8,
+    },
+  },
+  githubLogo: {
+    width: '20px',
+    height: '20px',
+    opacity: 0.8,
+  },
+  header: {
     position: 'absolute',
     top: '10px',
     left: '10px',
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: '0.8rem',
-    fontFamily: 'monospace',
+    display: 'flex',
+    alignItems: 'center',
   },
   title: {
     color: 'white',
