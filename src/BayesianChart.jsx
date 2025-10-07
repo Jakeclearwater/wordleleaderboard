@@ -679,99 +679,134 @@ const BayesianChart = ({ getCurrentGradient }) => {
           }}>
             👥 Quick Select:
           </span>
-          <button 
-            onClick={() => selectTopUsers(3)} 
-            style={{ 
+          {(() => {
+            const isSelected3 = selectedUsers.length === 3;
+            const isSelected5 = selectedUsers.length === 5;
+            const isSelected10 = selectedUsers.length === 10;
+            const isClearSelected = selectedUsers.length === 0;
+            
+            const baseButtonStyle = {
               padding: '4px 8px',
               fontSize: '13px',
-              border: '1px solid #dee2e6',
               borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '400',
+              transition: 'all 0.2s ease'
+            };
+            
+            const selectedStyle = {
+              backgroundColor: '#6aaa64',
+              color: 'white',
+              border: '1px solid #6aaa64'
+            };
+            
+            const defaultStyle = {
               backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
-          >
-            Top 3
-          </button>
-          <button 
-            onClick={() => selectTopUsers(5)} 
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
+              color: 'black',
+              border: '1px solid #dee2e6'
+            };
+            
+            const clearSelectedStyle = {
+              backgroundColor: '#6aaa64',
+              color: 'white',
+              border: '1px solid #6aaa64'
+            };
+            
+            const clearDefaultStyle = {
               backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
-          >
-            Top 5
-          </button>
-          <button 
-            onClick={() => selectTopUsers(10)} 
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e9ecef';
-              e.target.style.borderColor = '#adb5bd';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }}
-          >
-            Top 10
-          </button>
-          <button 
-            onClick={() => setSelectedUsers([])}
-            style={{ 
-              padding: '4px 8px',
-              fontSize: '13px',
-              border: '1px solid #dc3545',
-              borderRadius: '4px',
-              backgroundColor: '#fff5f5',
-              color: '#dc3545',
-              cursor: 'pointer',
-              fontWeight: '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#f8d7da';
-              e.target.style.borderColor = '#b02a37';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#fff5f5';
-              e.target.style.borderColor = '#dc3545';
-            }}
-          >
-            🗑️ Clear
-          </button>
+              color: 'black',
+              border: '1px solid #dee2e6'
+            };
+            
+            return (
+              <>
+                <button 
+                  onClick={() => selectTopUsers(3)} 
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isSelected3 ? selectedStyle : defaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected3) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected3) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  Top 3
+                </button>
+                <button 
+                  onClick={() => selectTopUsers(5)} 
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isSelected5 ? selectedStyle : defaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected5) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected5) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  Top 5
+                </button>
+                <button 
+                  onClick={() => selectTopUsers(10)} 
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isSelected10 ? selectedStyle : defaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected10) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected10) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  Top 10
+                </button>
+                <button 
+                  onClick={() => setSelectedUsers([])}
+                  style={{ 
+                    ...baseButtonStyle,
+                    ...(isClearSelected ? clearSelectedStyle : clearDefaultStyle)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isClearSelected) {
+                      e.target.style.backgroundColor = '#e9ecef';
+                      e.target.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isClearSelected) {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  🗑️ Clear
+                </button>
+              </>
+            );
+          })()}
         </div>
 
         {/* Data Options */}

@@ -34,11 +34,11 @@ const backgroundThemes = {
   },
   ocean: {
     name: '🌊 Ocean Blue',
-    gradient: 'linear-gradient(135deg, #667db6 0%, #0082c8 50%, #0082c8 100%)'
+    gradient: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'
   },
   sunset: {
     name: '🌅 Sunset Orange',
-    gradient: 'linear-gradient(135deg, #ff9a56 0%, #ff6b6b 50%, #c44569 100%)'
+    gradient: 'linear-gradient(135deg, #ff9a56 0%, #ff6b6b 100%)'
   },
   forest: {
     name: '🌲 Forest Green',
@@ -50,11 +50,11 @@ const backgroundThemes = {
   },
   midnight: {
     name: '🌙 Midnight Blue',
-    gradient: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)'
+    gradient: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)'
   },
   aurora: {
     name: '✨ Aurora',
-    gradient: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)'
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
   },
   cherry: {
     name: '🌸 Cherry Blossom',
