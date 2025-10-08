@@ -1,4 +1,3 @@
-import React from "react";
 // Inject confetti styles and keyframes directly for component encapsulation
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   if (!document.head.querySelector('style[data-confetti-styles]')) {
@@ -50,7 +49,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   }
 }
 
-export const createConfetti = () => {
+const createConfetti = () => {
   const colors = [
     '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
     '#FFB347', '#B39DDB', '#F06292', '#81C784', '#FF8A65', '#90CAF9'
@@ -83,7 +82,7 @@ export const createConfetti = () => {
   return pieces;
 };
 
-export const Confetti = ({ show, classes }) => (
+export const Confetti = ({ show }) => (
   show ? (
     <div className="confetti">
       {createConfetti()}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import useStyles from './useStyles';
 import wordleLogo from './assets/wordle.png';

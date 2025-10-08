@@ -422,8 +422,8 @@ const Leaderboard = ({ getCurrentGradient }) => {
             {/* Daily Leaderboard */}
             <div className={classes.leaderboardCard}>
               <div className={classes.cardHeader}>
-                <h2 className={classes.cardTitle} title={"Shows the best average score for each player for today's Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged."}>
-                  🌅 Today's Leaders
+                <h2 className={classes.cardTitle} title={"Shows the best average score for each player for today&apos;s Wordle. Only games played today are counted. DNF (Did Not Finish) is scored as 7. If a player submits multiple scores, all are averaged."}>
+                  🌅 Today&apos;s Leaders
                 </h2>
                 <p className={classes.cardSubtitle}>Best performers today</p>
               </div>

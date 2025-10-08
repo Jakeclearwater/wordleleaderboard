@@ -1,5 +1,55 @@
 import { createUseStyles } from "react-jss";
 
+const FONT_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+const FONT_MONO = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Mono', Consolas, monospace";
+
+const GLASS_CARD_BASE = {
+  background: "rgba(255, 255, 255, 0.98)",
+  backdropFilter: "blur(8px)",
+  borderRadius: "12px",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+  border: "1px solid rgba(255, 255, 255, 0.3)",
+};
+
+const TRAINING_ACCENT_FALLBACK = "linear-gradient(135deg, #6aaa64 0%, #3cba92 100%)";
+
+const PRIMARY_BUTTON_BASE = {
+  width: "100%",
+  padding: "12px 24px",
+  borderRadius: "8px",
+  background: "#3b82f6",
+  color: "white",
+  fontWeight: "500",
+  fontSize: "15px",
+  border: "none",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  fontFamily: FONT_SANS,
+  "&:hover": {
+    background: "#2563eb",
+  },
+  "&:active": {
+    transform: "translateY(1px)",
+  },
+};
+
+const INPUT_BASE = {
+  width: "100%",
+  padding: "12px 16px",
+  borderRadius: "8px",
+  border: "1px solid #e0e4e7",
+  fontSize: "15px",
+  boxSizing: "border-box",
+  transition: "all 0.2s ease",
+  background: "white",
+  fontFamily: FONT_SANS,
+  "&:focus": {
+    outline: "none",
+    borderColor: "#3b82f6",
+    boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
+  },
+};
+
 const useStyles = createUseStyles({
 
     header: {
@@ -34,7 +84,7 @@ const useStyles = createUseStyles({
         fontWeight: "600"
     },
 
-    playButtonStyle: {
+  playButtonStyle: {
         padding: "16px 32px",
         borderRadius: "12px",
         border: "none",
@@ -43,7 +93,7 @@ const useStyles = createUseStyles({
         fontWeight: "600",
         cursor: "pointer",
         transition: "all 0.2s ease",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamily: FONT_SANS,
         boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)",
         display: "flex",
         alignItems: "center",
@@ -64,12 +114,9 @@ const useStyles = createUseStyles({
     },
 
     contentCard: {
+        ...GLASS_CARD_BASE,
         width: "100%",
-        background: "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(8px)",
         borderRadius: "0 0 12px 12px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(255, 255, 255, 0.3)",
         borderTop: "none",
         overflow: "hidden",
         position: "relative",
@@ -78,30 +125,27 @@ const useStyles = createUseStyles({
         boxSizing: "border-box",
         margin: "0 0 2rem 0",
         lineHeight: "1.5",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontFamily: FONT_SANS,
     },
 
     greyParagraph: {
         marginTop: "1.5rem",
         fontSize: "1rem",
         color: "#737983ff",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontFamily: FONT_SANS,
     },
 
     greyParagraphSubText: {
         marginTop: "1.5rem",
         fontSize: "0.875rem",
         color: "#9ca3af",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontFamily: FONT_SANS,
     },
 
     innerContentCard: {
+        ...GLASS_CARD_BASE,
         maxWidth: "500px",
-        background: "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(8px)",
         borderRadius: "0 0 12px 12px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(255, 255, 255, 0.3)",
         borderTop: "none",
         overflow: "hidden",
         position: "relative",
@@ -110,7 +154,7 @@ const useStyles = createUseStyles({
         boxSizing: "border-box",
         margin: "0 0 2rem 0",
         lineHeight: "1.5",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        fontFamily: FONT_SANS,
     },
 
     mainResponsiveMargin: {
@@ -124,18 +168,15 @@ const useStyles = createUseStyles({
         boxSizing: "border-box",
         "@media (max-width: 600px)": {
             padding: "1rem 0.5rem",
-            maxWidth: "100vw"
-        }
+            maxWidth: "100vw",
+        },
     },
+
     loginContainer: {
+        ...GLASS_CARD_BASE,
         maxWidth: "400px",
         margin: "4rem auto",
         padding: "2rem",
-        background: "rgba(255, 255, 255, 0.98)",
-        backdropFilter: "blur(8px)",
-        borderRadius: "12px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        border: "1px solid rgba(255, 255, 255, 0.3)"
     },
     loginTitle: {
         textAlign: "center",
@@ -143,14 +184,14 @@ const useStyles = createUseStyles({
         color: "#1a1a1a",
         fontWeight: "600",
         fontSize: "24px",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontFamily: FONT_SANS,
     },
     loginSubtitle: {
         textAlign: "center",
         color: "#6b7280",
         fontSize: "15px",
         marginBottom: "2rem",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontFamily: FONT_SANS,
     },
     loginLabel: {
         fontWeight: "500",
@@ -158,42 +199,14 @@ const useStyles = createUseStyles({
         color: "#374151",
         display: "block",
         marginBottom: "0.5rem",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontFamily: FONT_SANS,
     },
     loginInput: {
-        width: "100%",
-        padding: "12px 16px",
-        borderRadius: "8px",
-        border: "1px solid #e0e4e7",
-        fontSize: "15px",
+        ...INPUT_BASE,
         marginBottom: "1.5rem",
-        boxSizing: "border-box",
-        transition: "all 0.2s ease",
-        background: "white",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        "&:focus": {
-            borderColor: "#3b82f6",
-            boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)"
-        }
     },
     loginButton: {
-        width: "100%",
-        padding: "12px 24px",
-        borderRadius: "8px",
-        background: "#3b82f6",
-        color: "white",
-        fontWeight: "500",
-        fontSize: "15px",
-        border: "none",
-        cursor: "pointer",
-        transition: "all 0.2s ease",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        "&:hover": {
-            background: "#2563eb"
-        },
-        "&:active": {
-            transform: "translateY(1px)"
-        }
+        ...PRIMARY_BUTTON_BASE,
     },
     form: {
         display: "flex",
@@ -217,7 +230,7 @@ const useStyles = createUseStyles({
             fontSize: "14px",
             marginBottom: "0.5rem",
             display: "block",
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            fontFamily: FONT_SANS,
         },
     },
     formGroup: {
@@ -237,25 +250,12 @@ const useStyles = createUseStyles({
     },
     
     input: {
-        padding: "12px 16px",
-        borderRadius: "8px",
-        border: "1px solid #e0e4e7",
-        fontSize: "15px",
-        width: "100%",
-        minWidth: "0",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-        transition: "all 0.2s ease",
-        background: "white",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    ...INPUT_BASE,
+    minWidth: "0",
+    maxWidth: "100%",
         "@media (max-width: 600px)": {
             fontSize: "15px",
             padding: "12px 12px",
-        },
-        "&:focus": {
-            outline: "none",
-            borderColor: "#3b82f6",
-            boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
         },
         "&.disabled": {
             backgroundColor: "#f8f9fa",
@@ -264,16 +264,17 @@ const useStyles = createUseStyles({
             borderColor: "#dee2e6",
         },
     },
-    select: {
-        padding: "12px",
-        borderRadius: "6px",
-        border: "1px solid #ccc",
-        backgroundColor: "white",
-        color: "black",
-        fontSize: "16px",
-        width: "100%",
-        boxSizing: "border-box",
-        appearance: "none",
+  select: {
+    padding: "12px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    backgroundColor: "white",
+    color: "black",
+    fontSize: "16px",
+    width: "100%",
+    boxSizing: "border-box",
+    appearance: "none",
+    fontFamily: FONT_SANS,
         // backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0IDUiPjxwYXRoIGZpbGw9IiM2NjYiIGQ9Ik0yIDBMMCAySDQuem0wIDUgTDAgM2g0eiIvPjwvc3ZnPg==')",
         // backgroundRepeat: "no-repeat",
         // backgroundPosition: "right 12px center",
@@ -284,26 +285,10 @@ const useStyles = createUseStyles({
             boxShadow: "0 0 0 2px rgba(40, 167, 69, 0.2)",
         },
     },
-    button: {
-        padding: "12px 24px",
-        border: "none",
-        borderRadius: "8px",
-        background: "#3b82f6",
-        color: "white",
-        cursor: "pointer",
-        fontSize: "15px",
-        fontWeight: "500",
-        width: "100%",
-        boxSizing: "border-box",
-        marginTop: "1rem",
-        transition: "all 0.2s ease",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        "&:hover": {
-            background: "#2563eb",
-        },
-        "&:active": {
-            transform: "translateY(1px)",
-        },
+  button: {
+    ...PRIMARY_BUTTON_BASE,
+    boxSizing: "border-box",
+    marginTop: "1rem",
         "&.disabled": {
             background: "#d1d5db",
             cursor: "not-allowed",
@@ -327,17 +312,13 @@ const useStyles = createUseStyles({
         height: "18px",
         accentColor: "#28a745",
     },
-    textarea: {
-        padding: "12px 16px",
-        borderRadius: "8px",
-        border: "1px solid #e0e4e7",
-        minHeight: "120px",
-        width: "100%",
-        minWidth: "0",
-        maxWidth: "100%",
-        boxSizing: "border-box",
-        fontSize: "14px",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Mono', Consolas, monospace",
+  textarea: {
+    ...INPUT_BASE,
+    minHeight: "120px",
+    minWidth: "0",
+    maxWidth: "100%",
+    fontSize: "14px",
+    fontFamily: FONT_MONO,
         resize: "vertical",
         transition: "all 0.2s ease",
         background: "white",
@@ -345,11 +326,6 @@ const useStyles = createUseStyles({
             fontSize: "14px",
             padding: "10px 10px",
             minHeight: "80px",
-        },
-        "&:focus": {
-            outline: "none",
-            borderColor: "#3b82f6",
-            boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)",
         },
         "&::placeholder": {
             color: "#bfc6d1",
@@ -443,7 +419,7 @@ const useStyles = createUseStyles({
         fontSize: "14px",
         fontWeight: "500",
         transition: "all 0.2s ease",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  fontFamily: FONT_SANS,
         "&:hover": {
             color: "#374151",
         },
@@ -489,28 +465,6 @@ const useStyles = createUseStyles({
         flexDirection: 'column',
         gap: 'var(--space-8)',
     },
-  
-  header: {
-    textAlign: 'center',
-    marginBottom: 'var(--space-8)',
-    position: 'relative',
-  },
-  
-  headerTitle: {
-    fontSize: 'clamp(2rem, 5vw, 3rem)',
-    fontWeight: '800',
-    color: 'var(--text-primary, #1f2937)',
-    margin: '0 0 var(--space-3) 0',
-    letterSpacing: '-0.02em',
-  },
-  
-  headerSubtitle: {
-    fontSize: '1.2rem',
-    color: 'var(--text-secondary, #6b7280)',
-    fontWeight: '400',
-    margin: 0,
-  },
-  
   statsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -529,6 +483,7 @@ const useStyles = createUseStyles({
     display: 'inline-block',
     animation: '$logoSpin 2s infinite linear',
     transformOrigin: 'center',
+    filter: 'drop-shadow(0 4px 12px rgba(15, 23, 42, 0.35))',
   },
   
   '@keyframes logoSpin': {
@@ -924,7 +879,358 @@ const useStyles = createUseStyles({
     marginBottom: '1rem',
     display: 'inline-block',
     animation: '$spin 2s infinite linear',
+    filter: 'drop-shadow(0 4px 12px rgba(15, 23, 42, 0.35))',
     transformOrigin: 'center',
+  },
+
+  // Training Wordle styles
+  trainingSurface: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '2.5rem 1.25rem',
+    boxSizing: 'border-box',
+    background: '#ffffff',
+    '@media (max-width: 600px)': {
+      padding: '1.75rem 0.75rem',
+    },
+  },
+  trainingContainer: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1.5rem',
+    width: 'min(100%, 540px)',
+    minWidth: '360px',
+    margin: '0 auto',
+    padding: '2rem 1.75rem',
+    borderRadius: '28px',
+  backgroundImage: `linear-gradient(165deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.88) 60%, rgba(15, 23, 42, 0.92) 100%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
+  backgroundBlendMode: 'overlay',
+    border: '1px solid rgba(148, 163, 184, 0.3)',
+    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.55)',
+    backdropFilter: 'blur(25px)',
+    '@media (max-width: 600px)': {
+      padding: '1.5rem 1.1rem',
+      borderRadius: '22px',
+      minWidth: '335px',
+    },
+    '@media (max-width: 400px)': {
+      minWidth: '320px',
+    },
+  },
+  trainingControls: {
+    display: 'flex',
+    gap: '0.75rem',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  trainingFeedback: {
+    position: 'absolute',
+    top: '1rem',
+    left: '50%',
+    transform: 'translate(-50%, -16px)',
+    opacity: 0,
+    pointerEvents: 'none',
+    padding: '0.85rem 1.35rem',
+    borderRadius: '16px',
+    textAlign: 'center',
+    fontSize: '0.95rem',
+    fontWeight: 500,
+    letterSpacing: '0.01em',
+    boxShadow: '0 26px 48px rgba(15, 23, 42, 0.55)',
+    backdropFilter: 'blur(16px)',
+    transition: 'opacity 0.25s ease, transform 0.25s ease',
+    maxWidth: 'calc(100% - 2.75rem)',
+    zIndex: 6,
+    '@media (max-width: 600px)': {
+      top: '0.75rem',
+      maxWidth: 'calc(100% - 1.75rem)',
+      padding: '0.75rem 1.1rem',
+      fontSize: '0.9rem',
+    },
+  },
+  trainingFeedbackVisible: {
+    opacity: 1,
+    transform: 'translate(-50%, 0)',
+  },
+  trainingFeedbackError: {
+    background: 'rgba(239, 68, 68, 0.2)',
+    border: '1px solid rgba(248, 113, 113, 0.5)',
+    color: '#fee2e2',
+  },
+  trainingFeedbackInfo: {
+    background: 'rgba(59, 130, 246, 0.22)',
+    border: '1px solid rgba(96, 165, 250, 0.55)',
+    color: '#e0f2fe',
+  },
+  trainingPrimaryButton: {
+    padding: '0.65rem 1.5rem',
+    borderRadius: '999px',
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: 600,
+    color: '#fff',
+    background: `var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
+    boxShadow: '0 14px 32px rgba(15, 23, 42, 0.45)',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    '&:hover': {
+      transform: 'translateY(-1px)',
+      filter: 'brightness(1.05)',
+      boxShadow: '0 18px 38px rgba(15, 23, 42, 0.5)',
+    },
+    '&:active': {
+      transform: 'translateY(0)',
+      boxShadow: '0 6px 18px rgba(15, 23, 42, 0.4)',
+    },
+  },
+  trainingSecondaryButton: {
+    padding: '0.65rem 1.5rem',
+    borderRadius: '999px',
+    border: '1px solid rgba(148, 163, 184, 0.45)',
+    cursor: 'pointer',
+    fontWeight: 600,
+    color: '#e2e8f0',
+    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.9) 100%)',
+    boxShadow: '0 8px 22px rgba(15, 23, 42, 0.4)',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    '&:hover': {
+      background: `var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
+      transform: 'translateY(-1px)',
+      color: '#f1f5f9',
+      boxShadow: '0 14px 28px rgba(15, 23, 42, 0.45)',
+    },
+    '&:active': {
+      transform: 'translateY(0)',
+      boxShadow: '0 6px 18px rgba(15, 23, 42, 0.35)',
+    },
+  },
+  trainingBoard: {
+    display: 'grid',
+    gap: '0.5rem',
+    width: '100%',
+    padding: '1.1rem',
+    borderRadius: '18px',
+    boxShadow: '0 24px 50px rgba(15, 23, 42, 0.5)',
+    backgroundImage: `linear-gradient(160deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.88) 55%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
+    backgroundBlendMode: 'overlay',
+    border: '1px solid rgba(148, 163, 184, 0.28)',
+  },
+  trainingRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(5, minmax(52px, 1fr))',
+    gap: '0.5rem',
+  },
+  trainingTile: {
+    width: '100%',
+    aspectRatio: '1 / 1',
+    borderRadius: '12px',
+    fontSize: '1.75rem',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    textTransform: 'uppercase',
+    transition: 'all 0.25s ease',
+    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.35)',
+    position: 'relative',
+    background: 'rgba(15, 23, 42, 0.85)',
+    border: '2px solid rgba(65, 73, 91, 0.55)',
+    '& span': {
+      position: 'relative',
+      zIndex: 1,
+    },
+  },
+  trainingTileEmpty: {
+    background: 'rgba(30, 41, 59, 0.9)',
+    border: '2px dashed rgba(148, 163, 184, 0.35)',
+    color: 'rgba(203, 213, 225, 0.45)',
+  },
+  trainingTilePending: {
+    background: 'rgba(37, 99, 235, 0.15)',
+    border: '2px solid rgba(59, 130, 246, 0.35)',
+    color: '#e0f2fe',
+  },
+  trainingTileHidden: {
+    background: 'rgba(15, 23, 42, 0.7)',
+    border: '2px solid rgba(51, 65, 85, 0.45)',
+    color: 'transparent',
+  },
+  trainingTileCorrect: {
+    background: '#538d4e',
+    border: '2px solid #6aaa64',
+  },
+  trainingTilePresent: {
+    background: '#b59f3b',
+    border: '2px solid #c9b458',
+    color: '#fff',
+  },
+  trainingTileAbsent: {
+    background: '#3a3a3c',
+    border: '2px solid #52525b',
+    color: '#d7dadc',
+  },
+  trainingKeyboard: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.45rem',
+    marginTop: '0.5rem',
+    paddingTop: '0.35rem',
+    overflow: 'visible',
+    '@media (max-width: 480px)': {
+      gap: '0.35rem',
+      paddingTop: '0.25rem',
+    },
+    '@media (max-width: 400px)': {
+      gap: '0.26rem',
+      paddingTop: '0.2rem',
+    },
+  },
+  trainingKeyboardRow: {
+    display: 'flex',
+    gap: '0.45rem',
+    justifyContent: 'center',
+    '@media (max-width: 480px)': {
+      gap: '0.35rem',
+    },
+    '@media (max-width: 400px)': {
+      gap: '0.25rem',
+    },
+  },
+  trainingKeyboardKey: {
+    minWidth: '42px',
+    padding: '0.8rem 0.55rem',
+    borderRadius: '8px',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.92) 0%, rgba(17, 24, 39, 0.9) 100%)',
+    color: '#f8fafc',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.18s ease',
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.38)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    '&:hover': {
+      transform: 'translateY(-1px)',
+      background: `linear-gradient(135deg, rgba(51, 65, 85, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
+      backgroundBlendMode: 'overlay',
+    },
+    '@media (max-width: 480px)': {
+      minWidth: '34px',
+      padding: '0.65rem 0.4rem',
+      fontSize: '0.82rem',
+    },
+    '@media (max-width: 400px)': {
+      minWidth: '28px',
+      padding: '0.55rem 0.32rem',
+      fontSize: '0.76rem',
+      letterSpacing: '0.32px',
+    },
+  },
+  trainingKeyAction: {
+    minWidth: '64px',
+    fontSize: '0.85rem',
+    '@media (max-width: 480px)': {
+      minWidth: '56px',
+      padding: '0.65rem 0.45rem',
+      fontSize: '0.8rem',
+    },
+    '@media (max-width: 400px)': {
+      minWidth: '42px',
+      padding: '0.55rem 0.35rem',
+      fontSize: '0.72rem',
+    },
+  },
+  trainingKeyCorrect: {
+    background: '#6aaa64 !important',
+  },
+  trainingKeyPresent: {
+    background: '#c9b458 !important',
+    color: '#fff !important',
+  },
+  trainingKeyAbsent: {
+    background: 'linear-gradient(140deg, rgba(148, 163, 184, 0.3) 0%, rgba(71, 85, 105, 0.22) 100%) !important',
+    color: '#94a3b8 !important',
+    border: '1px solid rgba(148, 163, 184, 0.55) !important',
+    boxShadow: 'none !important',
+    filter: 'saturate(0.35) brightness(0.92)',
+    '&:hover': {
+      transform: 'none !important',
+      background: 'linear-gradient(140deg, rgba(148, 163, 184, 0.36) 0%, rgba(71, 85, 105, 0.28) 100%) !important',
+    },
+  },
+  trainingResultCard: {
+    marginTop: '1rem',
+    padding: '1.75rem',
+    backgroundImage: `linear-gradient(165deg, rgba(15, 23, 42, 0.95) 0%, rgba(17, 24, 39, 0.86) 70%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
+    backgroundBlendMode: 'overlay',
+    borderRadius: '20px',
+    boxShadow: '0 28px 55px rgba(15, 23, 42, 0.5)',
+    textAlign: 'center',
+    border: '1px solid rgba(148, 163, 184, 0.3)',
+    color: '#e2e8f0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+    alignItems: 'center',
+  },
+  trainingResultTitle: {
+    fontSize: '1.25rem',
+    fontWeight: 700,
+    color: '#f8fafc',
+  },
+  trainingResultWord: {
+    fontSize: '2.2rem',
+    fontWeight: 800,
+    letterSpacing: '0.2em',
+    color: '#fef08a',
+  },
+  trainingOverlay: {
+    position: 'fixed',
+    inset: 0,
+    width: '100vw',
+    height: '100vh',
+    background: 'rgba(0, 0, 0, 0.45)',
+    display: 'grid',
+    placeItems: 'center',
+    zIndex: 9999,
+    padding: '1.25rem',
+    boxSizing: 'border-box',
+  },
+  trainingModal: {
+    background: 'rgba(15, 23, 42, 0.96)',
+    padding: '2rem',
+    borderRadius: '20px',
+    color: '#f8fafc',
+  maxWidth: '420px',
+  width: 'min(100%, 420px)',
+    boxShadow: '0 24px 50px rgba(15, 23, 42, 0.55)',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    alignItems: 'stretch',
+    '& ul': {
+      margin: '0 0 0.5rem 1.25rem',
+      padding: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.5rem',
+      fontSize: '0.95rem',
+      color: '#e2e8f0',
+    },
+    '@media (max-width: 600px)': {
+      margin: '0 auto',
+    },
   },
 
   // Keyframe animations for Bayesian chart

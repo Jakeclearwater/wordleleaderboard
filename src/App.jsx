@@ -54,7 +54,7 @@ const backgroundThemes = {
   },
   aurora: {
     name: '✨ Aurora',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    gradient: 'linear-gradient(135deg, #2f6f78 0%, #4f4d77 40%, #736070 100%)'
   },
   cherry: {
     name: '🌸 Cherry Blossom',
@@ -81,7 +81,6 @@ const App = () => {
     const saved = getCookie('custom-background-colors');
     return saved ? JSON.parse(saved) : { color1: '#667eea', color2: '#764ba2' };
   });
-  const [showBackgroundPicker, setShowBackgroundPicker] = useState(false);
 
   // Save theme preference to cookies
   useEffect(() => {

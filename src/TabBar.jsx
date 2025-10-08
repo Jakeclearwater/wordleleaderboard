@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
-const TABS = ["Wordle Game", "Score Entry", "Leaderboard", "Chart"];
+const TABS = ["Wordle Game", "Training", "Score Entry", "Leaderboard", "Chart"];
 
 const TabBar = ({ activeTab, setActiveTab }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [needsOverlap, setNeedsOverlap] = useState(false);
+  const tabCount = TABS.length;
 
   useEffect(() => {
     const checkLayout = () => {
       const width = window.innerWidth;
       setIsMobile(width <= 600);
-      // Check if we need overlap based on available space
-      // Rough calculation: 4 tabs * 120px + gaps = ~500px minimum
-      setNeedsOverlap(width < 500);
+      const baseWidth = width <= 600 ? 90 : 120;
+      const gapAllowance = 12;
+      setNeedsOverlap(width < tabCount * (baseWidth + gapAllowance));
     };
     
     checkLayout();
     window.addEventListener('resize', checkLayout);
     
     return () => window.removeEventListener('resize', checkLayout);
-  }, []);
+  }, [tabCount]);
   
   return (
     <div style={{
@@ -30,20 +31,24 @@ const TabBar = ({ activeTab, setActiveTab }) => {
       position: "relative",
       height: "40px",
       width: "100%",
-      maxWidth: needsOverlap ? "100%" : "600px",
+      maxWidth: needsOverlap ? "100%" : `${tabCount * 130}px`,
       zIndex: 10,
       overflow: "visible"
     }}>
-      {TABS.map((tab, idx) => (
+      {TABS.map((tab, idx) => {
+        const dynamicWidth = needsOverlap
+          ? `calc(${(100 / tabCount).toFixed(2)}% + 8px)`
+          : "auto";
+        return (
         <button
           key={tab}
           style={{
             flex: needsOverlap ? "0 1 auto" : "0 0 auto",
             minWidth: isMobile ? "70px" : "100px",
             maxWidth: needsOverlap ? (isMobile ? "120px" : "150px") : "180px",
-            width: needsOverlap ? "calc(25% + 10px)" : "auto",
+            width: dynamicWidth,
             position: "relative",
-            zIndex: activeTab === tab ? 10 : (5 - idx),
+            zIndex: activeTab === tab ? 10 : (tabCount - idx),
             fontWeight: activeTab === tab ? "600" : "500",
             fontSize: isMobile ? "12px" : "14px",
             padding: activeTab === tab 
@@ -62,7 +67,7 @@ const TabBar = ({ activeTab, setActiveTab }) => {
               : needsOverlap 
                 ? "inset 2px 0 4px rgba(0,0,0,0.15)" 
                 : "0 -2px 4px rgba(0,0,0,0.15)",
-            marginRight: needsOverlap && idx < TABS.length - 1 ? (isMobile ? "-15px" : "-10px") : (idx < TABS.length - 1 ? "8px" : "0"),
+            marginRight: needsOverlap && idx < TABS.length - 1 ? (isMobile ? "-12px" : "-8px") : (idx < TABS.length - 1 ? "8px" : "0"),
             cursor: "pointer",
             transition: "all 0.2s ease",
             outline: "none",
@@ -86,7 +91,8 @@ const TabBar = ({ activeTab, setActiveTab }) => {
           }}
           onClick={() => setActiveTab(tab)}
         >{tab}</button>
-      ))}
+      );
+      })}
     </div>
   );
 };
