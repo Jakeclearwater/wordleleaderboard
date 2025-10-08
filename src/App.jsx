@@ -109,14 +109,37 @@ const App = () => {
   };
   const classes = useStyles();
   const wordle = "ITWORDLE";
+  const [playIntro, setPlayIntro] = useState(true);
   const appVersion = getAppVersion();
   const classNames = ["green", "yellow"];
 
-  const wordleSpans = wordle.split('').map((char, index) => (
-    <span key={index}
-      className={classes.char + ' ' + classes['color_' + classNames[Math.floor(Math.random() * classNames.length)]]}
-    >{char}</span>
-  ));
+  useEffect(() => {
+    if (!playIntro) return undefined;
+    const totalDuration = wordle.length * 400 + 800;
+    const timeout = setTimeout(() => setPlayIntro(false), totalDuration);
+    return () => clearTimeout(timeout);
+  }, [playIntro, wordle.length]);
+
+  const wordleSpans = wordle.split('').map((char, index) => {
+    const colorKey = classNames[Math.floor(Math.random() * classNames.length)];
+    const colorClass = classes[`color_${colorKey}`];
+    const spanClasses = [classes.char, colorClass];
+
+    if (playIntro) {
+      spanClasses.push(classes.charIntro);
+    }
+
+    return (
+      <span
+        key={index}
+        className={spanClasses.join(' ')}
+        style={playIntro ? { animationDelay: `${index * 0.4}s` } : undefined}
+      >
+        <span className={classes.charFaceFront}>{char}</span>
+        <span className={classes.charFaceBack} aria-hidden="true" />
+      </span>
+    );
+  });
 
   const hack = () => {
     console.log("oops");
@@ -217,7 +240,7 @@ const useStyles = createUseStyles({
     fontSize: '3.8rem',
     fontWeight: '900',
     letterSpacing: '-0.02em',
-    margin: '2.4rem 0 0 0',
+    margin: '4rem 0 -1rem 0',
     padding: '0.5rem',
     display: 'flex',
     justifyContent: 'center',
@@ -261,34 +284,20 @@ const useStyles = createUseStyles({
     height: '3.5rem',
     textAlign: 'center',
     borderRadius: '6px',
-    color: 'white !important',
+    color: 'white',
     fontWeight: '800',
     fontSize: '1.4rem',
     boxSizing: 'border-box',
     boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-    transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)',
+    transition: 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease',
     border: 'none',
-    perspective: '600px',
+    perspective: '900px',
     position: 'relative',
-    overflow: 'hidden',
-    '&:hover': {
-      transform: 'rotateY(180deg) scale(1.08)',
-      boxShadow: '0 4px 18px rgba(0,0,0,0.25)',
-      backgroundColor: '#787c7e',
-      color: 'transparent !important',
-    },
-    '&:hover::after': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#787c7e',
-      borderRadius: '6px',
-      zIndex: 2,
-      display: 'block',
-    },
+    overflow: 'visible',
+    transformStyle: 'preserve-3d',
+    willChange: 'transform',
+    transform: 'rotateY(0deg)',
+    backgroundColor: 'var(--tile-bg, #6aaa64)',
     '@media (max-width: 768px)': {
       padding: '0.6rem 0.8rem',
       minWidth: '2.8rem',
@@ -296,22 +305,75 @@ const useStyles = createUseStyles({
       fontSize: '1.1rem',
       margin: '0.1rem',
     },
+    '&:hover': {
+      transform: 'rotateY(180deg) scale(1.04)',
+      boxShadow: '0 14px 28px rgba(15, 23, 42, 0.32)',
+    },
+  },
+  charIntro: {
+    animationName: '$revealChar',
+    animationDuration: '0.4s',
+    animationFillMode: 'both',
+    animationTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
+  },
+  charFaceFront: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 'inherit',
+    background: 'inherit',
+    color: 'inherit',
+    backfaceVisibility: 'hidden',
+    transform: 'rotateY(0deg)',
+    pointerEvents: 'none',
+  },
+  charFaceBack: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 'inherit',
+    background: '#787c7e',
+    color: '#f4f5f7',
+    backfaceVisibility: 'hidden',
+    transform: 'rotateY(180deg)',
+    pointerEvents: 'none',
   },
   color_green: {
-    backgroundColor: '#6aaa64',
-    // border: '2px solid #5a8a54',
+    '--tile-bg': '#6aaa64',
+    backgroundColor: 'var(--tile-bg)',
     border: 'none',
   },
   color_yellow: {
-    backgroundColor: '#c9b458',
-    //border: '2px solid #b9a448',
+    '--tile-bg': '#c9b458',
+    backgroundColor: 'var(--tile-bg)',
     border: 'none',
   },
   color_gray: {
-    backgroundColor: '#787c7e',
-    //border: '2px solid #686c6e',
+    '--tile-bg': '#787c7e',
+    backgroundColor: 'var(--tile-bg)',
     border: 'none',
-  }
+  },
+  '@keyframes revealChar': {
+    '0%': {
+      transform: 'rotateY(0deg)',
+      backgroundColor: '#787c7e',
+      color: '#d7dadc',
+    },
+    '45%': {
+      transform: 'rotateY(90deg)',
+      backgroundColor: '#787c7e',
+      color: '#d7dadc',
+    },
+    '100%': {
+      transform: 'rotateY(0deg)',
+      backgroundColor: 'var(--tile-bg, #6aaa64)',
+      color: 'white',
+    },
+  },
 });
 
 export default App;
