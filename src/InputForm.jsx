@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "./firebase"; // Adjust the import path as necessary
 import { sendResultToTeams } from "./sendResultToTeams";
@@ -10,6 +10,7 @@ import TabBar from "./TabBar";
 import PersonalStatistics from "./PersonalStatistics";
 import useStyles from "./useStyles";
 import wordleLogo from './assets/wordle.png';
+import TrainingWordle from "./TrainingWordle";
 
 // Cookie helpers
 const getCookie = (name) => {
@@ -25,7 +26,7 @@ const setCookie = (name, value, days = 365) => {
 };
 
 // Restore TABS for tab navigation
-const TABS = ["Wordle Game", "Score Entry", "Leaderboard", "Chart"];
+const TABS = ["Wordle Game", "Training", "Score Entry", "Leaderboard", "Chart"];
 
 const InputForm = ({
   backgroundThemes,
@@ -70,14 +71,14 @@ const InputForm = ({
         return;
       }
       // Get current date in NZT
-      const now = new Date();
-      const nzTime = new Intl.DateTimeFormat('en-CA', {
+      const nzFormatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Pacific/Auckland',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
-      }).format(now);
-      const formattedNZDate = nzTime;
+      });
+      const formattedNZDate = nzFormatter.format(new Date());
+
       // Query Firestore for scores by this user (client-side filter by derived date)
       try {
         const { getDocs, query, where, collection } = await import('firebase/firestore');
@@ -89,12 +90,7 @@ const InputForm = ({
         snapshot.forEach(doc => {
           const data = doc.data();
           if (data.isoDate) {
-            const derivedDate = new Intl.DateTimeFormat('en-CA', {
-              timeZone: 'Pacific/Auckland',
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            }).format(new Date(data.isoDate));
+            const derivedDate = nzFormatter.format(new Date(data.isoDate));
             if (derivedDate === formattedNZDate) {
               todayScores.push(data);
             }
@@ -203,25 +199,27 @@ const InputForm = ({
     let resultBlocks = [];
     let isDNF = didNotFinish; // Start with the checkbox value
     let hardMode = false; // Default hard mode to false
+    let parsedWordleGuesses = null;
 
     if (pasteWordle && wordleResult.trim().length > 0) {
       // Parse the pasted result
-      const [parsedWordleGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF, parsedHardMode] =
+      const [parsedGuesses, parsedWordleNumber, parsedResultBlocks, parsedIsDNF, parsedHardMode] =
         parseWordleResult(wordleResult);
+      parsedWordleGuesses = parsedGuesses;
 
       // Check for conflict between pasted result and DNF checkbox
       if (didNotFinish && !parsedIsDNF && parsedWordleGuesses > 0 && parsedWordleGuesses <= 6) {
         // User checked DNF but pasted a successful result - show confirmation
         const confirmOverride = window.confirm(
-          `Conflict detected: You checked "Did Not Finish" but your pasted result shows you completed it in ${parsedWordleGuesses} guesses.\n\n` +
-          `Click OK to use your actual score (${parsedWordleGuesses}) or Cancel to cancel submission.`
+          `Conflict detected: You checked "Did Not Finish" but your pasted result shows you completed it in ${parsedGuesses} guesses.\n\n` +
+          `Click OK to use your actual score (${parsedGuesses}) or Cancel to cancel submission.`
         );
 
         if (confirmOverride) {
           // Use the pasted result and uncheck DNF
           isDNF = false;
           setDidNotFinish(false);
-          finalGuesses = parsedWordleGuesses;
+          finalGuesses = parsedGuesses;
         } else {
           // Cancel the submission entirely
           setLoading(false);
@@ -231,7 +229,7 @@ const InputForm = ({
       } else {
         // No conflict - use parsed result or update DNF status if detected
         isDNF = isDNF || parsedIsDNF;
-        finalGuesses = isDNF ? 7 : parsedWordleGuesses;
+        finalGuesses = isDNF ? 7 : parsedGuesses;
       }
 
       // Set the values from parsing
@@ -294,7 +292,7 @@ const InputForm = ({
           // Automatically check the DNF box when detected from pasted result
           setDidNotFinish(true);
         }
-      } else if (isNumGuessesProvided && parseInt(guesses, 10) !== parsedWordleGuesses) {
+      } else if (parsedWordleGuesses !== null && isNumGuessesProvided && parseInt(guesses, 10) !== parsedWordleGuesses) {
         alert(
           `Mismatch detected: Number of guesses (${parseInt(guesses, 10)}) does not match the pasted result (${parsedWordleGuesses}).`
         );
@@ -321,16 +319,6 @@ const InputForm = ({
       setShowOverlay(false);
       return;
     }
-
-    // Get current date in New Zealand timezone
-    const now = new Date();
-    const nzTime = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Pacific/Auckland',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).format(now);
-    const formattedNZDate = nzTime; // Already in YYYY-MM-DD format
 
     // Create ISO datetime with the current actual time
     // Save the exact time when the score was submitted
@@ -615,10 +603,21 @@ Wordle 1,234 4/6
               <BayesianChart getCurrentGradient={getCurrentGradient} />
             </div>
           )}
+          {activeTab === "Training" && (
+            <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
+              <div className={classes.header}>
+                <h1 className={classes.headerTitle}>Training Mode</h1>
+                <p className={classes.headerSubtitle}>
+                  Practice Wordle locally with instant feedback before submitting your real score
+                </p>
+              </div>
+              <TrainingWordle getCurrentGradient={getCurrentGradient} />
+            </div>
+          )}
           {activeTab === "Wordle Game" && (
             <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
               <div className={classes.header}>
-                <h1 className={classes.headerTitle}>Today's Wordle</h1>
+                <h1 className={classes.headerTitle}>Today&apos;s Wordle</h1>
                 <p className={classes.headerSubtitle}>
                   Play the official New York Times Wordle game
                 </p>
@@ -692,7 +691,7 @@ Wordle 1,234 4/6
           }}>Score submitted successfully! 🎉</div>
         </div>
       )}
-      <Confetti show={showConfetti} classes={classes} />
+  <Confetti show={showConfetti} />
     </>
   );
 };

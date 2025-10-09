@@ -26,7 +26,6 @@ try {
   // Base version: 1.0.0
   const baseMajor = 1;
   const baseMinor = 0;
-  const basePatch = 0;
   
   // Calculate increments
   const minorIncrement = Math.floor(commitCount / 10);

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 
 // DBA Script for Wordle Leaderboard Firestore Database
 // This script provides basic database administration capabilities
