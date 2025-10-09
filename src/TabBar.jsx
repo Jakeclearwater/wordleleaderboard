@@ -35,7 +35,6 @@ const useTabStyles = createUseStyles({
     color: "#666",
     fontWeight: "500",
     backdropFilter: "blur(8px)",
-    boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.1)",
     zIndex: 1,
     userSelect: "none",
     WebkitTapHighlightColor: "transparent",
@@ -136,6 +135,13 @@ const TabBar = ({ activeTab, setActiveTab }) => {
           ? `calc(${(100 / tabCount).toFixed(2)}% + 8px)`
           : "auto";
         const isActive = activeTab === tab;
+        const activeIndex = TABS.indexOf(activeTab);
+        const distance = Math.abs(idx - activeIndex);
+        
+        // Calculate darkness based on distance from active tab (very subtle)
+        // Closer tabs are lighter, further tabs are slightly darker
+        const darknessAmount = isActive ? 0 : Math.min(distance * 3, 12); // 0-12 darkness
+        const insetShadowIntensity = isActive ? 0 : Math.min(0.1 + (distance * 0.015), 0.15);
         
         return (
           <button
@@ -149,6 +155,8 @@ const TabBar = ({ activeTab, setActiveTab }) => {
               fontSize: isMobile ? "12px" : "14px",
               padding: isMobile ? "8px 12px" : "12px 24px",
               marginRight: needsOverlap && idx < TABS.length - 1 ? (isMobile ? "-12px" : "-8px") : (idx < TABS.length - 1 ? "4px" : "0"),
+              background: isActive ? undefined : `rgba(${240 - darknessAmount}, ${240 - darknessAmount}, ${240 - darknessAmount}, 0.85)`,
+              boxShadow: isActive ? "none" : `inset 0 -2px 6px rgba(0, 0, 0, ${insetShadowIntensity})`,
             }}
             onClick={() => setActiveTab(tab)}
           >
