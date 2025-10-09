@@ -116,11 +116,10 @@ const useStyles = createUseStyles({
     contentCard: {
         ...GLASS_CARD_BASE,
         width: "100%",
-        borderRadius: "0 0 12px 12px",
-        borderTop: "none",
+        borderRadius: "12px",
         overflow: "hidden",
         position: "relative",
-        zIndex: 2,
+        zIndex: 50,
         padding: "1rem",
         boxSizing: "border-box",
         margin: "0 0 2rem 0",
