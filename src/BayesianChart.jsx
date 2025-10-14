@@ -15,6 +15,11 @@ const userColors = [
   '#3F51B5', '#8BC34A', '#FFC107', '#FF5722', '#673AB7',
 ];
 
+// Cache keys for localStorage
+const CACHE_KEY = 'bayesian-chart-cache';
+const CACHE_TIMESTAMP_KEY = 'bayesian-chart-cache-timestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Cookie helper functions
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -79,14 +84,50 @@ const BayesianChart = ({ getCurrentGradient }) => {
 
   // Memoized function to fetch all data - only defined once
   const fetchAllDataAndProcess = useCallback(async () => {
+    // Check cache in localStorage
+    const now = Date.now();
+    const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    
+    if (cachedTimestamp && cachedData && (now - parseInt(cachedTimestamp)) < CACHE_DURATION) {
+      const cacheAge = Math.floor((now - parseInt(cachedTimestamp)) / 1000);
+      const timeRemaining = Math.floor((CACHE_DURATION - (now - parseInt(cachedTimestamp))) / 1000);
+      console.log(`💾 Using cached Bayesian chart data (cached ${cacheAge}s ago, expires in ${timeRemaining}s)`);
+      
+      // Restore cached data
+      try {
+        const cached = JSON.parse(cachedData);
+        setAllScoresData(cached);
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.error('Error parsing cached Bayesian data, will fetch fresh:', e);
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+      }
+    }
+    
+    if (cachedTimestamp) {
+      console.log('🔄 Bayesian chart cache expired, fetching fresh data...');
+    } else {
+      console.log('🔄 Initial load, fetching Bayesian chart data...');
+    }
+    
     setLoading(true);
     try {
       // Fetch all scores (we'll sort and filter on client side for better timezone handling)
+      console.log('📊 Fetching Bayesian chart data...');
       const scoresQuery = collection(firestore, 'scores');
       const snapshot = await getDocs(scoresQuery);
       const allScores = snapshot.docs.map(doc => doc.data());
+      console.log(`📊 Loaded ${allScores.length} scores for Bayesian chart`);
 
       setAllScoresData(allScores);
+      
+      // Save to localStorage cache
+      localStorage.setItem(CACHE_KEY, JSON.stringify(allScores));
+      localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+      console.log('✅ Bayesian chart data cached successfully (expires in 5 minutes)');
       
       // Process data for default time range - will be handled by separate useEffect
       // Don't call processDataWithScores here to avoid race conditions
@@ -594,13 +635,13 @@ const BayesianChart = ({ getCurrentGradient }) => {
 
     const tooltipContent = (
       <div style={{
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--card-bg, #fff)',
         padding: '12px',
-        border: '1px solid #ddd',
+        border: '1px solid var(--border-light, #ddd)',
         borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        boxShadow: 'var(--shadow-medium, 0 2px 8px rgba(0,0,0,0.15))',
         fontSize: '12px',
-        color: '#333',
+        color: 'var(--text-primary, #333)',
         fontFamily: 'inherit',
         minWidth: '155px',
         position: 'fixed',
@@ -614,9 +655,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
         <div style={{
           fontWeight: '700',
           marginBottom: '8px',
-          color: '#333',
+          color: 'var(--text-primary, #333)',
           fontSize: '13px',
-          borderBottom: '1px solid #eee',
+          borderBottom: '1px solid var(--border-light, #eee)',
           paddingBottom: '4px'
         }}>
           📅 {formatDate(label)}
@@ -633,14 +674,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
           return (
             <div style={{
               padding: '8px',
-              backgroundColor: '#fafafa',
+              backgroundColor: 'var(--secondary-bg, #fafafa)',
               borderRadius: '4px',
-              borderLeft: `3px solid ${hoveredEntry.color || '#333'}`
+              borderLeft: `3px solid ${hoveredEntry.color || 'var(--text-primary, #333)'}`
             }}>
               {/* User Name */}
               <div style={{
                 fontWeight: '700',
-                color: hoveredEntry.color || '#333',
+                color: hoveredEntry.color || 'var(--text-primary, #333)',
                 marginBottom: '4px',
                 fontSize: '13px'
               }}>
@@ -654,10 +695,10 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 alignItems: 'center',
                 marginBottom: '2px'
               }}>
-                <span style={{ color: '#666', fontSize: '11px' }}>
+                <span style={{ color: 'var(--text-secondary, #666)', fontSize: '11px' }}>
                   📊 {dataType === 'bayesian' ? 'Bayesian Score' : 'Raw Average'}:
                 </span>
-                <span style={{ color: '#333', fontSize: '11px', fontWeight: '600' }}>
+                <span style={{ color: 'var(--text-primary, #333)', fontSize: '11px', fontWeight: '600' }}>
                   {typeof hoveredEntry.value === 'number' ? hoveredEntry.value.toFixed(2) : hoveredEntry.value}
                 </span>
               </div>
@@ -670,8 +711,8 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   alignItems: 'center',
                   marginBottom: '2px'
                 }}>
-                  <span style={{ color: '#666', fontSize: '11px' }}>📈 Actual Average:</span>
-                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                  <span style={{ color: 'var(--text-secondary, #666)', fontSize: '11px' }}>📈 Actual Average:</span>
+                  <span style={{ color: 'var(--text-primary, #333)', fontSize: '11px', fontWeight: '500' }}>
                     {actualAvg.toFixed(2)}
                   </span>
                 </div>
@@ -684,8 +725,8 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span style={{ color: '#666', fontSize: '11px' }}>🎯 Total Attempts:</span>
-                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                  <span style={{ color: 'var(--text-secondary, #666)', fontSize: '11px' }}>🎯 Total Attempts:</span>
+                  <span style={{ color: 'var(--text-primary, #333)', fontSize: '11px', fontWeight: '500' }}>
                     {attempts}
                   </span>
                 </div>
@@ -699,19 +740,19 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{
             marginTop: '8px',
             padding: '6px',
-            backgroundColor: '#f8f9fa',
+            backgroundColor: 'var(--secondary-bg, #f8f9fa)',
             borderRadius: '4px',
-            borderLeft: '3px solid #666'
+            borderLeft: '3px solid var(--text-secondary, #666)'
           }}>
             <div style={{
-              color: '#666',
+              color: 'var(--text-secondary, #666)',
               fontSize: '11px',
               fontWeight: '600'
             }}>
               🌍 Global {dataType === 'bayesian' ? 'Bayesian' : 'Raw'} Average
             </div>
             <div style={{
-              color: '#333',
+              color: 'var(--text-primary, #333)',
               fontSize: '12px',
               fontWeight: '500',
               marginTop: '2px'
@@ -751,15 +792,15 @@ const BayesianChart = ({ getCurrentGradient }) => {
         flexWrap: 'wrap',
         gap: '15px',
         padding: '12px',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--secondary-bg, #f8f9fa)',
         borderRadius: '8px',
-        border: '1px solid #e9ecef'
+        border: '1px solid var(--border-light, #e9ecef)'
       }}>
         {/* Quick Select Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ 
             fontSize: '14px', 
-            color: '#495057',
+            color: 'var(--text-primary, #495057)',
             fontWeight: '500',
             display: 'flex',
             alignItems: 'center',
@@ -789,9 +830,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
             };
             
             const defaultStyle = {
-              backgroundColor: 'white',
-              color: 'black',
-              border: '1px solid #dee2e6'
+              backgroundColor: 'var(--card-bg, white)',
+              color: 'var(--text-primary, black)',
+              border: '1px solid var(--border-light, #dee2e6)'
             };
             
             const clearSelectedStyle = {
@@ -801,9 +842,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
             };
             
             const clearDefaultStyle = {
-              backgroundColor: 'white',
-              color: 'black',
-              border: '1px solid #dee2e6'
+              backgroundColor: 'var(--card-bg, white)',
+              color: 'var(--text-primary, black)',
+              border: '1px solid var(--border-light, #dee2e6)'
             };
             
             return (
@@ -816,14 +857,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected3) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected3) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -837,14 +878,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected5) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected5) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -858,14 +899,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected10) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected10) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -879,14 +920,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isClearSelected) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isClearSelected) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -903,7 +944,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               display: 'flex',
@@ -919,8 +960,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 padding: '4px 6px', 
                 fontSize: '13px', 
                 borderRadius: '4px', 
-                border: '1px solid #dee2e6',
-                backgroundColor: 'white',
+                border: '1px solid var(--input-border, #dee2e6)',
+                backgroundColor: 'var(--input-bg, white)',
+                color: 'var(--input-text, #1f2937)',
                 fontWeight: '400',
                 cursor: 'pointer',
                 appearance: 'none',
@@ -944,7 +986,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               display: 'flex',
@@ -960,8 +1002,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 padding: '4px 6px', 
                 fontSize: '13px', 
                 borderRadius: '4px', 
-                border: '1px solid #dee2e6',
-                backgroundColor: 'white',
+                border: '1px solid var(--input-border, #dee2e6)',
+                backgroundColor: 'var(--input-bg, white)',
+                color: 'var(--input-text, #1f2937)',
                 fontWeight: '400',
                 cursor: 'pointer',
                 appearance: 'none',
@@ -980,7 +1023,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               cursor: 'pointer',
@@ -1002,7 +1045,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               display: 'flex',
@@ -1125,15 +1168,15 @@ const BayesianChart = ({ getCurrentGradient }) => {
       <div style={{ 
         marginTop: '20px', 
         marginBottom: '0', // Remove bottom margin for cleaner spacing
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--secondary-bg, #f8f9fa)',
         borderRadius: '8px',
-        border: '1px solid #e9ecef'
+        border: '1px solid var(--border-light, #e9ecef)'
       }}>
         <div 
           onClick={() => setChartInfoExpanded(!chartInfoExpanded)}
           style={{ 
             fontSize: '14px', 
-            color: '#495057',
+            color: 'var(--text-primary, #495057)',
             fontWeight: '500',
             padding: '16px',
             display: 'flex',
@@ -1143,7 +1186,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
             borderRadius: '8px',
             transition: 'background-color 0.2s ease'
           }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
+          onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--input-bg, #e9ecef)'}
           onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
         >
           <div style={{
@@ -1165,11 +1208,11 @@ const BayesianChart = ({ getCurrentGradient }) => {
         {chartInfoExpanded && (
           <div style={{ 
             padding: '0 16px 16px 16px',
-            borderTop: '1px solid #e9ecef'
+            borderTop: '1px solid var(--border-light, #e9ecef)'
           }}>
             <ul style={{ 
               fontSize: '13px', 
-              color: '#6c757d',
+              color: 'var(--text-secondary, #6c757d)',
               margin: '8px 0 0 0',
               paddingLeft: '16px',
               lineHeight: '1.5'

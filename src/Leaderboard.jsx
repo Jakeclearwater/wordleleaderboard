@@ -4,6 +4,11 @@ import { firestore } from './firebase';
 import useStyles from "./useStyles";
 import wordleLogo from './assets/wordle.png';
 
+// Cache keys for localStorage
+const CACHE_KEY = 'leaderboard-cache';
+const CACHE_TIMESTAMP_KEY = 'leaderboard-cache-timestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const Leaderboard = ({ getCurrentGradient }) => {
   const classes = useStyles();
   
@@ -19,16 +24,43 @@ const Leaderboard = ({ getCurrentGradient }) => {
   const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
   const [woodspoonLeaderboard, setWoodspoonLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lastFetch, setLastFetch] = useState(null);
 
   useEffect(() => {
     const fetchLeaderboards = async () => {
-      // Cache for 5 minutes
+      // Check cache in localStorage
       const now = Date.now();
-      if (lastFetch && (now - lastFetch) < 5 * 60 * 1000) {
-        setLoading(false);
-        return;
+      const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      
+      if (cachedTimestamp && cachedData && (now - parseInt(cachedTimestamp)) < CACHE_DURATION) {
+        const cacheAge = Math.floor((now - parseInt(cachedTimestamp)) / 1000);
+        const timeRemaining = Math.floor((CACHE_DURATION - (now - parseInt(cachedTimestamp))) / 1000);
+        console.log(`💾 Using cached leaderboard data (cached ${cacheAge}s ago, expires in ${timeRemaining}s)`);
+        
+        // Restore cached leaderboards
+        try {
+          const cached = JSON.parse(cachedData);
+          setDailyLeaderboard(cached.daily || []);
+          setWeeklyLeaderboard(cached.weekly || []);
+          setAllTimeLeaderboard(cached.allTime || []);
+          setRawAverageLeaderboard(cached.rawAverage || []);
+          setAllAttemptsLeaderboard(cached.allAttempts || []);
+          setWoodspoonLeaderboard(cached.woodspoon || []);
+          setLoading(false);
+          return;
+        } catch (e) {
+          console.error('Error parsing cached data, will fetch fresh:', e);
+          localStorage.removeItem(CACHE_KEY);
+          localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+        }
       }
+      
+      if (cachedTimestamp) {
+        console.log('🔄 Cache expired, fetching fresh leaderboard data...');
+      } else {
+        console.log('🔄 Initial load, fetching leaderboard data...');
+      }
+      
       setLoading(true);
       try {
         // Get current date in NZ timezone for accurate comparisons
@@ -338,7 +370,19 @@ const Leaderboard = ({ getCurrentGradient }) => {
         setRawAverageLeaderboard(rawAverageLeaderboard);
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
         setWoodspoonLeaderboard(woodspoonLeaderboardArray);
-        setLastFetch(Date.now());
+        
+        // Save to localStorage cache
+        const cacheData = {
+          daily: dailyLeaderboardArray,
+          weekly: weeklyLeaderboardArray,
+          allTime: allTimeLeaderboardArray,
+          rawAverage: rawAverageLeaderboard,
+          allAttempts: allAttemptsLeaderboardArray,
+          woodspoon: woodspoonLeaderboardArray
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+        console.log('✅ Leaderboard data cached successfully (expires in 5 minutes)');
       } catch (error) {
         console.error('Error fetching leaderboards:', error);
       } finally {
@@ -347,7 +391,7 @@ const Leaderboard = ({ getCurrentGradient }) => {
     };
 
     fetchLeaderboards();
-  }, []);
+  }, []); // Empty dependency array - only runs on mount, cache persists in state
 
   const getRankIcon = (index) => {
     switch (index) {

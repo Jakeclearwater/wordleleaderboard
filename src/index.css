@@ -3,10 +3,6 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: white;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -22,13 +18,20 @@
   --space-12: 3rem;     /* 48px */
   --space-16: 4rem;     /* 64px */
 
-  /* Colors */
-  --text-primary: #1a1a1a;
+  /* Light Mode Colors (default) */
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
+  
+  --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
   --card-bg: #ffffff;
   --secondary-bg: #f9fafb;
   --border-light: #e5e7eb;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-text: #1f2937;
 
   /* Wordle Colors */
   --wordle-green: #6aaa64;
@@ -49,6 +52,31 @@
   --shadow-small: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark Mode Override */
+html.dark-mode {
+  color-scheme: dark;
+  
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --card-bg: #1f2937;
+  --secondary-bg: #111827;
+  --border-light: #374151;
+  --input-bg: #374151;
+  --input-border: #4b5563;
+  --input-text: #f9fafb;
+  
+  /* Adjust shadows for dark mode */
+  --shadow-small: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-large: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+html.dark-mode body {
+  background-color: var(--secondary-bg);
+  color: var(--text-primary);
 }
 
 /* Global box-sizing reset for consistent spacing across browsers */
@@ -108,6 +136,7 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: var(--text-primary);
 }
 
 button {
@@ -117,7 +146,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--input-bg);
+  color: var(--text-primary);
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -130,59 +160,20 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-    
-    /* Light mode color overrides */
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --text-muted: #9ca3af;
-    --card-bg: #ffffff;
-    --secondary-bg: #f9fafb;
-    --border-light: #e5e7eb;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+input, textarea, select {
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  border-color: var(--input-border);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color: #ffffff;
     background-color: #1a1a1a;
-    
-    /* Dark mode color overrides */
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
-    --card-bg: #374151;
-    --secondary-bg: #4b5563;
-    --border-light: #6b7280;
   }
   a:hover {
     color: #646cff;
   }
-  button {
-    background-color: #374151;
-  }
-}
-
-:root {
-  color: #213547;
-  background-color: #ffffff;
-
-  /* Light mode color overrides */
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --card-bg: #ffffff;
-  --secondary-bg: #f9fafb;
-  --border-light: #e5e7eb;
 }
 
 

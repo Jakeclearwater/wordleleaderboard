@@ -28,11 +28,11 @@ const useTabStyles = createUseStyles({
     transition: "all 0.2s ease",
     outline: "none",
     whiteSpace: "nowrap",
-    overflow: "visible",
+    overflow: "hidden",
     textOverflow: "ellipsis",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    background: "rgba(240, 240, 240, 0.85)",
-    color: "#666",
+    background: "var(--secondary-bg, rgba(240, 240, 240, 0.85))",
+    color: "var(--text-secondary, #666)",
     fontWeight: "500",
     backdropFilter: "blur(8px)",
     zIndex: 1,
@@ -47,14 +47,14 @@ const useTabStyles = createUseStyles({
       boxShadow: "none",
     },
     '&:hover': {
-      background: "rgba(250, 250, 250, 0.9)",
-      color: "#444",
+      background: "var(--card-bg, rgba(250, 250, 250, 0.9))",
+      color: "var(--text-primary, #444)",
       boxShadow: "none",
     },
   },
   tabActive: {
-    background: "rgba(255, 255, 255, 0.98)",
-    color: "#1a1a1a",
+    background: "var(--card-bg, rgba(255, 255, 255, 0.98))",
+    color: "var(--text-primary, #1a1a1a)",
     fontWeight: "600",
     zIndex: 100,
     marginBottom: "-1px",
@@ -71,7 +71,7 @@ const useTabStyles = createUseStyles({
       height: "20px",
       background: "transparent",
       borderRadius: "0 0 20px 0",
-      boxShadow: "10px 0 0 0 rgba(255, 255, 255, 0.98)",
+      boxShadow: "10px 0 0 0 var(--card-bg, rgba(255, 255, 255, 0.98))",
       backdropFilter: "blur(8px)",
       zIndex: 100,
       transition: "all 0.1s ease",
@@ -85,20 +85,31 @@ const useTabStyles = createUseStyles({
       height: "20px",
       background: "transparent",
       borderRadius: "0 0 0 20px",
-      boxShadow: "-10px 0 0 0 rgba(255, 255, 255, 0.98)",
+      boxShadow: "-10px 0 0 0 var(--card-bg, rgba(255, 255, 255, 0.98))",
       backdropFilter: "blur(8px)",
       zIndex: 100,
       transition: "all 0.1s ease",
     },
     '&:hover': {
-      background: "rgba(255, 255, 255, 0.98)",
+      background: "var(--card-bg, rgba(255, 255, 255, 0.98))",
       '&::before': {
-        boxShadow: "10px 0 0 0 rgba(255, 255, 255, 0.98)",
+        boxShadow: "10px 0 0 0 var(--card-bg, rgba(255, 255, 255, 0.98))",
         backdropFilter: "blur(8px)",
       },
       '&::after': {
-        boxShadow: "-10px 0 0 0 rgba(255, 255, 255, 0.98)",
+        boxShadow: "-10px 0 0 0 var(--card-bg, rgba(255, 255, 255, 0.98))",
         backdropFilter: "blur(8px)",
+      },
+    },
+  },
+  // Hide the curved pseudo-elements on small screens to prevent visual glitches
+  '@media (max-width: 768px)': {
+    tabActive: {
+      '&::before': {
+        display: 'none',
+      },
+      '&::after': {
+        display: 'none',
       },
     },
   },
@@ -138,9 +149,7 @@ const TabBar = ({ activeTab, setActiveTab }) => {
         const activeIndex = TABS.indexOf(activeTab);
         const distance = Math.abs(idx - activeIndex);
         
-        // Calculate darkness based on distance from active tab (very subtle)
-        // Closer tabs are lighter, further tabs are slightly darker
-        const darknessAmount = isActive ? 0 : Math.min(distance * 3, 12); // 0-12 darkness
+        // Calculate inset shadow based on distance from active tab
         const insetShadowIntensity = isActive ? 0 : Math.min(0.1 + (distance * 0.015), 0.15);
         
         return (
@@ -155,7 +164,6 @@ const TabBar = ({ activeTab, setActiveTab }) => {
               fontSize: isMobile ? "12px" : "14px",
               padding: isMobile ? "8px 12px" : "12px 24px",
               marginRight: needsOverlap && idx < TABS.length - 1 ? (isMobile ? "-12px" : "-8px") : (idx < TABS.length - 1 ? "4px" : "0"),
-              background: isActive ? undefined : `rgba(${240 - darknessAmount}, ${240 - darknessAmount}, ${240 - darknessAmount}, 0.85)`,
               boxShadow: isActive ? "none" : `inset 0 -2px 6px rgba(0, 0, 0, ${insetShadowIntensity})`,
             }}
             onClick={() => setActiveTab(tab)}

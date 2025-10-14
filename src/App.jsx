@@ -81,6 +81,9 @@ const App = () => {
     const saved = getCookie('custom-background-colors');
     return saved ? JSON.parse(saved) : { color1: '#667eea', color2: '#764ba2' };
   });
+  
+  // Dark mode state with cookie persistence
+  const [darkMode, setDarkMode] = useState(() => getCookie('dark-mode') === 'true');
 
   // Save theme preference to cookies
   useEffect(() => {
@@ -91,6 +94,17 @@ const App = () => {
   useEffect(() => {
     setCookie('custom-background-colors', JSON.stringify(customColors));
   }, [customColors]);
+  
+  // Save dark mode preference to cookies
+  useEffect(() => {
+    setCookie('dark-mode', darkMode.toString());
+    // Apply dark mode class to document root for global styling
+    if (darkMode) {
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   // Get current gradient based on selected theme
   const getCurrentGradient = () => {
@@ -175,6 +189,8 @@ const App = () => {
           customColors={customColors}
           setCustomColors={setCustomColors}
           getCurrentGradient={getCurrentGradient}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
         />
         <footer className={classes.footer}>
           <p>Made with 💚 for Wordle enthusiasts · <span className={classes.spanicon} onClick={hack}>Don&apos;t break this!</span></p>
