@@ -337,6 +337,7 @@ const useStyles = createUseStyles({
         resize: "vertical",
         transition: "all 0.2s ease",
         background: "var(--input-bg, white)",
+        color: "var(--input-text, #1f2937)",
         textAlign: "left", // Ensure text is left-aligned
         "@media (max-width: 600px)": {
             fontSize: "14px",

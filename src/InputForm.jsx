@@ -526,7 +526,13 @@ const InputForm = ({
                               min="1"
                               max="6"
                               required={!didNotFinish}
+                              disabled={didNotFinish}
                               className={classes.input}
+                              style={didNotFinish ? {
+                                opacity: 0.5,
+                                cursor: 'not-allowed',
+                                backgroundColor: 'var(--secondary-bg, #f3f4f6)'
+                              } : {}}
                             />
                           </div>
                           <div className={classes.checkboxGroup}>
@@ -560,7 +566,6 @@ Wordle 1,234 4/6
 ⬛🟩🟩🟩⬛
 🟩🟩🟩🟩🟩`}
                             style={{
-                              backgroundColor: "white",
                               cursor: "text"
                             }}
                           />

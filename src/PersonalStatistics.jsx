@@ -4,7 +4,6 @@ import useStyles from './useStyles';
 import wordleLogo from './assets/wordle.png';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
-import { FlippingCountdownNZT, CountdownTimer } from './FlippingCountdownNZT';
 
 const useLocalStyles = createUseStyles({
   statisticsContainer: {
@@ -18,7 +17,7 @@ const useLocalStyles = createUseStyles({
   title: {
     fontSize: '1.8rem',
     fontWeight: '700',
-    color: '#1f2937',
+    color: 'var(--text-primary, #1f2937)',
     marginBottom: '2rem',
     textAlign: 'center',
   },
@@ -41,9 +40,9 @@ const useLocalStyles = createUseStyles({
     flexDirection: 'column',
     alignItems: 'center',
     padding: '1rem 0.5rem',
-    backgroundColor: '#f9fafb',
+    backgroundColor: 'var(--secondary-bg, #f9fafb)',
     borderRadius: '8px',
-    border: '1px solid #e5e7eb',
+    border: '1px solid var(--border-light, #e5e7eb)',
     '@media (max-width: 480px)': {
       padding: '0.75rem 0.25rem',
     },
@@ -52,7 +51,7 @@ const useLocalStyles = createUseStyles({
   statNumber: {
     fontSize: '1.5rem',
     fontWeight: '700',
-    color: '#1f2937',
+    color: 'var(--text-primary, #1f2937)',
     lineHeight: '1',
     marginBottom: '0.25rem',
     '@media (max-width: 480px)': {
@@ -63,7 +62,7 @@ const useLocalStyles = createUseStyles({
   statLabel: {
     fontSize: '0.75rem',
     fontWeight: '500',
-    color: '#6b7280',
+    color: 'var(--text-secondary, #6b7280)',
     textAlign: 'center',
     lineHeight: '1.2',
     textTransform: 'uppercase',
@@ -82,7 +81,7 @@ const useLocalStyles = createUseStyles({
   chartTitle: {
     fontSize: '1rem',
     fontWeight: '600',
-    color: '#374151',
+    color: 'var(--text-primary, #374151)',
     marginBottom: '1rem',
     textAlign: 'center',
   },
@@ -103,7 +102,7 @@ const useLocalStyles = createUseStyles({
   guessNumber: {
     fontSize: '0.875rem',
     fontWeight: '500',
-    color: '#374151',
+    color: 'var(--text-primary, #374151)',
     width: '1rem',
     textAlign: 'center',
     flexShrink: 0,
@@ -113,7 +112,7 @@ const useLocalStyles = createUseStyles({
     flex: 1,
     height: '1.5rem',
     position: 'relative',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: 'var(--secondary-bg, #f3f4f6)',
     borderRadius: '2px',
   },
   
@@ -145,24 +144,6 @@ const useLocalStyles = createUseStyles({
   emptyBar: {
     width: '0',
     height: '1.5rem',
-  },
-  
-  countdownSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: '1rem',
-    padding: '1rem',
-    backgroundColor: '#f9fafb',
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb',
-  },
-  
-  countdownText: {
-    fontSize: '0.875rem',
-    color: '#6b7280',
-    marginBottom: '0.5rem',
-    textAlign: 'center',
   },
 });
 
@@ -374,15 +355,6 @@ const PersonalStatistics = ({ username, todaysScore, getCurrentGradient }) => {
             );
           })}
         </div>
-      </div>
-
-      <div className={classes.countdownSection}>
-        <FlippingCountdownNZT>
-          <div className={classes.countdownText}>
-            Next Wordle in:
-          </div>
-          <CountdownTimer />
-        </FlippingCountdownNZT>
       </div>
     </div>
   );
