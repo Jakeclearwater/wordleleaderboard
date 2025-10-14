@@ -11,7 +11,9 @@ const TopRightLogin = ({
   setSelectedTheme,
   customColors,
   setCustomColors,
-  handleLogout
+  handleLogout,
+  darkMode,
+  setDarkMode
 }) => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -53,20 +55,20 @@ const TopRightLogin = ({
     display: "flex",
     alignItems: "center",
     gap: isMobile ? "0.4rem" : "0.6rem",
-    background: "rgba(255, 255, 255, 0.98)",
+    background: "var(--card-bg, rgba(255, 255, 255, 0.98))",
     backdropFilter: "blur(8px)",
     padding: isMobile ? "0.4rem 0.6rem" : "0.6rem 0.8rem",
     borderRadius: "50px",
-    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+    boxShadow: "var(--shadow-medium, 0 2px 12px rgba(0,0,0,0.08))",
     fontSize: isMobile ? "11px" : "13px",
     fontWeight: "500",
-    zIndex: 100,
-    border: "1px solid rgba(255, 255, 255, 0.3)",
+    zIndex: 200,
+    border: "1px solid var(--border-light, rgba(255, 255, 255, 0.3))",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
   }}>
     {isLoggedIn && (
       <>
-        <span style={{ color: "#374151" }}>
+        <span style={{ color: "var(--text-primary, #374151)" }}>
           {isMobile ? username : `Welcome, ${username}`}
         </span>
         {/* Settings Button */}
@@ -113,11 +115,11 @@ const TopRightLogin = ({
               right: '0',
               width: isMobile ? '280px' : '320px',
               maxWidth: 'calc(100vw - 2rem)',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: 'var(--card-bg, rgba(255, 255, 255, 0.95))',
               backdropFilter: 'blur(15px)',
               borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: 'var(--shadow-large, 0 8px 32px rgba(0, 0, 0, 0.2))',
+              border: '1px solid var(--border-light, rgba(255, 255, 255, 0.3))',
               padding: '0',
               zIndex: 1000
             }}>
@@ -127,14 +129,14 @@ const TopRightLogin = ({
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '12px 16px',
-                borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                borderBottom: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
+                backgroundColor: 'var(--secondary-bg, rgba(255, 255, 255, 0.8))',
                 borderRadius: '12px 12px 0 0'
               }}>
                 <span style={{
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: '#333'
+                  color: 'var(--text-primary, #333)'
                 }}>
                   🎨 Background Themes
                 </span>
@@ -144,7 +146,7 @@ const TopRightLogin = ({
                     border: 'none',
                     fontSize: '14px',
                     cursor: 'pointer',
-                    color: '#666',
+                    color: 'var(--text-secondary, #666)',
                     padding: '4px'
                   }}
                   onClick={() => setShowSettings(false)}
@@ -208,14 +210,14 @@ const TopRightLogin = ({
               </div>
               {/* Custom Colors Section */}
               <div style={{
-                borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+                borderTop: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
                 padding: '12px',
-                backgroundColor: 'rgba(248, 249, 250, 0.8)'
+                backgroundColor: 'var(--secondary-bg, rgba(248, 249, 250, 0.8))'
               }}>
                 <div style={{
                   fontSize: '12px',
                   fontWeight: '600',
-                  color: '#333',
+                  color: 'var(--text-primary, #333)',
                   marginBottom: '8px'
                 }}>
                   🎨 Custom Colors
@@ -228,7 +230,7 @@ const TopRightLogin = ({
                   <div style={{ flex: 1 }}>
                     <label style={{
                       fontSize: '10px',
-                      color: '#666',
+                      color: 'var(--text-secondary, #666)',
                       fontWeight: '500',
                       display: 'block',
                       marginBottom: '2px'
@@ -242,7 +244,7 @@ const TopRightLogin = ({
                       style={{
                         width: '100%',
                         height: isMobile ? '28px' : '32px',
-                        border: '1px solid #ddd',
+                        border: '1px solid var(--input-border, #ddd)',
                         borderRadius: '4px',
                         cursor: 'pointer'
                       }}
@@ -251,7 +253,7 @@ const TopRightLogin = ({
                   <div style={{ flex: 1 }}>
                     <label style={{
                       fontSize: '10px',
-                      color: '#666',
+                      color: 'var(--text-secondary, #666)',
                       fontWeight: '500',
                       display: 'block',
                       marginBottom: '2px'
@@ -265,7 +267,7 @@ const TopRightLogin = ({
                       style={{
                         width: '100%',
                         height: isMobile ? '28px' : '32px',
-                        border: '1px solid #ddd',
+                        border: '1px solid var(--input-border, #ddd)',
                         borderRadius: '4px',
                         cursor: 'pointer'
                       }}
@@ -292,11 +294,112 @@ const TopRightLogin = ({
                   Use Custom
                 </button>
               </div>
+              {/* Dark Mode Toggle Section */}
+              <div style={{
+                borderTop: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
+                padding: '12px',
+                backgroundColor: 'var(--secondary-bg, rgba(248, 249, 250, 0.8))'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{ fontSize: '16px' }}>{darkMode ? '🌙' : '☀️'}</span>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: 'var(--text-primary, #333)'
+                    }}>
+                      Dark Mode
+                    </span>
+                  </div>
+                  <button
+                    style={{
+                      width: '50px',
+                      height: '26px',
+                      borderRadius: '13px',
+                      border: 'none',
+                      background: darkMode ? '#3b82f6' : '#d1d5db',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      transition: 'background 0.3s ease',
+                      padding: 0
+                    }}
+                    onClick={() => setDarkMode(!darkMode)}
+                  >
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      background: 'white',
+                      position: 'absolute',
+                      top: '3px',
+                      left: darkMode ? '27px' : '3px',
+                      transition: 'left 0.3s ease',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                    }} />
+                  </button>
+                </div>
+              </div>
+              {/* Clear Cache Section */}
+              <div style={{
+                borderTop: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
+                padding: '12px',
+                backgroundColor: 'var(--secondary-bg, rgba(248, 249, 250, 0.8))'
+              }}>
+                <button
+                  style={{
+                    width: '100%',
+                    fontSize: "13px",
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-light, #ddd)",
+                    background: "var(--card-bg, white)",
+                    color: "var(--text-primary, #333)",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                    transition: "all 0.2s ease",
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px"
+                  }}
+                  onMouseOver={e => {
+                    e.target.style.background = '#f59e0b';
+                    e.target.style.color = 'white';
+                    e.target.style.borderColor = '#f59e0b';
+                  }}
+                  onMouseOut={e => {
+                    e.target.style.background = 'var(--card-bg, white)';
+                    e.target.style.color = 'var(--text-primary, #333)';
+                    e.target.style.borderColor = 'var(--border-light, #ddd)';
+                  }}
+                  onClick={() => {
+                    localStorage.removeItem('leaderboard-cache');
+                    localStorage.removeItem('leaderboard-cache-timestamp');
+                    localStorage.removeItem('bayesian-chart-cache');
+                    localStorage.removeItem('bayesian-chart-cache-timestamp');
+                    console.log('🗑️ Cache manually cleared');
+                    alert('Cache cleared! The page will reload to fetch fresh data.');
+                    window.location.reload();
+                  }}
+                >
+                  🗑️ Clear Cache & Reload
+                </button>
+              </div>
               {/* Logout Section */}
               <div style={{
-                borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+                borderTop: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
                 padding: '12px',
-                backgroundColor: 'rgba(248, 249, 250, 0.8)'
+                backgroundColor: 'var(--secondary-bg, rgba(248, 249, 250, 0.8))'
               }}>
                 <button
                   style={{

@@ -34,9 +34,11 @@ const InputForm = ({
   setSelectedTheme,
   customColors,
   setCustomColors,
-  getCurrentGradient
+  getCurrentGradient,
+  darkMode,
+  setDarkMode
 }) => {
-  const classes = useStyles();
+  const classes = useStyles({ gradient: getCurrentGradient() });
   const [username, setUsername] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState(TABS[0]);
@@ -335,6 +337,13 @@ const InputForm = ({
         hardMode: hardMode, // Save hardMode boolean
       });
 
+      // Clear localStorage cache so fresh data will be fetched
+      localStorage.removeItem('leaderboard-cache');
+      localStorage.removeItem('leaderboard-cache-timestamp');
+      localStorage.removeItem('bayesian-chart-cache');
+      localStorage.removeItem('bayesian-chart-cache-timestamp');
+      console.log('🗑️ Cache cleared after score submission');
+
       // Update state to show personal statistics immediately
       setAlreadySubmittedToday(true);
       setTodaysScore({
@@ -450,6 +459,8 @@ const InputForm = ({
         customColors={customColors}
         setCustomColors={setCustomColors}
         handleLogout={handleLogout}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
       />
       <div className={classes.mainResponsiveMargin}>
         <div style={{
@@ -681,12 +692,12 @@ Wordle 1,234 4/6
       {showOverlay && (
         <div className={`${classes.overlay} ${showOverlay ? '' : classes.hidden}`}>
           <div style={{
-            background: "rgba(255, 255, 255, 0.95)",
-            color: "#333",
+            background: "var(--card-bg, rgba(255, 255, 255, 0.95))",
+            color: "var(--text-primary, #333)",
             padding: "2rem 3rem",
             borderRadius: "16px",
             backdropFilter: "blur(10px)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+            boxShadow: "var(--shadow-large, 0 8px 32px rgba(0,0,0,0.2))",
             fontWeight: "600"
           }}>Score submitted successfully! 🎉</div>
         </div>

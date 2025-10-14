@@ -15,6 +15,11 @@ const userColors = [
   '#3F51B5', '#8BC34A', '#FFC107', '#FF5722', '#673AB7',
 ];
 
+// Cache keys for localStorage
+const CACHE_KEY = 'bayesian-chart-cache';
+const CACHE_TIMESTAMP_KEY = 'bayesian-chart-cache-timestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // Cookie helper functions
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -30,7 +35,9 @@ const setCookie = (name, value, days = 365) => {
 };
 
 const BayesianChart = ({ getCurrentGradient }) => {
-  const classes = useStyles({ gradient: getCurrentGradient() });
+  // Memoize the gradient to prevent color changes on re-renders
+  const [initialGradient] = useState(() => getCurrentGradient());
+  const classes = useStyles({ gradient: initialGradient });
   const [chartData, setChartData] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -41,6 +48,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
   const [timeRange, setTimeRange] = useState(() => getCookie('bayesian-time-range') || '1month');
   const [connectLines, setConnectLines] = useState(() => getCookie('bayesian-connect-lines') === 'true');
   const [dataType, setDataType] = useState(() => getCookie('bayesian-data-type') || 'bayesian');
+  const [chartInfoExpanded, setChartInfoExpanded] = useState(() => getCookie('bayesian-chart-info-expanded') !== 'false');
   const [allScoresData, setAllScoresData] = useState([]); // Store all scores for filtering
 
   // Close player menu when clicking outside
@@ -70,16 +78,56 @@ const BayesianChart = ({ getCurrentGradient }) => {
     setCookie('bayesian-data-type', dataType);
   }, [dataType]);
 
+  useEffect(() => {
+    setCookie('bayesian-chart-info-expanded', chartInfoExpanded.toString());
+  }, [chartInfoExpanded]);
+
   // Memoized function to fetch all data - only defined once
   const fetchAllDataAndProcess = useCallback(async () => {
+    // Check cache in localStorage
+    const now = Date.now();
+    const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    
+    if (cachedTimestamp && cachedData && (now - parseInt(cachedTimestamp)) < CACHE_DURATION) {
+      const cacheAge = Math.floor((now - parseInt(cachedTimestamp)) / 1000);
+      const timeRemaining = Math.floor((CACHE_DURATION - (now - parseInt(cachedTimestamp))) / 1000);
+      console.log(`💾 Using cached Bayesian chart data (cached ${cacheAge}s ago, expires in ${timeRemaining}s)`);
+      
+      // Restore cached data
+      try {
+        const cached = JSON.parse(cachedData);
+        setAllScoresData(cached);
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.error('Error parsing cached Bayesian data, will fetch fresh:', e);
+        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+      }
+    }
+    
+    if (cachedTimestamp) {
+      console.log('🔄 Bayesian chart cache expired, fetching fresh data...');
+    } else {
+      console.log('🔄 Initial load, fetching Bayesian chart data...');
+    }
+    
     setLoading(true);
     try {
       // Fetch all scores (we'll sort and filter on client side for better timezone handling)
+      console.log('📊 Fetching Bayesian chart data...');
       const scoresQuery = collection(firestore, 'scores');
       const snapshot = await getDocs(scoresQuery);
       const allScores = snapshot.docs.map(doc => doc.data());
+      console.log(`📊 Loaded ${allScores.length} scores for Bayesian chart`);
 
       setAllScoresData(allScores);
+      
+      // Save to localStorage cache
+      localStorage.setItem(CACHE_KEY, JSON.stringify(allScores));
+      localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+      console.log('✅ Bayesian chart data cached successfully (expires in 5 minutes)');
       
       // Process data for default time range - will be handled by separate useEffect
       // Don't call processDataWithScores here to avoid race conditions
@@ -489,10 +537,59 @@ const BayesianChart = ({ getCurrentGradient }) => {
     return date.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' });
   };
 
+  // Calculate dynamic Y-axis domain based on visible data
+  const calculateYAxisDomain = () => {
+    if (!chartData || chartData.length === 0) return [3, 7];
+    
+    // Collect all visible values (selected users + global average)
+    const allValues = [];
+    
+    chartData.forEach(dataPoint => {
+      // Add global average
+      if (dataPoint.globalAverage != null) {
+        allValues.push(dataPoint.globalAverage);
+      }
+      
+      // Add selected user values
+      selectedUsers.forEach(userName => {
+        if (dataPoint[userName] != null) {
+          allValues.push(dataPoint[userName]);
+        }
+      });
+    });
+    
+    if (allValues.length === 0) return [3, 7];
+    
+    const minValue = Math.min(...allValues);
+    const maxValue = Math.max(...allValues);
+    const range = maxValue - minValue;
+    
+    // Calculate padding based on range size - more aggressive for smaller ranges
+    let padding;
+    if (range < 0.1) {
+      // Very tight range - use fixed small padding
+      padding = 0.2;
+    } else if (range < 0.5) {
+      // Small range - use moderate padding
+      padding = 0.3;
+    } else if (range < 1.0) {
+      // Medium range - use standard padding
+      padding = 0.5;
+    } else {
+      // Larger range - use proportional padding
+      padding = Math.max(0.5, range * 0.3);
+    }
+    
+    const domainMin = Math.max(1, minValue - padding); // Don't go below 1
+    const domainMax = Math.min(10, maxValue + padding); // Don't go above 10
+    
+    return [domainMin, domainMax];
+  };
+
   // Track mouse position for portal tooltip
   const chartRef = useRef();
 
-  // CustomTooltip using React portal
+  // CustomTooltip using React portal - shows only the closest line to cursor
   const CustomTooltip = ({ active, payload, label, coordinate }) => {
     if (!(active && payload && payload.length && coordinate)) return null;
 
@@ -503,15 +600,48 @@ const BayesianChart = ({ getCurrentGradient }) => {
     const tooltipX = chartRect.left + coordinate.x - 140; // Position to left of cursor
     const tooltipY = chartRect.top + coordinate.y; // 10px offset up
 
+    // Find the closest non-global entry to the cursor Y position
+    const globalEntry = payload.find(entry => entry.dataKey === 'globalAverage');
+    const userEntries = payload.filter(entry => entry.dataKey !== 'globalAverage');
+    
+    if (userEntries.length === 0) return null;
+    
+    // If only one user entry, use that
+    let hoveredEntry = userEntries[0];
+    
+    // If multiple entries, find the one closest to cursor Y position
+    if (userEntries.length > 1) {
+      // Get the chart's Y-axis scale to convert values to pixel positions
+      const chartHeight = chartRef.current?.offsetHeight || 400;
+      const [yAxisMin, yAxisMax] = calculateYAxisDomain(); // Use dynamic domain
+      const yAxisRange = yAxisMax - yAxisMin;
+      
+      // Calculate relative mouse Y position within chart (0-1)
+      const relativeMouseY = (coordinate.y - 20) / (chartHeight - 80); // Account for margins
+      const mouseYValue = yAxisMax - (relativeMouseY * yAxisRange); // Convert to data value
+      
+      // Find entry with value closest to mouse Y position
+      let closestDistance = Infinity;
+      userEntries.forEach(entry => {
+        if (entry.value != null) {
+          const distance = Math.abs(entry.value - mouseYValue);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            hoveredEntry = entry;
+          }
+        }
+      });
+    }
+
     const tooltipContent = (
       <div style={{
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--card-bg, #fff)',
         padding: '12px',
-        border: '1px solid #ddd',
+        border: '1px solid var(--border-light, #ddd)',
         borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        boxShadow: 'var(--shadow-medium, 0 2px 8px rgba(0,0,0,0.15))',
         fontSize: '12px',
-        color: '#333',
+        color: 'var(--text-primary, #333)',
         fontFamily: 'inherit',
         minWidth: '155px',
         position: 'fixed',
@@ -525,63 +655,33 @@ const BayesianChart = ({ getCurrentGradient }) => {
         <div style={{
           fontWeight: '700',
           marginBottom: '8px',
-          color: '#333',
+          color: 'var(--text-primary, #333)',
           fontSize: '13px',
-          borderBottom: '1px solid #eee',
+          borderBottom: '1px solid var(--border-light, #eee)',
           paddingBottom: '4px'
         }}>
           📅 {formatDate(label)}
         </div>
 
-        {/* Global Average Section */}
-        {payload.find(entry => entry.dataKey === 'globalAverage') && (
-          <div style={{
-            marginBottom: '8px',
-            padding: '6px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            borderLeft: '3px solid #666'
-          }}>
-            <div style={{
-              color: '#666',
-              fontSize: '11px',
-              fontWeight: '600'
-            }}>
-              🌍 Global {dataType === 'bayesian' ? 'Bayesian' : 'Raw'} Average
-            </div>
-            <div style={{
-              color: '#333',
-              fontSize: '12px',
-              fontWeight: '500',
-              marginTop: '2px'
-            }}>
-              {typeof payload.find(entry => entry.dataKey === 'globalAverage').value === 'number'
-                ? payload.find(entry => entry.dataKey === 'globalAverage').value.toFixed(2)
-                : payload.find(entry => entry.dataKey === 'globalAverage').value}
-            </div>
-          </div>
-        )}
-
-        {/* User Data Sections */}
-        {payload.filter(entry => entry.dataKey !== 'globalAverage').map((entry, index) => {
+        {/* Hovered User Data Section */}
+        {(() => {
           // Find the user data for this entry
           const userData = chartData.find(d => d.date === label);
-          const userName = entry.dataKey;
+          const userName = hoveredEntry.dataKey;
           const actualAvg = userData ? userData[`${userName}_actual`] : null;
           const attempts = userData ? userData[`${userName}_attempts`] : null;
 
           return (
-            <div key={index} style={{
-              marginBottom: index < payload.filter(e => e.dataKey !== 'globalAverage').length - 1 ? '10px' : '0',
+            <div style={{
               padding: '8px',
-              backgroundColor: '#fafafa',
+              backgroundColor: 'var(--secondary-bg, #fafafa)',
               borderRadius: '4px',
-              borderLeft: `3px solid ${entry.color || '#333'}`
+              borderLeft: `3px solid ${hoveredEntry.color || 'var(--text-primary, #333)'}`
             }}>
               {/* User Name */}
               <div style={{
                 fontWeight: '700',
-                color: entry.color || '#333',
+                color: hoveredEntry.color || 'var(--text-primary, #333)',
                 marginBottom: '4px',
                 fontSize: '13px'
               }}>
@@ -595,11 +695,11 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 alignItems: 'center',
                 marginBottom: '2px'
               }}>
-                <span style={{ color: '#666', fontSize: '11px' }}>
+                <span style={{ color: 'var(--text-secondary, #666)', fontSize: '11px' }}>
                   📊 {dataType === 'bayesian' ? 'Bayesian Score' : 'Raw Average'}:
                 </span>
-                <span style={{ color: '#333', fontSize: '11px', fontWeight: '600' }}>
-                  {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+                <span style={{ color: 'var(--text-primary, #333)', fontSize: '11px', fontWeight: '600' }}>
+                  {typeof hoveredEntry.value === 'number' ? hoveredEntry.value.toFixed(2) : hoveredEntry.value}
                 </span>
               </div>
 
@@ -611,8 +711,8 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   alignItems: 'center',
                   marginBottom: '2px'
                 }}>
-                  <span style={{ color: '#666', fontSize: '11px' }}>📈 Actual Average:</span>
-                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                  <span style={{ color: 'var(--text-secondary, #666)', fontSize: '11px' }}>📈 Actual Average:</span>
+                  <span style={{ color: 'var(--text-primary, #333)', fontSize: '11px', fontWeight: '500' }}>
                     {actualAvg.toFixed(2)}
                   </span>
                 </div>
@@ -625,15 +725,44 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
-                  <span style={{ color: '#666', fontSize: '11px' }}>🎯 Total Attempts:</span>
-                  <span style={{ color: '#333', fontSize: '11px', fontWeight: '500' }}>
+                  <span style={{ color: 'var(--text-secondary, #666)', fontSize: '11px' }}>🎯 Total Attempts:</span>
+                  <span style={{ color: 'var(--text-primary, #333)', fontSize: '11px', fontWeight: '500' }}>
                     {attempts}
                   </span>
                 </div>
               )}
             </div>
           );
-        })}
+        })()}
+        
+        {/* Global Average Section - Always at the end */}
+        {globalEntry && (
+          <div style={{
+            marginTop: '8px',
+            padding: '6px',
+            backgroundColor: 'var(--secondary-bg, #f8f9fa)',
+            borderRadius: '4px',
+            borderLeft: '3px solid var(--text-secondary, #666)'
+          }}>
+            <div style={{
+              color: 'var(--text-secondary, #666)',
+              fontSize: '11px',
+              fontWeight: '600'
+            }}>
+              🌍 Global {dataType === 'bayesian' ? 'Bayesian' : 'Raw'} Average
+            </div>
+            <div style={{
+              color: 'var(--text-primary, #333)',
+              fontSize: '12px',
+              fontWeight: '500',
+              marginTop: '2px'
+            }}>
+              {typeof globalEntry.value === 'number'
+                ? globalEntry.value.toFixed(2)
+                : globalEntry.value}
+            </div>
+          </div>
+        )}
       </div>
     );
 
@@ -663,15 +792,15 @@ const BayesianChart = ({ getCurrentGradient }) => {
         flexWrap: 'wrap',
         gap: '15px',
         padding: '12px',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--secondary-bg, #f8f9fa)',
         borderRadius: '8px',
-        border: '1px solid #e9ecef'
+        border: '1px solid var(--border-light, #e9ecef)'
       }}>
         {/* Quick Select Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ 
             fontSize: '14px', 
-            color: '#495057',
+            color: 'var(--text-primary, #495057)',
             fontWeight: '500',
             display: 'flex',
             alignItems: 'center',
@@ -701,9 +830,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
             };
             
             const defaultStyle = {
-              backgroundColor: 'white',
-              color: 'black',
-              border: '1px solid #dee2e6'
+              backgroundColor: 'var(--card-bg, white)',
+              color: 'var(--text-primary, black)',
+              border: '1px solid var(--border-light, #dee2e6)'
             };
             
             const clearSelectedStyle = {
@@ -713,9 +842,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
             };
             
             const clearDefaultStyle = {
-              backgroundColor: 'white',
-              color: 'black',
-              border: '1px solid #dee2e6'
+              backgroundColor: 'var(--card-bg, white)',
+              color: 'var(--text-primary, black)',
+              border: '1px solid var(--border-light, #dee2e6)'
             };
             
             return (
@@ -728,14 +857,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected3) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected3) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -749,14 +878,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected5) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected5) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -770,14 +899,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected10) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected10) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -791,14 +920,14 @@ const BayesianChart = ({ getCurrentGradient }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!isClearSelected) {
-                      e.target.style.backgroundColor = '#e9ecef';
-                      e.target.style.borderColor = '#adb5bd';
+                      e.target.style.backgroundColor = 'var(--secondary-bg, #e9ecef)';
+                      e.target.style.borderColor = 'var(--input-border, #adb5bd)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isClearSelected) {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#dee2e6';
+                      e.target.style.backgroundColor = 'var(--card-bg, white)';
+                      e.target.style.borderColor = 'var(--border-light, #dee2e6)';
                     }
                   }}
                 >
@@ -815,7 +944,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               display: 'flex',
@@ -831,8 +960,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 padding: '4px 6px', 
                 fontSize: '13px', 
                 borderRadius: '4px', 
-                border: '1px solid #dee2e6',
-                backgroundColor: 'white',
+                border: '1px solid var(--input-border, #dee2e6)',
+                backgroundColor: 'var(--input-bg, white)',
+                color: 'var(--input-text, #1f2937)',
                 fontWeight: '400',
                 cursor: 'pointer',
                 appearance: 'none',
@@ -856,7 +986,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               display: 'flex',
@@ -872,8 +1002,9 @@ const BayesianChart = ({ getCurrentGradient }) => {
                 padding: '4px 6px', 
                 fontSize: '13px', 
                 borderRadius: '4px', 
-                border: '1px solid #dee2e6',
-                backgroundColor: 'white',
+                border: '1px solid var(--input-border, #dee2e6)',
+                backgroundColor: 'var(--input-bg, white)',
+                color: 'var(--input-text, #1f2937)',
                 fontWeight: '400',
                 cursor: 'pointer',
                 appearance: 'none',
@@ -892,7 +1023,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               cursor: 'pointer',
@@ -914,7 +1045,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ 
               fontSize: '13px',
-              color: '#495057',
+              color: 'var(--text-primary, #495057)',
               fontWeight: '500',
               whiteSpace: 'nowrap',
               display: 'flex',
@@ -1001,22 +1132,12 @@ const BayesianChart = ({ getCurrentGradient }) => {
             height={60}
           />
           <YAxis 
-            domain={[3, 7]}
+            domain={calculateYAxisDomain()}
             label={{ value: dataType === 'bayesian' ? 'Bayesian Score' : 'Raw Average', angle: -90, position: 'insideLeft' }}
             tickFormatter={(value) => value.toFixed(1)}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ position: 'relative', zIndex: 1 }} />
-          {/* Global Average Line - dashed */}
-          <Line
-            type="monotone"
-            dataKey="globalAverage"
-            stroke="#666666"
-            strokeWidth={2}
-            strokeDasharray="5 5"
-            dot={false}
-            name={`${dataType === 'bayesian' ? 'Bayesian' : 'Raw'} Global Average`}
-          />
           {/* Individual User Lines */}
           {selectedUsers.map((userName) => (
             <Line
@@ -1030,42 +1151,81 @@ const BayesianChart = ({ getCurrentGradient }) => {
               name={userName}
             />
           ))}
+          {/* Global Average Line - dashed - Hidden from legend */}
+          <Line
+            type="monotone"
+            dataKey="globalAverage"
+            stroke="#999999"
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            dot={false}
+            legendType="none"
+            name={`${dataType === 'bayesian' ? 'Bayesian' : 'Raw'} Global Average`}
+          />
         </LineChart>
       </ResponsiveContainer>
       
       <div style={{ 
         marginTop: '20px', 
         marginBottom: '0', // Remove bottom margin for cleaner spacing
-        padding: '16px',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--secondary-bg, #f8f9fa)',
         borderRadius: '8px',
-        border: '1px solid #e9ecef'
+        border: '1px solid var(--border-light, #e9ecef)'
       }}>
-        <div style={{ 
-          fontSize: '14px', 
-          color: '#495057',
-          fontWeight: '500',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}>
-          ℹ️ About this chart:
+        <div 
+          onClick={() => setChartInfoExpanded(!chartInfoExpanded)}
+          style={{ 
+            fontSize: '14px', 
+            color: 'var(--text-primary, #495057)',
+            fontWeight: '500',
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            borderRadius: '8px',
+            transition: 'background-color 0.2s ease'
+          }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--input-bg, #e9ecef)'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            ℹ️ About this chart
+          </div>
+          <div style={{
+            transform: chartInfoExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+            fontSize: '12px'
+          }}>
+            ▼
+          </div>
         </div>
-        <ul style={{ 
-          fontSize: '13px', 
-          color: '#6c757d',
-          margin: '0',
-          paddingLeft: '16px',
-          lineHeight: '1.5'
-        }}>
-          <li>📈 Shows how each player&apos;s {dataType === 'bayesian' ? 'Bayesian score' : 'raw average'} evolves over time</li>
-          <li>🎯 Lower scores are better (representing fewer average guesses)</li>
-          <li>🧮 {dataType === 'bayesian' ? 'All lines use Bayesian scoring with recency penalty and attempts bonus' : 'All lines show simple averages of actual scores'}</li>
-          <li>🌍 Dashed line: Average of all players&apos; {dataType === 'bayesian' ? 'Bayesian scores' : 'raw averages'} for each date</li>
-          <li>🔗 Toggle &quot;Contiguous&quot; to connect/break lines on missing days</li>
-          <li>⏰ Use time range selector to focus on specific periods</li>
-        </ul>
+        
+        {chartInfoExpanded && (
+          <div style={{ 
+            padding: '0 16px 16px 16px',
+            borderTop: '1px solid var(--border-light, #e9ecef)'
+          }}>
+            <ul style={{ 
+              fontSize: '13px', 
+              color: 'var(--text-secondary, #6c757d)',
+              margin: '8px 0 0 0',
+              paddingLeft: '16px',
+              lineHeight: '1.5'
+            }}>
+              <li>📈 Shows how each player&apos;s {dataType === 'bayesian' ? 'Bayesian score' : 'raw average'} evolves over time</li>
+              <li>🎯 Lower scores are better (representing fewer average guesses)</li>
+              <li>🧮 {dataType === 'bayesian' ? 'All lines use Bayesian scoring with recency penalty and attempts bonus' : 'All lines show simple averages of actual scores'}</li>
+              <li>🌍 Dashed line: Average of all players&apos; {dataType === 'bayesian' ? 'Bayesian scores' : 'raw averages'} for each date</li>
+              <li>🔗 Toggle &quot;Contiguous&quot; to connect/break lines on missing days</li>
+              <li>⏰ Use time range selector to focus on specific periods</li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

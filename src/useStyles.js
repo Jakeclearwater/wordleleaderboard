@@ -4,11 +4,11 @@ const FONT_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-s
 const FONT_MONO = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'SF Mono', Consolas, monospace";
 
 const GLASS_CARD_BASE = {
-  background: "rgba(255, 255, 255, 0.98)",
+  background: "var(--card-bg, rgba(255, 255, 255, 0.98))",
   backdropFilter: "blur(8px)",
   borderRadius: "12px",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-  border: "1px solid rgba(255, 255, 255, 0.3)",
+  boxShadow: "var(--shadow-medium, 0 4px 20px rgba(0,0,0,0.08))",
+  border: "1px solid var(--border-light, rgba(255, 255, 255, 0.3))",
 };
 
 const TRAINING_ACCENT_FALLBACK = "linear-gradient(135deg, #6aaa64 0%, #3cba92 100%)";
@@ -37,11 +37,12 @@ const INPUT_BASE = {
   width: "100%",
   padding: "12px 16px",
   borderRadius: "8px",
-  border: "1px solid #e0e4e7",
+  border: "1px solid var(--input-border, #e0e4e7)",
   fontSize: "15px",
   boxSizing: "border-box",
   transition: "all 0.2s ease",
-  background: "white",
+  background: "var(--input-bg, white)",
+  color: "var(--input-text, #1f2937)",
   fontFamily: FONT_SANS,
   "&:focus": {
     outline: "none",
@@ -77,10 +78,10 @@ const useStyles = createUseStyles({
         marginTop: "1.5rem",
         fontSize: "1.1rem",
         color: "#2563eb",
-        background: "#f3f4f6",
+        background: "var(--secondary-bg, #f3f4f6)",
         borderRadius: "8px",
         padding: "1rem 1.5rem",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        boxShadow: "var(--shadow-small, 0 2px 8px rgba(0,0,0,0.05))",
         fontWeight: "600"
     },
 
@@ -130,22 +131,21 @@ const useStyles = createUseStyles({
     greyParagraph: {
         marginTop: "1.5rem",
         fontSize: "1rem",
-        color: "#737983ff",
+        color: "var(--text-secondary, #737983ff)",
         fontFamily: FONT_SANS,
     },
 
     greyParagraphSubText: {
         marginTop: "1.5rem",
         fontSize: "0.875rem",
-        color: "#9ca3af",
+        color: "var(--text-muted, #9ca3af)",
         fontFamily: FONT_SANS,
     },
 
     innerContentCard: {
         ...GLASS_CARD_BASE,
         maxWidth: "500px",
-        borderRadius: "0 0 12px 12px",
-        borderTop: "none",
+        borderRadius: "12px",
         overflow: "hidden",
         position: "relative",
         zIndex: 2,
@@ -154,6 +154,17 @@ const useStyles = createUseStyles({
         margin: "0 0 2rem 0",
         lineHeight: "1.5",
         fontFamily: FONT_SANS,
+        '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '6px',
+            background: props => (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '12px 12px 0 0',
+            opacity: 0.8,
+        }
     },
 
     mainResponsiveMargin: {
@@ -180,14 +191,14 @@ const useStyles = createUseStyles({
     loginTitle: {
         textAlign: "center",
         marginBottom: "2rem",
-        color: "#1a1a1a",
+        color: "var(--text-primary, #1a1a1a)",
         fontWeight: "600",
         fontSize: "24px",
         fontFamily: FONT_SANS,
     },
     loginSubtitle: {
         textAlign: "center",
-        color: "#6b7280",
+        color: "var(--text-secondary, #6b7280)",
         fontSize: "15px",
         marginBottom: "2rem",
         fontFamily: FONT_SANS,
@@ -195,7 +206,7 @@ const useStyles = createUseStyles({
     loginLabel: {
         fontWeight: "500",
         fontSize: "14px",
-        color: "#374151",
+        color: "var(--text-primary, #374151)",
         display: "block",
         marginBottom: "0.5rem",
         fontFamily: FONT_SANS,
@@ -224,7 +235,7 @@ const useStyles = createUseStyles({
             width: "100%",
         },
         "& label": {
-            color: "#374151",
+            color: "var(--text-primary, #374151)",
             fontWeight: "500",
             fontSize: "14px",
             marginBottom: "0.5rem",
@@ -235,6 +246,7 @@ const useStyles = createUseStyles({
     formGroup: {
         display: "flex",
         flexDirection: "column",
+        alignItems: "center", // Center the input box horizontally
         transition: "all 0.2s ease-out",
         gap: "0.25rem",
     },
@@ -252,23 +264,27 @@ const useStyles = createUseStyles({
     ...INPUT_BASE,
     minWidth: "0",
     maxWidth: "100%",
+    // For number inputs (like guesses), use a more reasonable width
+    "&[type='number']": {
+        width: "150px", // About 25px larger than typical default
+    },
         "@media (max-width: 600px)": {
             fontSize: "15px",
             padding: "12px 12px",
         },
         "&.disabled": {
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--input-bg, #f8f9fa)",
             cursor: "not-allowed",
-            color: "#6c757d",
-            borderColor: "#dee2e6",
+            color: "var(--text-muted, #6c757d)",
+            borderColor: "var(--border-light, #dee2e6)",
         },
     },
   select: {
     padding: "12px",
     borderRadius: "6px",
-    border: "1px solid #ccc",
-    backgroundColor: "white",
-    color: "black",
+    border: "1px solid var(--input-border, #ccc)",
+    backgroundColor: "var(--input-bg, white)",
+    color: "var(--input-text, black)",
     fontSize: "16px",
     width: "100%",
     boxSizing: "border-box",
@@ -313,14 +329,15 @@ const useStyles = createUseStyles({
     },
   textarea: {
     ...INPUT_BASE,
-    minHeight: "120px",
+    minHeight: "145px", // Increased by 25px from 120px
     minWidth: "0",
     maxWidth: "100%",
     fontSize: "14px",
     fontFamily: FONT_MONO,
         resize: "vertical",
         transition: "all 0.2s ease",
-        background: "white",
+        background: "var(--input-bg, white)",
+        textAlign: "left", // Ensure text is left-aligned
         "@media (max-width: 600px)": {
             fontSize: "14px",
             padding: "10px 10px",
@@ -402,10 +419,10 @@ const useStyles = createUseStyles({
     },
     modeSelector: {
         display: "flex",
-        background: "#f3f4f6",
+        background: "var(--secondary-bg, #f3f4f6)",
         borderRadius: "8px",
         padding: "4px",
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--border-light, #e5e7eb)",
     },
     modeOption: {
         flex: 1,
@@ -413,23 +430,23 @@ const useStyles = createUseStyles({
         borderRadius: "6px",
         border: "none",
         background: "transparent",
-        color: "#6b7280",
+        color: "var(--text-secondary, #6b7280)",
         cursor: "pointer",
         fontSize: "14px",
         fontWeight: "500",
         transition: "all 0.2s ease",
   fontFamily: FONT_SANS,
         "&:hover": {
-            color: "#374151",
+            color: "var(--text-primary, #374151)",
         },
     },
     activeMode: {
-        background: "white",
-        color: "#1f2937",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+        background: "var(--card-bg, white)",
+        color: "var(--text-primary, #1f2937)",
+        boxShadow: "var(--shadow-small, 0 1px 3px rgba(0, 0, 0, 0.1))",
         fontWeight: "600",
         "&:hover": {
-            color: "#1f2937",
+            color: "var(--text-primary, #1f2937)",
         },
     },
     formContainer: {
@@ -480,14 +497,24 @@ const useStyles = createUseStyles({
     height: 'auto',
     marginBottom: '1rem',
     display: 'inline-block',
-    animation: '$logoSpin 2s infinite linear',
+    animation: '$squeezeBounce 1.5s ease-in-out infinite',
     transformOrigin: 'center',
     filter: 'drop-shadow(0 4px 12px rgba(15, 23, 42, 0.35))',
   },
   
-  '@keyframes logoSpin': {
-    '0%': { transform: 'rotate(0deg)' },
-    '100%': { transform: 'rotate(360deg)' },
+  '@keyframes squeezeBounce': {
+    '0%, 100%': { 
+      transform: 'scale(1, 1)' 
+    },
+    '25%': { 
+      transform: 'scale(1.3, 0.7)' 
+    },
+    '50%': { 
+      transform: 'scale(0.7, 1.3)' 
+    },
+    '75%': { 
+      transform: 'scale(1.15, 0.85)' 
+    },
   },
   
   statCard: {
@@ -706,11 +733,11 @@ const useStyles = createUseStyles({
   // Bayesian Chart Styles
   bayesianChartContainer: {
     padding: '2rem',
-    background: 'rgba(255, 255, 255, 0.95)',
+    background: 'var(--card-bg, rgba(255, 255, 255, 0.95))',
     backdropFilter: 'blur(10px)',
     borderRadius: '16px',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    boxShadow: 'var(--shadow-large, 0 8px 32px rgba(0, 0, 0, 0.1))',
+    border: '1px solid var(--border-light, rgba(255, 255, 255, 0.2))',
     margin: '0',
     maxWidth: '100%',
     width: '100%',
@@ -720,7 +747,7 @@ const useStyles = createUseStyles({
     position: 'relative',
     '&:hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+      boxShadow: 'var(--shadow-large, 0 12px 40px rgba(0, 0, 0, 0.15))',
     },
     '&::before': {
       content: '""',
@@ -728,15 +755,16 @@ const useStyles = createUseStyles({
       top: 0,
       left: 0,
       right: 0,
-      height: '4px',
+      height: '6px',
       background: props => (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       borderRadius: '16px 16px 0 0',
+      opacity: 0.8,
     }
   },
   bayesianTitle: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#333',
+    color: 'var(--text-primary, #333)',
     marginBottom: '2rem',
     textAlign: 'center',
     display: 'flex',
@@ -797,9 +825,9 @@ const useStyles = createUseStyles({
     alignItems: 'center',
     gap: '8px',
     padding: '4px 6px',
-    border: '1px solid #dee2e6',
+    border: '1px solid var(--border-light, #dee2e6)',
     borderRadius: '4px',
-    background: 'white',
+    background: 'var(--card-bg, white)',
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: '400',
@@ -861,7 +889,7 @@ const useStyles = createUseStyles({
   bayesianLoadingText: {
     fontSize: '18px',
     fontWeight: '600',
-    color: '#333',
+    color: 'var(--text-primary, #333)',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     '-webkit-background-clip': 'text',
     '-webkit-text-fill-color': 'transparent',
@@ -869,7 +897,7 @@ const useStyles = createUseStyles({
   },
   bayesianLoadingSubtext: {
     fontSize: '14px',
-    color: '#666',
+    color: 'var(--text-secondary, #666)',
     fontWeight: '400',
   },
   bayesianSpinningLogo: {
@@ -877,7 +905,7 @@ const useStyles = createUseStyles({
     height: 'auto',
     marginBottom: '1rem',
     display: 'inline-block',
-    animation: '$spin 2s infinite linear',
+    animation: '$squeezeBounce 1.5s ease-in-out infinite',
     filter: 'drop-shadow(0 4px 12px rgba(15, 23, 42, 0.35))',
     transformOrigin: 'center',
   },
@@ -889,7 +917,7 @@ const useStyles = createUseStyles({
     justifyContent: 'center',
     padding: '2.5rem 1.25rem',
     boxSizing: 'border-box',
-    background: '#ffffff',
+    background: 'var(--secondary-bg, #ffffff)',
     '@media (max-width: 600px)': {
       padding: '1.75rem 0.75rem',
     },
@@ -1232,11 +1260,7 @@ const useStyles = createUseStyles({
     },
   },
 
-  // Keyframe animations for Bayesian chart
-  '@keyframes spin': {
-    '0%': { transform: 'rotate(0deg)' },
-    '100%': { transform: 'rotate(360deg)' },
-  },
+  // Keyframe animations
 });
 
 export default useStyles;

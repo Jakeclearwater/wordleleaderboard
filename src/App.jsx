@@ -29,8 +29,8 @@ const setCookie = (name, value, days = 365) => {
 // Predefined background themes
 const backgroundThemes = {
   default: {
-    name: '🌈 Default Purple',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    name: '💜 Violet Dreams',
+    gradient: 'linear-gradient(135deg, #3a5870ff 20%, #764ba2 90%)'
   },
   ocean: {
     name: '🌊 Ocean Blue',
@@ -41,11 +41,11 @@ const backgroundThemes = {
     gradient: 'linear-gradient(135deg, #ff9a56 0%, #ff6b6b 100%)'
   },
   forest: {
-    name: '🌲 Forest Green',
-    gradient: 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)'
+    name: '🌈 Rainbow',
+    gradient: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #1dd1a1 75%, #ee5a6f 100%)'
   },
   caruba: {
-    name: '🌴 Jamaican Jungle',
+    name: '🌴 Jamaican Summer',
     gradient: 'linear-gradient(135deg, #6aaa64 0%, #c9b458 100%)'
   },
   midnight: {
@@ -81,6 +81,9 @@ const App = () => {
     const saved = getCookie('custom-background-colors');
     return saved ? JSON.parse(saved) : { color1: '#667eea', color2: '#764ba2' };
   });
+  
+  // Dark mode state with cookie persistence
+  const [darkMode, setDarkMode] = useState(() => getCookie('dark-mode') === 'true');
 
   // Save theme preference to cookies
   useEffect(() => {
@@ -91,6 +94,17 @@ const App = () => {
   useEffect(() => {
     setCookie('custom-background-colors', JSON.stringify(customColors));
   }, [customColors]);
+  
+  // Save dark mode preference to cookies
+  useEffect(() => {
+    setCookie('dark-mode', darkMode.toString());
+    // Apply dark mode class to document root for global styling
+    if (darkMode) {
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   // Get current gradient based on selected theme
   const getCurrentGradient = () => {
@@ -113,15 +127,20 @@ const App = () => {
   const appVersion = getAppVersion();
   const classNames = ["green", "yellow"];
 
+  // Stable color assignment - only calculated once
+  const [stableColors] = useState(() => 
+    wordle.split('').map(() => classNames[Math.floor(Math.random() * classNames.length)])
+  );
+
   useEffect(() => {
     if (!playIntro) return undefined;
-    const totalDuration = wordle.length * 400 + 800;
+    const totalDuration = wordle.length * 300 + 600; // 300ms per letter, 600ms buffer
     const timeout = setTimeout(() => setPlayIntro(false), totalDuration);
     return () => clearTimeout(timeout);
   }, [playIntro, wordle.length]);
 
   const wordleSpans = wordle.split('').map((char, index) => {
-    const colorKey = classNames[Math.floor(Math.random() * classNames.length)];
+    const colorKey = stableColors[index];
     const colorClass = classes[`color_${colorKey}`];
     const spanClasses = [classes.char, colorClass];
 
@@ -133,7 +152,7 @@ const App = () => {
       <span
         key={index}
         className={spanClasses.join(' ')}
-        style={playIntro ? { animationDelay: `${index * 0.4}s` } : undefined}
+        style={playIntro ? { animationDelay: `${index * 0.3}s` } : undefined} // Middle ground: 0.3s
       >
         <span className={classes.charFaceFront}>{char}</span>
         <span className={classes.charFaceBack} aria-hidden="true" />
@@ -170,6 +189,8 @@ const App = () => {
           customColors={customColors}
           setCustomColors={setCustomColors}
           getCurrentGradient={getCurrentGradient}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
         />
         <footer className={classes.footer}>
           <p>Made with 💚 for Wordle enthusiasts · <span className={classes.spanicon} onClick={hack}>Don&apos;t break this!</span></p>
