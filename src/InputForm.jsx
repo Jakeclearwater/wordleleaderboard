@@ -38,7 +38,7 @@ const InputForm = ({
   darkMode,
   setDarkMode
 }) => {
-  const classes = useStyles();
+  const classes = useStyles({ gradient: getCurrentGradient() });
   const [username, setUsername] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState(TABS[0]);

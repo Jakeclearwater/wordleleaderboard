@@ -145,8 +145,7 @@ const useStyles = createUseStyles({
     innerContentCard: {
         ...GLASS_CARD_BASE,
         maxWidth: "500px",
-        borderRadius: "0 0 12px 12px",
-        borderTop: "none",
+        borderRadius: "12px",
         overflow: "hidden",
         position: "relative",
         zIndex: 2,
@@ -155,6 +154,17 @@ const useStyles = createUseStyles({
         margin: "0 0 2rem 0",
         lineHeight: "1.5",
         fontFamily: FONT_SANS,
+        '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '6px',
+            background: props => (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '12px 12px 0 0',
+            opacity: 0.8,
+        }
     },
 
     mainResponsiveMargin: {

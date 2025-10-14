@@ -29,8 +29,8 @@ const setCookie = (name, value, days = 365) => {
 // Predefined background themes
 const backgroundThemes = {
   default: {
-    name: '🌈 Default Purple',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    name: '💜 Violet Dreams',
+    gradient: 'linear-gradient(135deg, #3a5870ff 20%, #764ba2 90%)'
   },
   ocean: {
     name: '🌊 Ocean Blue',
@@ -41,11 +41,11 @@ const backgroundThemes = {
     gradient: 'linear-gradient(135deg, #ff9a56 0%, #ff6b6b 100%)'
   },
   forest: {
-    name: '🌲 Forest Green',
-    gradient: 'linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)'
+    name: '🌈 Rainbow',
+    gradient: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #1dd1a1 75%, #ee5a6f 100%)'
   },
   caruba: {
-    name: '🌴 Jamaican Jungle',
+    name: '🌴 Jamaican Summer',
     gradient: 'linear-gradient(135deg, #6aaa64 0%, #c9b458 100%)'
   },
   midnight: {
