@@ -60,7 +60,7 @@ const TopRightLogin = ({
     boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
     fontSize: isMobile ? "11px" : "13px",
     fontWeight: "500",
-    zIndex: 100,
+    zIndex: 200,
     border: "1px solid rgba(255, 255, 255, 0.3)",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
   }}>

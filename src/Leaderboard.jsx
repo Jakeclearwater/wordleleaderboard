@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { firestore } from './firebase';
 import useStyles from "./useStyles";
@@ -19,9 +19,16 @@ const Leaderboard = ({ getCurrentGradient }) => {
   const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
   const [woodspoonLeaderboard, setWoodspoonLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastFetch, setLastFetch] = useState(null);
 
   useEffect(() => {
     const fetchLeaderboards = async () => {
+      // Cache for 5 minutes
+      const now = Date.now();
+      if (lastFetch && (now - lastFetch) < 5 * 60 * 1000) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         // Get current date in NZ timezone for accurate comparisons
@@ -44,9 +51,11 @@ const Leaderboard = ({ getCurrentGradient }) => {
         }).format(weekAgoNZ);
 
         // Fetch all scores for client-side filtering (more flexible than server-side queries)
+        console.log('📊 Fetching leaderboard data...');
         const allScoresQuery = collection(firestore, 'scores');
         const allScoresSnapshot = await getDocs(allScoresQuery);
         const allScores = allScoresSnapshot.docs.map(doc => doc.data());
+        console.log(`📊 Loaded ${allScores.length} scores, processing leaderboards...`);
 
         // Helper function to get the effective date from a score record
         const getEffectiveDate = (score) => {
@@ -329,6 +338,7 @@ const Leaderboard = ({ getCurrentGradient }) => {
         setRawAverageLeaderboard(rawAverageLeaderboard);
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
         setWoodspoonLeaderboard(woodspoonLeaderboardArray);
+        setLastFetch(Date.now());
       } catch (error) {
         console.error('Error fetching leaderboards:', error);
       } finally {

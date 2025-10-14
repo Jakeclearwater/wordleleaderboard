@@ -113,15 +113,20 @@ const App = () => {
   const appVersion = getAppVersion();
   const classNames = ["green", "yellow"];
 
+  // Stable color assignment - only calculated once
+  const [stableColors] = useState(() => 
+    wordle.split('').map(() => classNames[Math.floor(Math.random() * classNames.length)])
+  );
+
   useEffect(() => {
     if (!playIntro) return undefined;
-    const totalDuration = wordle.length * 400 + 800;
+    const totalDuration = wordle.length * 300 + 600; // 300ms per letter, 600ms buffer
     const timeout = setTimeout(() => setPlayIntro(false), totalDuration);
     return () => clearTimeout(timeout);
   }, [playIntro, wordle.length]);
 
   const wordleSpans = wordle.split('').map((char, index) => {
-    const colorKey = classNames[Math.floor(Math.random() * classNames.length)];
+    const colorKey = stableColors[index];
     const colorClass = classes[`color_${colorKey}`];
     const spanClasses = [classes.char, colorClass];
 
@@ -133,7 +138,7 @@ const App = () => {
       <span
         key={index}
         className={spanClasses.join(' ')}
-        style={playIntro ? { animationDelay: `${index * 0.4}s` } : undefined}
+        style={playIntro ? { animationDelay: `${index * 0.3}s` } : undefined} // Middle ground: 0.3s
       >
         <span className={classes.charFaceFront}>{char}</span>
         <span className={classes.charFaceBack} aria-hidden="true" />

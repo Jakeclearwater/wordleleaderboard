@@ -235,6 +235,7 @@ const useStyles = createUseStyles({
     formGroup: {
         display: "flex",
         flexDirection: "column",
+        alignItems: "center", // Center the input box horizontally
         transition: "all 0.2s ease-out",
         gap: "0.25rem",
     },
@@ -252,6 +253,10 @@ const useStyles = createUseStyles({
     ...INPUT_BASE,
     minWidth: "0",
     maxWidth: "100%",
+    // For number inputs (like guesses), use a more reasonable width
+    "&[type='number']": {
+        width: "150px", // About 25px larger than typical default
+    },
         "@media (max-width: 600px)": {
             fontSize: "15px",
             padding: "12px 12px",
@@ -313,7 +318,7 @@ const useStyles = createUseStyles({
     },
   textarea: {
     ...INPUT_BASE,
-    minHeight: "120px",
+    minHeight: "145px", // Increased by 25px from 120px
     minWidth: "0",
     maxWidth: "100%",
     fontSize: "14px",
@@ -321,6 +326,7 @@ const useStyles = createUseStyles({
         resize: "vertical",
         transition: "all 0.2s ease",
         background: "white",
+        textAlign: "left", // Ensure text is left-aligned
         "@media (max-width: 600px)": {
             fontSize: "14px",
             padding: "10px 10px",
