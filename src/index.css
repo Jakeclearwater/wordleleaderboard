@@ -176,4 +176,18 @@ input, textarea, select {
   }
 }
 
-
+/* Space theme animations */
+@keyframes twinkle {
+  0%, 100% { 
+    opacity: 0.8; 
+  }
+  25% { 
+    opacity: 0.3; 
+  }
+  50% { 
+    opacity: 1; 
+  }
+  75% { 
+    opacity: 0.5; 
+  }
+}

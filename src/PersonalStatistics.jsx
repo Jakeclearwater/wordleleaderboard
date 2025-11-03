@@ -147,9 +147,9 @@ const useLocalStyles = createUseStyles({
   },
 });
 
-const PersonalStatistics = ({ username, todaysScore, getCurrentGradient }) => {
-  // Extract a primary color from the gradient for today's bar
-  const gradientString = getCurrentGradient ? getCurrentGradient() : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+const PersonalStatistics = ({ username, todaysScore, getCurrentGradient, getAccentGradient }) => {
+  // Extract a primary color from the accent gradient for today's bar
+  const gradientString = getAccentGradient ? getAccentGradient() : getCurrentGradient ? getCurrentGradient() : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
   const colorMatch = gradientString.match(/#[0-9a-fA-F]{6}/);
   const todayBarColor = colorMatch ? colorMatch[0] : '#667eea';
   

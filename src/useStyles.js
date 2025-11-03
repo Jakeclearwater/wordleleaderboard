@@ -161,7 +161,7 @@ const useStyles = createUseStyles({
             left: 0,
             right: 0,
             height: '6px',
-            background: props => (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: props => (props && props.accentGradient) || (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             borderRadius: '12px 12px 0 0',
             opacity: 0.8,
         }
@@ -757,7 +757,7 @@ const useStyles = createUseStyles({
       left: 0,
       right: 0,
       height: '6px',
-      background: props => (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: props => (props && props.accentGradient) || (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       borderRadius: '16px 16px 0 0',
       opacity: 0.8,
     }

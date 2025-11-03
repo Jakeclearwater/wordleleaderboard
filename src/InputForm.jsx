@@ -35,10 +35,14 @@ const InputForm = ({
   customColors,
   setCustomColors,
   getCurrentGradient,
+  getAccentGradient,
   darkMode,
   setDarkMode
 }) => {
-  const classes = useStyles({ gradient: getCurrentGradient() });
+  const classes = useStyles({ 
+    gradient: getCurrentGradient(),
+    accentGradient: getAccentGradient ? getAccentGradient() : getCurrentGradient()
+  });
   const [username, setUsername] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState(TABS[0]);
@@ -451,6 +455,7 @@ const InputForm = ({
         isLoggedIn={isLoggedIn}
         username={username}
         getCurrentGradient={getCurrentGradient}
+        getAccentGradient={getAccentGradient}
         showSettings={showSettings}
         setShowSettings={setShowSettings}
         backgroundThemes={backgroundThemes}
@@ -486,6 +491,7 @@ const InputForm = ({
                     username={username}
                     todaysScore={todaysScore}
                     getCurrentGradient={getCurrentGradient}
+                    getAccentGradient={getAccentGradient}
                   />
                 ) : (
                   <form onSubmit={handleSubmit} className={classes.form}>
@@ -576,7 +582,7 @@ Wordle 1,234 4/6
                     <button
                       type="submit"
                       className={classes.button}
-                      style={{ background: getCurrentGradient(), transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
+                      style={{ background: getAccentGradient ? getAccentGradient() : getCurrentGradient(), transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
                       disabled={loading || !isFormValid()}
                       onMouseOver={e => {
                         e.target.style.filter = 'brightness(1.1)';
@@ -665,7 +671,7 @@ Wordle 1,234 4/6
                   }}
                   className={classes.playButtonStyle}
                   style={{
-                    background: getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    background: getAccentGradient ? getAccentGradient() : getCurrentGradient ? getCurrentGradient() : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                   }}
                   onMouseOver={(e) => {
                     e.target.style.transform = "translateY(-2px)";
