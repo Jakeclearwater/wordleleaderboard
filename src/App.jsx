@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ShootingStars from './ShootingStars.jsx';
 import InputForm from './InputForm';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
@@ -65,8 +66,9 @@ const backgroundThemes = {
     gradient: 'linear-gradient(135deg, #8360c3 0%, #2ebf91 100%)'
   },
   monochrome: {
-    name: '⚫ Monochrome',
-    gradient: 'linear-gradient(135deg, #434343 0%, #000000 100%)'
+    name: '🌌 Space',
+    gradient: 'radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%), linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    special: 'space'
   },
   custom: {
     name: '🎨 Custom',
@@ -106,6 +108,9 @@ const App = () => {
     }
   }, [darkMode]);
 
+  // List of dark themes that need light button gradients
+  const darkThemes = ['monochrome', 'midnight'];
+  
   // Get current gradient based on selected theme
   const getCurrentGradient = () => {
     if (selectedTheme === 'custom') {
@@ -114,18 +119,87 @@ const App = () => {
     return backgroundThemes[selectedTheme]?.gradient || backgroundThemes.default.gradient;
   };
 
-  const gradientStyle = {
-    background: getCurrentGradient(),
-    minHeight: '100vh',
-    width: '100%',
-    margin: 0,
-    padding: 0
+  // Get gradient for buttons/accents (light fallback for dark themes)
+  const getAccentGradient = () => {
+    if (darkThemes.includes(selectedTheme)) {
+      // Use a bright, vibrant gradient for dark backgrounds
+      return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    }
+    return getCurrentGradient();
   };
+
+  const getBackgroundStyle = () => {
+    const currentTheme = backgroundThemes[selectedTheme];
+    if (selectedTheme === 'monochrome' && currentTheme?.special === 'space') {
+      return {
+        background: 'radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%)',
+        minHeight: '100vh',
+        width: '100%',
+        margin: 0,
+        padding: 0,
+        position: 'relative'
+      };
+    }
+    return {
+      background: getCurrentGradient(),
+      minHeight: '100vh',
+      width: '100%',
+      margin: 0,
+      padding: 0
+    };
+  };
+
+  const gradientStyle = getBackgroundStyle();
   const classes = useStyles();
   const wordle = "ITWORDLE";
+  // Shooting stars now run in production mode (no debug artifacts)
   const [playIntro, setPlayIntro] = useState(true);
   const appVersion = getAppVersion();
   const classNames = ["green", "yellow"];
+
+  // Generate random space elements on component mount
+  const [spaceElements] = useState(() => {
+    const generateRandomStars = (count, type) => {
+      return Array.from({ length: count }, (_, i) => ({
+        id: i,
+        top: Math.random() * 90 + 5, // 5% to 95%
+        left: Math.random() * 90 + 5, // 5% to 95%
+        animationDelay: Math.random() * 4, // 0-4s delay
+        size: type === 'small' ? Math.random() * 2 + 1 : type === 'bright' ? Math.random() * 3 + 4 : Math.random() * 2 + 3,
+      }));
+    };
+
+    // Legacy shooting star generator removed. Shooting stars now handled exclusively
+    // by the <ShootingStars /> component with a pooled rAF system.
+
+    const generateNebulae = () => {
+      const nebulaColors = [
+        'radial-gradient(ellipse 60% 40% at 30% 30%, rgba(138,43,226,0.4) 0%, rgba(75,0,130,0.3) 40%, rgba(25,25,112,0.2) 70%, transparent 100%)', // Purple
+        'radial-gradient(ellipse 50% 35% at 40% 20%, rgba(255,69,0,0.4) 0%, rgba(255,140,0,0.3) 40%, rgba(220,20,60,0.2) 70%, transparent 100%)', // Orange-Red
+        'radial-gradient(ellipse 55% 45% at 25% 35%, rgba(0,191,255,0.4) 0%, rgba(30,144,255,0.3) 40%, rgba(0,0,139,0.2) 70%, transparent 100%)', // Blue
+        'radial-gradient(ellipse 65% 30% at 35% 40%, rgba(50,205,50,0.4) 0%, rgba(34,139,34,0.3) 40%, rgba(0,100,0,0.2) 70%, transparent 100%)', // Green
+        'radial-gradient(ellipse 45% 50% at 45% 25%, rgba(255,20,147,0.4) 0%, rgba(199,21,133,0.3) 40%, rgba(139,0,139,0.2) 70%, transparent 100%)', // Pink-Magenta
+      ];
+      
+      return Array.from({ length: 4 }, (_, i) => ({
+        id: i,
+        top: Math.random() * 70 + 10, // 10% to 80%
+        left: Math.random() * 70 + 10, // 10% to 80%
+        width: Math.random() * 80 + 80, // 80px to 160px
+        height: Math.random() * 60 + 60, // 60px to 120px
+        rotation: Math.random() * 360, // 0 to 360 degrees
+        animationDelay: Math.random() * 10, // 0-10s delay
+        color: nebulaColors[Math.floor(Math.random() * nebulaColors.length)],
+      }));
+    };
+
+    return {
+      regularStars: generateRandomStars(25, 'regular'),
+      brightStars: generateRandomStars(8, 'bright'),
+      smallStars: generateRandomStars(15, 'small'),
+      nebulae: generateNebulae(),
+    };
+  });
 
   // Stable color assignment - only calculated once
   const [stableColors] = useState(() => 
@@ -148,11 +222,42 @@ const App = () => {
       spanClasses.push(classes.charIntro);
     }
 
+    const handleMouseEnter = (e) => {
+      if (playIntro) return; // Don't allow hover during intro
+      
+      // Clear any existing timeout
+      if (e.target.hoverTimeout) {
+        clearTimeout(e.target.hoverTimeout);
+      }
+      
+      // Add hover effect with small delay to prevent jitter
+      e.target.hoverTimeout = setTimeout(() => {
+        e.target.style.transform = 'rotateX(180deg) scale(1.04)';
+        e.target.style.boxShadow = '0 14px 28px rgba(15, 23, 42, 0.32)';
+      }, 100); // 100ms delay
+    };
+
+    const handleMouseLeave = (e) => {
+      // Clear any pending hover timeout
+      if (e.target.hoverTimeout) {
+        clearTimeout(e.target.hoverTimeout);
+        e.target.hoverTimeout = null;
+      }
+      
+      // Add small delay before removing hover to prevent flicker
+      setTimeout(() => {
+        e.target.style.transform = 'rotateX(0deg)';
+        e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+      }, 50); // 50ms delay on exit
+    };
+
     return (
       <span
         key={index}
         className={spanClasses.join(' ')}
-        style={playIntro ? { animationDelay: `${index * 0.3}s` } : undefined} // Middle ground: 0.3s
+        style={playIntro ? { animationDelay: `${index * 0.3}s` } : undefined}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <span className={classes.charFaceFront}>{char}</span>
         <span className={classes.charFaceBack} aria-hidden="true" />
@@ -161,7 +266,7 @@ const App = () => {
   });
 
   const hack = () => {
-    console.log("oops");
+  // Placeholder: Background overlay mutation trigger
     // This will now not affect the background image since the image is managed by BackgroundOverlay
     document.getElementById('backgroundOverlay').style.backgroundImage = `url('${bsod}')`;
     document.getElementById('backgroundOverlay').style.backgroundSize = 'cover';
@@ -173,6 +278,78 @@ const App = () => {
   return (
     <div className={classes.App} style={gradientStyle}>
       <div id="backgroundOverlay" className={classes.overlay}></div>
+      {(() => {
+        const isSpaceTheme = selectedTheme === 'monochrome' && backgroundThemes[selectedTheme]?.special === 'space';
+        // Space theme active
+        return isSpaceTheme;
+      })() && (
+        <div className={classes.starsOverlay}>
+          {/* Regular Twinkling Stars */}
+          {spaceElements.regularStars.map(star => (
+            <div
+              key={`star-${star.id}`}
+              className={classes.star}
+              style={{
+                top: `${star.top}%`,
+                left: `${star.left}%`,
+                width: `${star.size}px`,
+                height: `${star.size}px`,
+                animationDelay: `${star.animationDelay}s`
+              }}
+            ></div>
+          ))}
+
+          {/* Bright Stars */}
+          {spaceElements.brightStars.map(star => (
+            <div
+              key={`bright-${star.id}`}
+              className={classes.brightStar}
+              style={{
+                top: `${star.top}%`,
+                left: `${star.left}%`,
+                width: `${star.size}px`,
+                height: `${star.size}px`,
+                animationDelay: `${star.animationDelay}s`
+              }}
+            ></div>
+          ))}
+
+          {/* Small Distant Stars */}
+          {spaceElements.smallStars.map(star => (
+            <div
+              key={`small-${star.id}`}
+              className={classes.smallStar}
+              style={{
+                top: `${star.top}%`,
+                left: `${star.left}%`,
+                width: `${star.size}px`,
+                height: `${star.size}px`,
+                animationDelay: `${star.animationDelay}s`
+              }}
+            ></div>
+          ))}
+
+          {/* Randomized Nebulae */}
+          {spaceElements.nebulae.map(nebula => (
+            <div
+              key={`nebula-${nebula.id}`}
+              className={classes.nebula}
+              style={{
+                top: `${nebula.top}%`,
+                left: `${nebula.left}%`,
+                width: `${nebula.width}px`,
+                height: `${nebula.height}px`,
+                background: nebula.color,
+                transform: `rotate(${nebula.rotation}deg)`,
+                animationDelay: `${nebula.animationDelay}s`
+              }}
+            ></div>
+          ))}
+
+          {/* Shooting Stars */}
+          <ShootingStars />
+        </div>
+      )}
 
       <div className={classes.container}>
         <div className={classes.header}>
@@ -189,6 +366,7 @@ const App = () => {
           customColors={customColors}
           setCustomColors={setCustomColors}
           getCurrentGradient={getCurrentGradient}
+          getAccentGradient={getAccentGradient}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
         />
@@ -229,7 +407,131 @@ const useStyles = createUseStyles({
     left: 0,
     width: '100vw',
     height: '100vh',
-    zIndex: 999,
+    zIndex: 0, // Behind everything - just for special background images
+    pointerEvents: 'none',
+  },
+  starsOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    pointerEvents: 'none',
+    zIndex: 1,
+  },
+  shootingStar1: {
+    position: 'fixed',
+    top: '15%',
+    left: '-10%',
+    fontSize: '24px',
+    animation: 'shootingStar1 8s linear infinite',
+    zIndex: 2,
+    pointerEvents: 'none',
+    filter: 'drop-shadow(-15px 0 8px rgba(255,255,255,0.6)) drop-shadow(-30px 0 15px rgba(255,255,255,0.3))',
+    transform: 'rotate(45deg)',
+  },
+  shootingStar2: {
+    position: 'fixed',
+    top: '35%',
+    left: '-10%',
+    fontSize: '20px',
+    animation: 'shootingStar2 12s linear infinite 3s',
+    zIndex: 2,
+    pointerEvents: 'none',
+    filter: 'drop-shadow(-12px 0 6px rgba(255,255,255,0.5)) drop-shadow(-24px 0 12px rgba(255,255,255,0.2))',
+    transform: 'rotate(45deg)',
+  },
+  shootingStar3: {
+    position: 'fixed',
+    top: '65%',
+    left: '-10%',
+    fontSize: '22px',
+    animation: 'shootingStar3 10s linear infinite 6s',
+    zIndex: 2,
+    pointerEvents: 'none',
+    filter: 'drop-shadow(-18px 0 10px rgba(255,255,255,0.7)) drop-shadow(-36px 0 18px rgba(255,255,255,0.4))',
+    transform: 'rotate(45deg)',
+  },
+  star: {
+    position: 'absolute',
+    width: '4px',
+    height: '4px',
+    background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.3) 80%, transparent 100%)',
+    borderRadius: '50%',
+    animation: 'twinkle 3s ease-in-out infinite',
+    pointerEvents: 'none',
+    boxShadow: '0 0 8px rgba(255,255,255,1), 0 0 16px rgba(255,255,255,0.8), 0 0 32px rgba(255,255,255,0.6), 0 0 48px rgba(255,255,255,0.3)',
+    filter: 'blur(0.5px) brightness(1.2)',
+  },
+  brightStar: {
+    position: 'absolute',
+    width: '6px',
+    height: '6px',
+    background: 'radial-gradient(circle, #ffff99 0%, rgba(255,255,153,1) 40%, rgba(255,255,153,0.7) 70%, transparent 100%)',
+    borderRadius: '50%',
+    pointerEvents: 'none',
+    boxShadow: '0 0 12px rgba(255,255,153,1), 0 0 24px rgba(255,255,153,0.9), 0 0 48px rgba(255,255,153,0.7), 0 0 72px rgba(255,255,153,0.4)',
+    animation: 'pulse 4s ease-in-out infinite',
+    filter: 'blur(0.3px) brightness(1.3)',
+  },
+  smallStar: {
+    position: 'absolute',
+    width: '2px',
+    height: '2px',
+    background: 'radial-gradient(circle, #f0f0f0 0%, rgba(240,240,240,0.8) 60%, rgba(224,224,224,0.4) 85%, transparent 100%)',
+    borderRadius: '50%',
+    animation: 'twinkle 2s ease-in-out infinite',
+    pointerEvents: 'none',
+    boxShadow: '0 0 6px rgba(240,240,240,0.9), 0 0 12px rgba(240,240,240,0.6), 0 0 24px rgba(240,240,240,0.3)',
+    filter: 'blur(0.2px) brightness(1.1)',
+  },
+  nebula: {
+    position: 'absolute',
+    borderRadius: '50%',
+    pointerEvents: 'none',
+    animation: 'float 12s ease-in-out infinite',
+    filter: 'blur(8px)',
+    zIndex: 5, // Above stars (1) but below content (50)
+    opacity: 0.9, // Make them more visible
+  },
+  dynamicShootingStar: {
+    position: 'fixed',
+    width: '4px',
+    height: '4px',
+    background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.3) 80%, transparent 100%)',
+    borderRadius: '50%',
+    zIndex: 10, // Above nebulae and stars
+    pointerEvents: 'none',
+    willChange: 'transform, opacity',
+    // Add motion blur trail effect
+    boxShadow: '0 0 8px rgba(255,255,255,1), 0 0 16px rgba(255,255,255,0.8), 0 0 32px rgba(255,255,255,0.6)',
+  },
+  debugShootingStar: {
+    position: 'fixed',
+    top: '6vh',
+    left: '-10vw',
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, #ffffff 0%, #ffffff 60%, rgba(255,255,255,0.6) 80%, transparent 100%)',
+    boxShadow: '0 0 24px rgba(255,255,255,1), 0 0 48px rgba(255,255,255,0.9), 0 0 96px rgba(255,255,255,0.6)',
+    border: '2px solid #ff0066',
+    animation: 'debugShootingStarLTR 6s linear infinite',
+    zIndex: 500,
+    pointerEvents: 'none',
+  },
+  debugShootingStarReverse: {
+    position: 'fixed',
+    top: '12vh',
+    left: '110vw',
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, #ffddaa 0%, #ffddaa 60%, rgba(255,221,170,0.5) 80%, transparent 100%)',
+    boxShadow: '0 0 24px rgba(255,221,170,1), 0 0 48px rgba(255,221,170,0.9), 0 0 96px rgba(255,221,170,0.5)',
+    border: '2px solid #00aaff',
+    animation: 'debugShootingStarRTL 7s linear infinite',
+    zIndex: 500,
     pointerEvents: 'none',
   },
   versionInfo: {
@@ -268,6 +570,8 @@ const useStyles = createUseStyles({
     alignItems: 'center',
     flexWrap: 'wrap',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    position: 'relative',
+    zIndex: 10,
     '@media (max-width: 768px)': {
       fontSize: '2.4rem',
       margin: '3.2rem 0 -1rem 0',
@@ -316,8 +620,9 @@ const useStyles = createUseStyles({
     position: 'relative',
     overflow: 'visible',
     transformStyle: 'preserve-3d',
+    transformOrigin: 'center center',
     willChange: 'transform',
-    transform: 'rotateY(0deg)',
+    transform: 'rotateX(0deg)',
     backgroundColor: 'var(--tile-bg, #6aaa64)',
     '@media (max-width: 768px)': {
       padding: '0.6rem 0.8rem',
@@ -325,10 +630,6 @@ const useStyles = createUseStyles({
       height: '2.8rem',
       fontSize: '1.1rem',
       margin: '0.1rem',
-    },
-    '&:hover': {
-      transform: 'rotateY(180deg) scale(1.04)',
-      boxShadow: '0 14px 28px rgba(15, 23, 42, 0.32)',
     },
   },
   charIntro: {
@@ -347,7 +648,7 @@ const useStyles = createUseStyles({
     background: 'inherit',
     color: 'inherit',
     backfaceVisibility: 'hidden',
-    transform: 'rotateY(0deg)',
+    transform: 'rotateX(0deg)',
     pointerEvents: 'none',
   },
   charFaceBack: {
@@ -360,7 +661,7 @@ const useStyles = createUseStyles({
     background: '#787c7e',
     color: '#f4f5f7',
     backfaceVisibility: 'hidden',
-    transform: 'rotateY(180deg)',
+    transform: 'rotateX(180deg)',
     pointerEvents: 'none',
   },
   color_green: {
@@ -380,20 +681,83 @@ const useStyles = createUseStyles({
   },
   '@keyframes revealChar': {
     '0%': {
-      transform: 'rotateY(0deg)',
+      transform: 'rotateX(0deg)',
       backgroundColor: '#787c7e',
       color: '#d7dadc',
     },
     '45%': {
-      transform: 'rotateY(90deg)',
+      transform: 'rotateX(90deg)',
       backgroundColor: '#787c7e',
       color: '#d7dadc',
     },
     '100%': {
-      transform: 'rotateY(0deg)',
+      transform: 'rotateX(0deg)',
       backgroundColor: 'var(--tile-bg, #6aaa64)',
       color: 'white',
     },
+  },
+
+  '@keyframes pulse': {
+    '0%': {
+      transform: 'scale(1)',
+      opacity: 0.8,
+    },
+    '50%': {
+      transform: 'scale(1.2)',
+      opacity: 1,
+    },
+    '100%': {
+      transform: 'scale(1)',
+      opacity: 0.8,
+    },
+  },
+  '@keyframes float': {
+    '0%': {
+      transform: 'translateY(0px) rotate(0deg)',
+      opacity: 0.6,
+    },
+    '33%': {
+      transform: 'translateY(-10px) rotate(120deg)',
+      opacity: 0.8,
+    },
+    '66%': {
+      transform: 'translateY(5px) rotate(240deg)',
+      opacity: 0.7,
+    },
+    '100%': {
+      transform: 'translateY(0px) rotate(360deg)',
+      opacity: 0.6,
+    },
+  },
+  '@keyframes shootingStar': {
+    '0%': {
+      opacity: 0,
+      transform: 'translate(0, 0) scale(0.8)',
+    },
+    '10%': {
+      opacity: 1,
+      transform: 'translate(0, 0) scale(1)',
+    },
+    '90%': {
+      opacity: 1,
+      transform: 'translate(var(--end-x, 100vw), var(--end-y, 100vh)) scale(1)',
+    },
+    '100%': {
+      opacity: 0,
+      transform: 'translate(var(--end-x, 100vw), var(--end-y, 100vh)) scale(0.5)',
+    },
+  },
+  '@keyframes debugShootingStarLTR': {
+    '0%': { opacity: 0, transform: 'translateX(0) scale(0.8)' },
+    '5%': { opacity: 1, transform: 'translateX(0) scale(1)' },
+    '95%': { opacity: 1, transform: 'translateX(120vw) scale(1)' },
+    '100%': { opacity: 0, transform: 'translateX(120vw) scale(0.7)' },
+  },
+  '@keyframes debugShootingStarRTL': {
+    '0%': { opacity: 0, transform: 'translateX(0) scale(0.8)' },
+    '5%': { opacity: 1, transform: 'translateX(0) scale(1)' },
+    '95%': { opacity: 1, transform: 'translateX(-120vw) scale(1)' },
+    '100%': { opacity: 0, transform: 'translateX(-120vw) scale(0.7)' },
   },
 });
 
