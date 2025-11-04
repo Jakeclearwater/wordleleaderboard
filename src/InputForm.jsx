@@ -611,7 +611,7 @@ Wordle 1,234 4/6
           )}
           {activeTab === "Leaderboard" && (
             <div style={{ padding: "2rem", width: "100%", minHeight: "60vh" }}>
-              <Leaderboard getCurrentGradient={getCurrentGradient} />
+              <Leaderboard getCurrentGradient={getCurrentGradient} getAccentGradient={getAccentGradient} />
             </div>
           )}
           {activeTab === "Chart" && (
@@ -622,7 +622,7 @@ Wordle 1,234 4/6
                   Analyze your Wordle performance trends over time
                 </p>
               </div>
-              <BayesianChart getCurrentGradient={getCurrentGradient} />
+              <BayesianChart getCurrentGradient={getCurrentGradient} getAccentGradient={getAccentGradient} />
             </div>
           )}
           {activeTab === "Training" && (

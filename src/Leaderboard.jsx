@@ -9,13 +9,14 @@ const CACHE_KEY = 'leaderboard-cache';
 const CACHE_TIMESTAMP_KEY = 'leaderboard-cache-timestamp';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-const Leaderboard = ({ getCurrentGradient }) => {
+const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
   const classes = useStyles();
   
-  // Set the gradient as a CSS custom property
+  // Set the gradient as a CSS custom property - use accent gradient for dark themes
   useEffect(() => {
-    document.documentElement.style.setProperty('--dynamic-gradient', getCurrentGradient());
-  }, [getCurrentGradient]);
+    const gradient = getAccentGradient ? getAccentGradient() : getCurrentGradient();
+    document.documentElement.style.setProperty('--dynamic-gradient', gradient);
+  }, [getCurrentGradient, getAccentGradient]);
 
   const [dailyLeaderboard, setDailyLeaderboard] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);

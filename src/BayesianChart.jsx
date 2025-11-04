@@ -34,9 +34,9 @@ const setCookie = (name, value, days = 365) => {
   document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
 };
 
-const BayesianChart = ({ getCurrentGradient }) => {
-  // Memoize the gradient to prevent color changes on re-renders
-  const [initialGradient] = useState(() => getCurrentGradient());
+const BayesianChart = ({ getCurrentGradient, getAccentGradient }) => {
+  // Memoize the gradient to prevent color changes on re-renders - use accent for dark themes
+  const [initialGradient] = useState(() => getAccentGradient ? getAccentGradient() : getCurrentGradient());
   const classes = useStyles({ gradient: initialGradient });
   const [chartData, setChartData] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -1233,6 +1233,7 @@ const BayesianChart = ({ getCurrentGradient }) => {
 
 BayesianChart.propTypes = {
   getCurrentGradient: PropTypes.func.isRequired,
+  getAccentGradient: PropTypes.func,
 };
 
 export default BayesianChart;

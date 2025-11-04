@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import PatchNotesModal from "./PatchNotesModal";
+import versionInfo from './version.json';
 
 const TopRightLogin = ({
   isLoggedIn,
@@ -17,6 +19,60 @@ const TopRightLogin = ({
   setDarkMode
 }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const [showPatchNotes, setShowPatchNotes] = useState(false);
+  const [hasUnreadPatchNotes, setHasUnreadPatchNotes] = useState(false);
+
+  // Check if patch notes should be shown
+  useEffect(() => {
+    const checkPatchNotesStatus = () => {
+      // Only show patch notes if PR info is available
+      if (!versionInfo.pr) {
+        setHasUnreadPatchNotes(false);
+        return;
+      }
+      
+      const latestVersion = versionInfo.version;
+      const buildTime = versionInfo.buildTimestamp;
+      const sixDaysAgo = Date.now() - (6 * 24 * 60 * 60 * 1000);
+      
+      // Check if build is within 6 days
+      const isRecentBuild = buildTime > sixDaysAgo;
+      
+      // Check if user has dismissed this version
+      const dismissedVersion = getCookie('patch-notes-dismissed');
+      const isDismissed = dismissedVersion === latestVersion;
+      
+      // Show notification if build is recent AND not dismissed
+      setHasUnreadPatchNotes(isRecentBuild && !isDismissed);
+    };
+    
+    checkPatchNotesStatus();
+  }, []);
+
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  };
+
+  const setCookie = (name, value, days = 365) => {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+  };
+
+  const handleDismissPatchNotes = () => {
+    const latestVersion = versionInfo.version;
+    setCookie('patch-notes-dismissed', latestVersion, 365);
+    setHasUnreadPatchNotes(false);
+    setShowPatchNotes(false);
+  };
+
+  const handleOpenPatchNotes = () => {
+    setShowPatchNotes(true);
+    setShowSettings(false); // Close settings when opening patch notes
+  };
 
   useEffect(() => {
     const checkMobile = () => {
@@ -107,6 +163,21 @@ const TopRightLogin = ({
             }}>
               ⚙️
             </span>
+            {/* Notification Badge */}
+            {hasUnreadPatchNotes && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                width: '14px',
+                height: '14px',
+                backgroundColor: '#ef4444',
+                borderRadius: '50%',
+                border: '2px solid white',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                animation: 'pulse 2s ease-in-out infinite',
+              }} />
+            )}
           </button>
           {/* Settings Dropdown */}
           {showSettings && (
@@ -395,6 +466,49 @@ const TopRightLogin = ({
                 >
                   🗑️ Clear Cache & Reload
                 </button>
+                {/* What's New Button */}
+                <button
+                  style={{
+                    width: '100%',
+                    fontSize: '14px',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: getAccentGradient ? getAccentGradient() : getCurrentGradient ? getCurrentGradient() : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    position: 'relative',
+                    marginTop: '8px'
+                  }}
+                  onMouseOver={e => {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                  }}
+                  onMouseOut={e => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  onClick={handleOpenPatchNotes}
+                >
+                  🎉 What&apos;s New
+                  {hasUnreadPatchNotes && (
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      backgroundColor: '#ef4444',
+                      borderRadius: '50%',
+                      border: '2px solid white',
+                      boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)',
+                    }} />
+                  )}
+                </button>
               </div>
               {/* Logout Section */}
               <div style={{
@@ -431,6 +545,14 @@ const TopRightLogin = ({
           )}
         </div>
       </>
+    )}
+    {/* Patch Notes Modal */}
+    {showPatchNotes && (
+      <PatchNotesModal 
+        onClose={handleDismissPatchNotes} 
+        getAccentGradient={getAccentGradient}
+        getCurrentGradient={getCurrentGradient}
+      />
     )}
   </div>
   );
