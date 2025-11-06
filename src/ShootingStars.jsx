@@ -91,15 +91,17 @@ export default function ShootingStars({ count = 4 }) {
       el.className = classes.star;
       // Elongated shape: tail extends in the direction opposite to motion
       el.style.width = `${star.tailLength}px`;
-      el.style.height = `${star.size}px`;
-      el.style.borderRadius = `${star.size/2}px`;
+      el.style.height = `${star.size * 1.45}px`;
+      el.style.borderRadius = `${star.size}px`;
+      // Taper the tail so it starts broad then sharpens to a point
+      el.style.clipPath = 'polygon(0% 0%, 22% 12%, 48% 25%, 72% 38%, 94% 46%, 72% 62%, 48% 75%, 22% 88%, 0% 100%, 4% 50%)';
       // Linear gradient from bright colored head to transparent tail
       const { r, g, b } = star.color;
       el.style.background = `linear-gradient(to left, 
-        rgba(${r},${g},${b},0.95) 0%, 
-        rgba(${r},${g},${b},0.85) 10%, 
-        rgba(${r},${g},${b},0.5) 30%, 
-        rgba(${r},${g},${b},0.2) 60%, 
+        rgba(${r},${g},${b},1) 0%, 
+        rgba(${r},${g},${b},0.85) 15%, 
+        rgba(${r},${g},${b},0.55) 35%, 
+        rgba(${r},${g},${b},0.25) 65%, 
         transparent 100%)`;
       el.style.filter = `brightness(${star.brightness}) blur(0.5px)`;
       el.style.boxShadow = `0 0 ${star.size*3}px rgba(${r},${g},${b},0.7), 0 0 ${star.size*6}px rgba(${r},${g},${b},0.4)`;
@@ -119,13 +121,14 @@ export default function ShootingStars({ count = 4 }) {
     if (el) {
       const { r, g, b } = newStar.color;
       el.style.width = `${newStar.tailLength}px`;
-      el.style.height = `${newStar.size}px`;
-      el.style.borderRadius = `${newStar.size/2}px`;
+      el.style.height = `${newStar.size * 1.45}px`;
+      el.style.borderRadius = `${newStar.size}px`;
+      el.style.clipPath = 'polygon(0% 0%, 22% 12%, 48% 25%, 72% 38%, 94% 46%, 72% 62%, 48% 75%, 22% 88%, 0% 100%, 4% 50%)';
       el.style.background = `linear-gradient(to left, 
-        rgba(${r},${g},${b},0.95) 0%, 
-        rgba(${r},${g},${b},0.85) 10%, 
-        rgba(${r},${g},${b},0.5) 30%, 
-        rgba(${r},${g},${b},0.2) 60%, 
+        rgba(${r},${g},${b},1) 0%, 
+        rgba(${r},${g},${b},0.85) 15%, 
+        rgba(${r},${g},${b},0.55) 35%, 
+        rgba(${r},${g},${b},0.25) 65%, 
         transparent 100%)`;
       el.style.filter = `brightness(${newStar.brightness}) blur(0.5px)`;
       el.style.boxShadow = `0 0 ${newStar.size*3}px rgba(${r},${g},${b},0.7), 0 0 ${newStar.size*6}px rgba(${r},${g},${b},0.4)`;

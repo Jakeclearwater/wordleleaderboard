@@ -269,17 +269,25 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
           // Use effective date for consistency
           const effectiveDate = getEffectiveDate(s);
           if (!effectiveDate) return acc;
+          const attemptDate = new Date(effectiveDate);
           
           if (!acc[s.name]) {
-            acc[s.name] = { totalGuesses: 0, attempts: 0, lastAttempt: new Date(effectiveDate) };
+            acc[s.name] = {
+              totalGuesses: 0,
+              attempts: 0,
+              lastAttempt: attemptDate,
+              firstAttempt: attemptDate
+            };
           }
           
           acc[s.name].totalGuesses += g;
           acc[s.name].attempts += 1;
           
-          const attemptDate = new Date(effectiveDate);
           if (attemptDate > acc[s.name].lastAttempt) {
             acc[s.name].lastAttempt = attemptDate;
+          }
+          if (attemptDate < acc[s.name].firstAttempt) {
+            acc[s.name].firstAttempt = attemptDate;
           }
           
           return acc;
@@ -333,12 +341,17 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
           .filter(player => player.attempts >= 5) // Minimum 5 games for raw average
           .sort((a, b) => a.average - b.average); // Sort by raw average (lower is better)
 
+        const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
         const allAttemptsLeaderboardArray = Object.keys(groupedAllTime).map(name => {
           const player = groupedAllTime[name];
+          const spanMs = Math.max(0, player.lastAttempt - player.firstAttempt);
+          const weeksActive = Math.max(1, (spanMs / WEEK_MS) + 1);
+          const gamesPerWeek = player.attempts / weeksActive;
           return {
             name,
             attempts: player.attempts,
-            average: player.totalGuesses / player.attempts
+            average: player.totalGuesses / player.attempts,
+            gamesPerWeek
           };
         }).sort((a, b) => b.attempts - a.attempts);
 
@@ -603,7 +616,7 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
                 <h2 className={classes.cardTitle} title={"Lists players by total games played. Shows their average score. All games count, including DNFs (scored as 7)."}>
                   🚀 Most Active
                 </h2>
-                <p className={classes.cardSubtitle}>Players by total games</p>
+                <p className={classes.cardSubtitle}>Total games with weekly pace</p>
               </div>
               <ul className={classes.leaderboardList}>
                 {allAttemptsLeaderboard.slice(0, 20).map((entry, index) => (
@@ -614,7 +627,7 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
                     <div className={classes.playerInfo}>
                       <div className={classes.playerName}>{entry.name}</div>
                       <div className={classes.playerStats}>
-                        Avg: {entry.average.toFixed(2)}
+                        {entry.gamesPerWeek ? `≈ ${entry.gamesPerWeek.toFixed(1)} games/week` : `Avg ${entry.average.toFixed(2)}`}
                       </div>
                     </div>
                     <div className={classes.scoreDisplay}>

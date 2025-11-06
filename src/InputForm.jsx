@@ -710,7 +710,7 @@ Wordle 1,234 4/6
             backdropFilter: "blur(10px)",
             boxShadow: "var(--shadow-large, 0 8px 32px rgba(0,0,0,0.2))",
             fontWeight: "600"
-          }}>Score submitted successfully! 🎉</div>
+          }}>Score submitted successfully.</div>
         </div>
       )}
   <Confetti show={showConfetti} />
