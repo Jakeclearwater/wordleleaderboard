@@ -1,0 +1,10 @@
+{
+  "id": "custom-2024-11-01-maintenance",
+  "type": "custom",
+  "subject": "Scheduled Maintenance Notice",
+  "body": "Our servers will undergo scheduled maintenance this weekend.\n\nMaintenance Window:\n• Saturday, November 9th, 2024\n• 2:00 AM - 6:00 AM (EST)\n\nDuring this time, the leaderboard may be temporarily unavailable. All data will be preserved and normal service will resume immediately after maintenance is complete.\n\nThank you for your patience!",
+  "sender": "Operations Team",
+  "date": "2024-11-01T15:30:00Z",
+  "badge": "Maintenance",
+  "priority": "high"
+}

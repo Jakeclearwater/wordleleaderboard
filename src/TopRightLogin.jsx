@@ -21,6 +21,8 @@ const TopRightLogin = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showPatchNotes, setShowPatchNotes] = useState(false);
   const [hasUnreadPatchNotes, setHasUnreadPatchNotes] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showCustomColors, setShowCustomColors] = useState(selectedTheme === 'custom');
 
   // Check if patch notes should be shown
   useEffect(() => {
@@ -28,6 +30,7 @@ const TopRightLogin = ({
       // Only show patch notes if PR info is available
       if (!versionInfo.pr) {
         setHasUnreadPatchNotes(false);
+        setUnreadCount(0);
         return;
       }
       
@@ -38,16 +41,29 @@ const TopRightLogin = ({
       // Check if build is within 6 days
       const isRecentBuild = buildTime > sixDaysAgo;
       
-      // Check if user has dismissed this version
-      const dismissedVersion = getCookie('patch-notes-dismissed');
-      const isDismissed = dismissedVersion === latestVersion;
+      // Get list of dismissed versions
+      const dismissedVersionsStr = getCookie('patch-notes-dismissed-versions');
+      const dismissedVersions = dismissedVersionsStr ? dismissedVersionsStr.split(',') : [];
       
-      // Show notification if build is recent AND not dismissed
-      setHasUnreadPatchNotes(isRecentBuild && !isDismissed);
+      // Check if user has dismissed this version
+      const isDismissed = dismissedVersions.includes(latestVersion);
+      
+      // Count unread: if recent and not dismissed, count as 1
+      // In the future, you could track multiple versions here
+      const count = (isRecentBuild && !isDismissed) ? 1 : 0;
+      
+      setHasUnreadPatchNotes(count > 0);
+      setUnreadCount(count);
     };
     
     checkPatchNotesStatus();
   }, []);
+
+  useEffect(() => {
+    if (selectedTheme === 'custom') {
+      setShowCustomColors(true);
+    }
+  }, [selectedTheme]);
 
   const getCookie = (name) => {
     const value = `; ${document.cookie}`;
@@ -62,11 +78,29 @@ const TopRightLogin = ({
     document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
   };
 
-  const handleDismissPatchNotes = () => {
+  const handleDismissVersion = (versionId) => {
+    // Get existing dismissed versions
+    const dismissedVersionsStr = getCookie('patch-notes-dismissed-versions');
+    const dismissedVersions = dismissedVersionsStr ? dismissedVersionsStr.split(',') : [];
+    
+    // Add version if not already dismissed
+    if (!dismissedVersions.includes(versionId)) {
+      dismissedVersions.push(versionId);
+    }
+    
+    // Save updated list
+    setCookie('patch-notes-dismissed-versions', dismissedVersions.join(','), 365);
+    
+    // Recalculate unread count
     const latestVersion = versionInfo.version;
-    setCookie('patch-notes-dismissed', latestVersion, 365);
-    setHasUnreadPatchNotes(false);
-    setShowPatchNotes(false);
+    const buildTime = versionInfo.buildTimestamp;
+    const sixDaysAgo = Date.now() - (6 * 24 * 60 * 60 * 1000);
+    const isRecentBuild = buildTime > sixDaysAgo;
+    const isDismissed = dismissedVersions.includes(latestVersion);
+    const count = (isRecentBuild && !isDismissed) ? 1 : 0;
+    
+    setHasUnreadPatchNotes(count > 0);
+    setUnreadCount(count);
   };
 
   const handleOpenPatchNotes = () => {
@@ -169,14 +203,22 @@ const TopRightLogin = ({
                 position: 'absolute',
                 top: '-4px',
                 right: '-4px',
-                width: '14px',
-                height: '14px',
+                minWidth: '18px',
+                height: '18px',
                 backgroundColor: '#ef4444',
                 borderRadius: '50%',
                 border: '2px solid white',
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                animation: 'pulse 2s ease-in-out infinite',
-              }} />
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                fontWeight: '700',
+                color: 'white',
+                padding: unreadCount > 9 ? '0 4px' : '0'
+              }}>
+                {unreadCount}
+              </span>
             )}
           </button>
           {/* Settings Dropdown */}
@@ -210,7 +252,7 @@ const TopRightLogin = ({
                   fontWeight: '600',
                   color: 'var(--text-primary, #333)'
                 }}>
-                  🎨 Background Themes
+                  ⚙️ App Settings
                 </span>
                 <button
                   style={{
@@ -226,59 +268,109 @@ const TopRightLogin = ({
                   ✕
                 </button>
               </div>
-              {/* Theme Grid */}
+              {/* Theme Picker */}
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                gap: '8px',
-                padding: '12px'
+                padding: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
               }}>
-                {backgroundThemes && Object.entries(backgroundThemes).filter(([key]) => key !== 'custom').map(([key, theme]) => (
-                  <button
-                    key={key}
+                <label style={{
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'var(--text-primary, #333)'
+                }} htmlFor="theme-select">
+                  Theme
+                </label>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <select
+                    id="theme-select"
+                    value={selectedTheme}
+                    onChange={e => setSelectedTheme(e.target.value)}
                     style={{
-                      height: isMobile ? '40px' : '50px',
-                      border: selectedTheme === key ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
+                      flex: 1,
+                      padding: '8px 12px',
                       borderRadius: '8px',
+                      border: '1px solid var(--input-border, #d1d5db)',
+                      background: 'var(--card-bg, rgba(255, 255, 255, 0.9))',
+                      color: 'var(--text-primary, #333)',
+                      fontSize: '13px',
+                      fontWeight: '500',
                       cursor: 'pointer',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedTheme === key ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                      background: theme.gradient,
-                      transform: selectedTheme === key ? 'translateY(-2px)' : 'translateY(0)'
-                    }}
-                    onClick={() => setSelectedTheme(key)}
-                    title={theme.name}
-                    onMouseOver={e => {
-                      if (selectedTheme !== key) {
-                        e.target.style.transform = 'translateY(-1px)';
-                        e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-                      }
-                    }}
-                    onMouseOut={e => {
-                      if (selectedTheme !== key) {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                      }
+                      boxShadow: '0 1px 3px rgba(15, 23, 42, 0.08)'
                     }}
                   >
-                    <span style={{
-                      position: 'absolute',
-                      bottom: '4px',
-                      left: '8px',
-                      right: '8px',
-                      color: 'white',
-                      fontSize: '10px',
-                      fontWeight: '600',
-                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
-                      textAlign: 'center',
-                      lineHeight: '1.2'
-                    }}>
-                      {theme.name}
-                    </span>
-                  </button>
-                ))}
+                    {backgroundThemes && Object.entries(backgroundThemes).map(([key, theme]) => (
+                      <option key={key} value={key}>
+                        {theme.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{
+                    width: '46px',
+                    height: '26px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
+                    background: selectedTheme === 'custom' && customColors
+                      ? `linear-gradient(135deg, ${customColors.color1} 0%, ${customColors.color2} 100%)`
+                      : backgroundThemes && backgroundThemes[selectedTheme]
+                        ? backgroundThemes[selectedTheme].gradient
+                        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.12)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }} aria-hidden="true">
+                    {/* Add stars for space theme */}
+                    {selectedTheme === 'monochrome' && (
+                      <>
+                        <div style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '6px',
+                          width: '1.5px',
+                          height: '1.5px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          boxShadow: '0 0 2px rgba(255, 255, 255, 0.8)'
+                        }} />
+                        <div style={{
+                          position: 'absolute',
+                          top: '12px',
+                          right: '14px',
+                          width: '1px',
+                          height: '1px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                          boxShadow: '0 0 1px rgba(255, 255, 255, 0.6)'
+                        }} />
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '22px',
+                          width: '1px',
+                          height: '1px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                          boxShadow: '0 0 1px rgba(255, 255, 255, 0.5)'
+                        }} />
+                        <div style={{
+                          position: 'absolute',
+                          top: '18px',
+                          right: '8px',
+                          width: '1px',
+                          height: '1px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          boxShadow: '0 0 1.5px rgba(255, 255, 255, 0.7)'
+                        }} />
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               {/* Custom Colors Section */}
               <div style={{
@@ -286,87 +378,124 @@ const TopRightLogin = ({
                 padding: '12px',
                 backgroundColor: 'var(--secondary-bg, rgba(248, 249, 250, 0.8))'
               }}>
-                <div style={{
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary, #333)',
-                  marginBottom: '8px'
-                }}>
-                  🎨 Custom Colors
-                </div>
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  marginBottom: '8px'
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{
-                      fontSize: '10px',
-                      color: 'var(--text-secondary, #666)',
-                      fontWeight: '500',
-                      display: 'block',
-                      marginBottom: '2px'
-                    }}>
-                      Color 1:
-                    </label>
-                    <input
-                      type="color"
-                      value={customColors ? customColors.color1 : '#667eea'}
-                      onChange={e => setCustomColors && setCustomColors(prev => ({ ...prev, color1: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        height: isMobile ? '28px' : '32px',
-                        border: '1px solid var(--input-border, #ddd)',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{
-                      fontSize: '10px',
-                      color: 'var(--text-secondary, #666)',
-                      fontWeight: '500',
-                      display: 'block',
-                      marginBottom: '2px'
-                    }}>
-                      Color 2:
-                    </label>
-                    <input
-                      type="color"
-                      value={customColors ? customColors.color2 : '#764ba2'}
-                      onChange={e => setCustomColors && setCustomColors(prev => ({ ...prev, color2: e.target.value }))}
-                      style={{
-                        width: '100%',
-                        height: isMobile ? '28px' : '32px',
-                        border: '1px solid var(--input-border, #ddd)',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    />
-                  </div>
-                </div>
                 <button
+                  type="button"
+                  onClick={() => setShowCustomColors(prev => !prev)}
                   style={{
                     width: '100%',
-                    height: isMobile ? '36px' : '40px',
-                    border: selectedTheme === 'custom' ? '3px solid rgba(255, 255, 255, 0.8)' : 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    background: customColors ? `linear-gradient(135deg, ${customColors.color1} 0%, ${customColors.color2} 100%)` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
                     fontSize: '12px',
                     fontWeight: '600',
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.7)',
-                    transition: 'all 0.2s ease',
-                    boxShadow: selectedTheme === 'custom' ? '0 4px 12px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)'
+                    color: 'var(--text-primary, #333)',
+                    cursor: 'pointer'
                   }}
-                  onClick={() => setSelectedTheme('custom')}
                 >
-                  Use Custom
+                  <span>🎨 Custom Colors</span>
+                  <span style={{
+                    fontSize: '14px',
+                    transition: 'transform 0.2s ease',
+                    transform: showCustomColors ? 'rotate(180deg)' : 'rotate(0deg)'
+                  }}>▾</span>
                 </button>
+                {showCustomColors && (
+                  <div style={{
+                    marginTop: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px'
+                    }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{
+                          fontSize: '10px',
+                          color: 'var(--text-secondary, #666)',
+                          fontWeight: '500',
+                          display: 'block',
+                          marginBottom: '4px'
+                        }}>
+                          Color 1
+                        </label>
+                        <input
+                          type="color"
+                          value={customColors ? customColors.color1 : '#667eea'}
+                          onChange={e => setCustomColors && setCustomColors(prev => ({ ...prev, color1: e.target.value }))}
+                          style={{
+                            width: '100%',
+                            height: isMobile ? '28px' : '32px',
+                            border: '1px solid var(--input-border, #ddd)',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{
+                          fontSize: '10px',
+                          color: 'var(--text-secondary, #666)',
+                          fontWeight: '500',
+                          display: 'block',
+                          marginBottom: '4px'
+                        }}>
+                          Color 2
+                        </label>
+                        <input
+                          type="color"
+                          value={customColors ? customColors.color2 : '#764ba2'}
+                          onChange={e => setCustomColors && setCustomColors(prev => ({ ...prev, color2: e.target.value }))}
+                          style={{
+                            width: '100%',
+                            height: isMobile ? '28px' : '32px',
+                            border: '1px solid var(--input-border, #ddd)',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <div style={{
+                        flex: 1,
+                        height: '28px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-light, rgba(0,0,0,0.12))',
+                        background: customColors ? `linear-gradient(135deg, ${customColors.color1} 0%, ${customColors.color2} 100%)` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        boxShadow: 'inset 0 0 4px rgba(15, 23, 42, 0.12)'
+                      }} aria-hidden="true" />
+                      {selectedTheme !== 'custom' && (
+                        <button
+                          type="button"
+                          style={{
+                            marginLeft: '12px',
+                            background: 'none',
+                            border: 'none',
+                            color: '#6366f1',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            textDecoration: 'underline'
+                          }}
+                          onClick={() => setSelectedTheme('custom')}
+                        >
+                          Use these colors
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              {/* Dark Mode Toggle Section */}
+              {/* Quick Actions */}
               <div style={{
                 borderTop: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
                 padding: '12px',
@@ -378,137 +507,141 @@ const TopRightLogin = ({
                   justifyContent: 'space-between',
                   gap: '12px'
                 }}>
+                  <span style={{
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: 'var(--text-primary, #333)'
+                  }}>
+                    Quick Actions
+                  </span>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '10px'
                   }}>
-                    <span style={{ fontSize: '16px' }}>{darkMode ? '🌙' : '☀️'}</span>
-                    <span style={{
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: 'var(--text-primary, #333)'
-                    }}>
-                      Dark Mode
-                    </span>
+                    <button
+                      type="button"
+                      title="Clear cache & reload"
+                      aria-label="Clear cache and reload"
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        border: '1px solid var(--border-light, rgba(0,0,0,0.15))',
+                        background: 'var(--card-bg, white)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                        boxShadow: 'none'
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.15)';
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                      onClick={() => {
+                        localStorage.removeItem('leaderboard-cache');
+                        localStorage.removeItem('leaderboard-cache-timestamp');
+                        localStorage.removeItem('bayesian-chart-cache');
+                        localStorage.removeItem('bayesian-chart-cache-timestamp');
+                        console.log('🗑️ Cache manually cleared');
+                        alert('Cache cleared! The page will reload to fetch fresh data.');
+                        window.location.reload();
+                      }}
+                    >
+                      🗑️
+                    </button>
+                    <button
+                      type="button"
+                      title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                      aria-label="Toggle dark mode"
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        border: '1px solid var(--border-light, rgba(0,0,0,0.15))',
+                        background: 'var(--card-bg, white)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                        boxShadow: 'none'
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.15)';
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                      onClick={() => setDarkMode(!darkMode)}
+                    >
+                      {darkMode ? '☀️' : '🌙'}
+                    </button>
+                    <button
+                      type="button"
+                      title={hasUnreadPatchNotes ? "Messages (new updates available)" : "Messages"}
+                      aria-label="Show messages"
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        border: '1px solid var(--border-light, rgba(0,0,0,0.15))',
+                        background: 'var(--card-bg, white)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                        position: 'relative',
+                        boxShadow: 'none'
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.15)';
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                      onClick={handleOpenPatchNotes}
+                    >
+                      💬
+                      {hasUnreadPatchNotes && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '2px',
+                          right: '2px',
+                          minWidth: '16px',
+                          height: '16px',
+                          backgroundColor: '#ef4444',
+                          borderRadius: '50%',
+                          border: '2px solid white',
+                          boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '9px',
+                          fontWeight: '700',
+                          color: 'white',
+                          padding: unreadCount > 9 ? '0 3px' : '0'
+                        }}>
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    style={{
-                      width: '50px',
-                      height: '26px',
-                      borderRadius: '13px',
-                      border: 'none',
-                      background: darkMode ? '#3b82f6' : '#d1d5db',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      transition: 'background 0.3s ease',
-                      padding: 0
-                    }}
-                    onClick={() => setDarkMode(!darkMode)}
-                  >
-                    <div style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      background: 'white',
-                      position: 'absolute',
-                      top: '3px',
-                      left: darkMode ? '27px' : '3px',
-                      transition: 'left 0.3s ease',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
-                    }} />
-                  </button>
                 </div>
-              </div>
-              {/* Clear Cache Section */}
-              <div style={{
-                borderTop: '1px solid var(--border-light, rgba(0, 0, 0, 0.1))',
-                padding: '12px',
-                backgroundColor: 'var(--secondary-bg, rgba(248, 249, 250, 0.8))'
-              }}>
-                <button
-                  style={{
-                    width: '100%',
-                    fontSize: "13px",
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--border-light, #ddd)",
-                    background: "var(--card-bg, white)",
-                    color: "var(--text-primary, #333)",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                    transition: "all 0.2s ease",
-                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px"
-                  }}
-                  onMouseOver={e => {
-                    e.target.style.background = '#f59e0b';
-                    e.target.style.color = 'white';
-                    e.target.style.borderColor = '#f59e0b';
-                  }}
-                  onMouseOut={e => {
-                    e.target.style.background = 'var(--card-bg, white)';
-                    e.target.style.color = 'var(--text-primary, #333)';
-                    e.target.style.borderColor = 'var(--border-light, #ddd)';
-                  }}
-                  onClick={() => {
-                    localStorage.removeItem('leaderboard-cache');
-                    localStorage.removeItem('leaderboard-cache-timestamp');
-                    localStorage.removeItem('bayesian-chart-cache');
-                    localStorage.removeItem('bayesian-chart-cache-timestamp');
-                    console.log('🗑️ Cache manually cleared');
-                    alert('Cache cleared! The page will reload to fetch fresh data.');
-                    window.location.reload();
-                  }}
-                >
-                  🗑️ Clear Cache & Reload
-                </button>
-                {/* What's New Button */}
-                <button
-                  style={{
-                    width: '100%',
-                    fontSize: '14px',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: getAccentGradient ? getAccentGradient() : getCurrentGradient ? getCurrentGradient() : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    transition: 'all 0.2s ease',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    position: 'relative',
-                    marginTop: '8px'
-                  }}
-                  onMouseOver={e => {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-                  }}
-                  onMouseOut={e => {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                  onClick={handleOpenPatchNotes}
-                >
-                  🎉 What&apos;s New
-                  {hasUnreadPatchNotes && (
-                    <span style={{
-                      width: '8px',
-                      height: '8px',
-                      backgroundColor: '#ef4444',
-                      borderRadius: '50%',
-                      border: '2px solid white',
-                      boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)',
-                    }} />
-                  )}
-                </button>
               </div>
               {/* Logout Section */}
               <div style={{
@@ -549,9 +682,11 @@ const TopRightLogin = ({
     {/* Patch Notes Modal */}
     {showPatchNotes && (
       <PatchNotesModal 
-        onClose={handleDismissPatchNotes} 
+        onClose={() => setShowPatchNotes(false)} 
         getAccentGradient={getAccentGradient}
         getCurrentGradient={getCurrentGradient}
+        dismissedVersions={getCookie('patch-notes-dismissed-versions')?.split(',') || []}
+        onDismissVersion={handleDismissVersion}
       />
     )}
   </div>

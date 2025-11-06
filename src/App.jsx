@@ -160,13 +160,42 @@ const App = () => {
   // Generate random space elements on component mount
   const [spaceElements] = useState(() => {
     const generateRandomStars = (count, type) => {
-      return Array.from({ length: count }, (_, i) => ({
-        id: i,
-        top: Math.random() * 90 + 5, // 5% to 95%
-        left: Math.random() * 90 + 5, // 5% to 95%
-        animationDelay: Math.random() * 4, // 0-4s delay
-        size: type === 'small' ? Math.random() * 2 + 1 : type === 'bright' ? Math.random() * 3 + 4 : Math.random() * 2 + 3,
-      }));
+      return Array.from({ length: count }, (_, i) => {
+        const base = {
+          id: i,
+          top: Math.random() * 90 + 5, // 5% to 95%
+          left: Math.random() * 90 + 5, // 5% to 95%
+          animationDelay: type === 'distant' ? 0 : Math.random() * 4, // Distant stars stay fixed
+        };
+
+        if (type === 'distant') {
+          return {
+            ...base,
+            size: Math.random() * 0.9 + 0.6,
+            opacity: 0.24 + Math.random() * 0.25,
+            blur: Math.random() * 0.6 + 0.2,
+          };
+        }
+
+        if (type === 'small') {
+          return {
+            ...base,
+            size: Math.random() * 2 + 1,
+          };
+        }
+
+        if (type === 'bright') {
+          return {
+            ...base,
+            size: Math.random() * 3 + 4,
+          };
+        }
+
+        return {
+          ...base,
+          size: Math.random() * 2 + 3,
+        };
+      });
     };
 
     // Legacy shooting star generator removed. Shooting stars now handled exclusively
@@ -194,6 +223,7 @@ const App = () => {
     };
 
     return {
+      distantStars: generateRandomStars(60, 'distant'),
       regularStars: generateRandomStars(25, 'regular'),
       brightStars: generateRandomStars(8, 'bright'),
       smallStars: generateRandomStars(15, 'small'),
@@ -284,6 +314,22 @@ const App = () => {
         return isSpaceTheme;
       })() && (
         <div className={classes.starsOverlay}>
+          {/* Distant Fixed Stars */}
+          {spaceElements.distantStars.map(star => (
+            <div
+              key={`distant-${star.id}`}
+              className={classes.distantStar}
+              style={{
+                top: `${star.top}%`,
+                left: `${star.left}%`,
+                width: `${star.size}px`,
+                height: `${star.size}px`,
+                opacity: star.opacity,
+                filter: `blur(${star.blur}px)`
+              }}
+            ></div>
+          ))}
+
           {/* Regular Twinkling Stars */}
           {spaceElements.regularStars.map(star => (
             <div
@@ -419,6 +465,15 @@ const useStyles = createUseStyles({
     pointerEvents: 'none',
     zIndex: 1,
   },
+  distantStar: {
+    position: 'absolute',
+    width: '1.2px',
+    height: '1.2px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 60%, transparent 100%)',
+    pointerEvents: 'none',
+    mixBlendMode: 'screen',
+  },
   shootingStar1: {
     position: 'fixed',
     top: '15%',
@@ -487,12 +542,27 @@ const useStyles = createUseStyles({
   },
   nebula: {
     position: 'absolute',
-    borderRadius: '50%',
+    borderRadius: '60%',
     pointerEvents: 'none',
     animation: 'float 12s ease-in-out infinite',
-    filter: 'blur(8px)',
-    zIndex: 5, // Above stars (1) but below content (50)
-    opacity: 0.9, // Make them more visible
+    filter: 'blur(8px) drop-shadow(0 0 60px rgba(120, 150, 255, 0.28)) drop-shadow(0 0 120px rgba(90, 110, 200, 0.18))',
+    zIndex: 0,
+    opacity: 0.8,
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      width: '320%',
+      height: '320%',
+      transform: 'translate(-50%, -50%)',
+      borderRadius: '60%',
+      background: 'radial-gradient(circle, rgba(160, 190, 255, 0.22) 0%, rgba(110, 140, 220, 0.16) 38%, rgba(70, 90, 180, 0.08) 60%, transparent 80%)',
+      filter: 'blur(24px)',
+      opacity: 0.55,
+      mixBlendMode: 'screen',
+      pointerEvents: 'none',
+    },
   },
   dynamicShootingStar: {
     position: 'fixed',
@@ -505,34 +575,6 @@ const useStyles = createUseStyles({
     willChange: 'transform, opacity',
     // Add motion blur trail effect
     boxShadow: '0 0 8px rgba(255,255,255,1), 0 0 16px rgba(255,255,255,0.8), 0 0 32px rgba(255,255,255,0.6)',
-  },
-  debugShootingStar: {
-    position: 'fixed',
-    top: '6vh',
-    left: '-10vw',
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, #ffffff 0%, #ffffff 60%, rgba(255,255,255,0.6) 80%, transparent 100%)',
-    boxShadow: '0 0 24px rgba(255,255,255,1), 0 0 48px rgba(255,255,255,0.9), 0 0 96px rgba(255,255,255,0.6)',
-    border: '2px solid #ff0066',
-    animation: 'debugShootingStarLTR 6s linear infinite',
-    zIndex: 500,
-    pointerEvents: 'none',
-  },
-  debugShootingStarReverse: {
-    position: 'fixed',
-    top: '12vh',
-    left: '110vw',
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, #ffddaa 0%, #ffddaa 60%, rgba(255,221,170,0.5) 80%, transparent 100%)',
-    boxShadow: '0 0 24px rgba(255,221,170,1), 0 0 48px rgba(255,221,170,0.9), 0 0 96px rgba(255,221,170,0.5)',
-    border: '2px solid #00aaff',
-    animation: 'debugShootingStarRTL 7s linear infinite',
-    zIndex: 500,
-    pointerEvents: 'none',
   },
   versionInfo: {
     color: 'white',
@@ -746,18 +788,6 @@ const useStyles = createUseStyles({
       opacity: 0,
       transform: 'translate(var(--end-x, 100vw), var(--end-y, 100vh)) scale(0.5)',
     },
-  },
-  '@keyframes debugShootingStarLTR': {
-    '0%': { opacity: 0, transform: 'translateX(0) scale(0.8)' },
-    '5%': { opacity: 1, transform: 'translateX(0) scale(1)' },
-    '95%': { opacity: 1, transform: 'translateX(120vw) scale(1)' },
-    '100%': { opacity: 0, transform: 'translateX(120vw) scale(0.7)' },
-  },
-  '@keyframes debugShootingStarRTL': {
-    '0%': { opacity: 0, transform: 'translateX(0) scale(0.8)' },
-    '5%': { opacity: 1, transform: 'translateX(0) scale(1)' },
-    '95%': { opacity: 1, transform: 'translateX(-120vw) scale(1)' },
-    '100%': { opacity: 0, transform: 'translateX(-120vw) scale(0.7)' },
   },
 });
 

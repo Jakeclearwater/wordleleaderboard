@@ -1,0 +1,15 @@
+{
+  "id": "custom-2024-11-07-example",
+  "type": "custom",
+  "version": "1.20.0",
+  "subject": "Welcome to the new Message Center!",
+  "body": "We've upgraded our notification system to support custom messages. You can now receive announcements, updates, and important information directly in your message center.\n\nThis is an example of a custom notification. Admin users can create new notifications by adding JSON files to the notifications folder.",
+  "sender": "System Administrator",
+  "date": "2024-11-07T12:00:00Z",
+  "badge": "Announcement",
+  "link": {
+    "url": "https://github.com/Jakeclearwater/wordleleaderboard",
+    "text": "View Project"
+  },
+  "priority": "normal"
+}

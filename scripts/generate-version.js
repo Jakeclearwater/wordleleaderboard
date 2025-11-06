@@ -2,7 +2,7 @@
 // This script generates a version file from git info at build time
 
 import { execSync } from 'child_process';
-import { writeFileSync, readFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import https from 'https';
