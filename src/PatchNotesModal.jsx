@@ -357,27 +357,49 @@ const PatchNotesModal = ({ onClose, getAccentGradient, getCurrentGradient, dismi
     .filter(notification => notification && notification.type === 'custom')
     .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
 
-  // Build version-based notification
-  const versionNotification = versionInfo.pr ? {
-    id: versionInfo.version,
-    version: versionInfo.version,
-    prNumber: versionInfo.pr.prNumber,
-    prTitle: versionInfo.pr.prTitle,
-    prBody: versionInfo.pr.prBody,
-    prUrl: versionInfo.pr.prUrl,
-    prAuthor: versionInfo.pr.prAuthor,
-    mergedAt: versionInfo.pr.prMergedAt,
-    buildTimestamp: versionInfo.buildTimestamp,
-  } : {
-    id: versionInfo.version,
-    version: versionInfo.version,
-    commitMessage: versionInfo.commitMessage || 'Latest Update',
-    commitDate: versionInfo.commitDate || versionInfo.buildTime,
-    buildTimestamp: versionInfo.buildTimestamp,
-  };
+  // Build notifications from recent PRs (last 30 days)
+  const prNotifications = [];
+  
+  // Add current PR if available
+  if (versionInfo.pr) {
+    prNotifications.push({
+      id: `pr-${versionInfo.pr.prNumber}`,
+      version: versionInfo.version,
+      prNumber: versionInfo.pr.prNumber,
+      prTitle: versionInfo.pr.prTitle,
+      prBody: versionInfo.pr.prBody,
+      prUrl: versionInfo.pr.prUrl,
+      prAuthor: versionInfo.pr.prAuthor,
+      mergedAt: versionInfo.pr.prMergedAt,
+      buildTimestamp: versionInfo.buildTimestamp,
+    });
+  }
+  
+  // Add recent PRs from last 30 days
+  if (versionInfo.recentPRs && Array.isArray(versionInfo.recentPRs)) {
+    versionInfo.recentPRs.forEach(pr => {
+      // Avoid duplicates with current PR
+      const isDuplicate = versionInfo.pr && pr.prNumber === versionInfo.pr.prNumber;
+      if (!isDuplicate) {
+        prNotifications.push({
+          id: `pr-${pr.prNumber}`,
+          prNumber: pr.prNumber,
+          prTitle: pr.prTitle,
+          prBody: pr.prBody,
+          prUrl: pr.prUrl,
+          prAuthor: pr.prAuthor,
+          mergedAt: pr.prMergedAt,
+        });
+      }
+    });
+  }
 
-  // Merge custom notifications with version notification
-  const notifications = [versionNotification, ...customNotificationsList];
+  // Merge all notifications (PRs + custom notifications), sorted by date
+  const notifications = [...prNotifications, ...customNotificationsList].sort((a, b) => {
+    const dateA = new Date(a.mergedAt || a.date || 0);
+    const dateB = new Date(b.mergedAt || b.date || 0);
+    return dateB - dateA; // Newest first
+  });
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -402,6 +424,10 @@ const PatchNotesModal = ({ onClose, getAccentGradient, getCurrentGradient, dismi
         newSet.delete(notificationId);
       } else {
         newSet.add(notificationId);
+        // Auto-dismiss (mark as read) when expanding
+        if (!isNotificationDismissed(notificationId)) {
+          handleDismissNotification(notificationId);
+        }
       }
       return newSet;
     });
@@ -493,19 +519,8 @@ const PatchNotesModal = ({ onClose, getAccentGradient, getCurrentGradient, dismi
                         )}
                       </div>
                     </div>
-                    {isDismissed ? (
+                    {isDismissed && (
                       <span className={classes.dismissedBadge}>✓ Read</span>
-                    ) : (
-                      <button 
-                        className={classes.dismissVersionButton}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDismissNotification(notification.id);
-                        }}
-                        title="Mark as read"
-                      >
-                        Mark as read
-                      </button>
                     )}
                   </div>
                 ) : (
@@ -548,19 +563,8 @@ const PatchNotesModal = ({ onClose, getAccentGradient, getCurrentGradient, dismi
                           }
                         </div>
                       </div>
-                      {isDismissed ? (
+                      {isDismissed && (
                         <span className={classes.dismissedBadge}>✓ Read</span>
-                      ) : (
-                        <button 
-                          className={classes.dismissVersionButton}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDismissNotification(notification.id);
-                          }}
-                          title="Mark as read"
-                        >
-                          Mark as read
-                        </button>
                       )}
                     </div>
                     

@@ -61,6 +61,65 @@ async function fetchPRInfo(owner, repo, commitHash) {
   });
 }
 
+// Fetch recent merged PRs from the last 30 days
+async function fetchRecentPRs(owner, repo) {
+  return new Promise((resolve) => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const since = thirtyDaysAgo.toISOString();
+
+    const options = {
+      hostname: 'api.github.com',
+      path: `/repos/${owner}/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100`,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Node.js',
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          if (res.statusCode === 200) {
+            const pulls = JSON.parse(data);
+            // Filter for merged PRs in the last 30 days
+            const recentMergedPRs = pulls
+              .filter(pr => pr.merged_at && new Date(pr.merged_at) >= thirtyDaysAgo)
+              .map(pr => ({
+                prNumber: pr.number,
+                prTitle: pr.title,
+                prBody: pr.body,
+                prUrl: pr.html_url,
+                prAuthor: pr.user.login,
+                prMergedAt: pr.merged_at
+              }));
+            resolve(recentMergedPRs);
+          } else {
+            console.log(`GitHub API returned status ${res.statusCode}`);
+            resolve([]);
+          }
+        } catch (e) {
+          console.error('Error parsing PR data:', e);
+          resolve([]);
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      console.error('Error fetching PRs:', e);
+      resolve([]);
+    });
+    req.setTimeout(5000, () => {
+      req.destroy();
+      resolve([]);
+    });
+    req.end();
+  });
+}
+
 async function generateVersion() {
 try {
   // Get git commit hash (short)
@@ -110,6 +169,11 @@ try {
   console.log('🔍 Checking for PR information...');
   const prInfo = await fetchPRInfo('Jakeclearwater', 'wordleleaderboard', fullCommitHash);
 
+  // Fetch all recent PRs from the last 30 days
+  console.log('🔍 Fetching recent PRs from last 30 days...');
+  const recentPRs = await fetchRecentPRs('Jakeclearwater', 'wordleleaderboard');
+  console.log(`✅ Found ${recentPRs.length} merged PRs in the last 30 days`);
+
   const versionInfo = {
     version: semver,
     commit: commitHash,
@@ -122,7 +186,8 @@ try {
     commitDate: commitDate,
     commitMessage: commitMessage,
     commitBody: commitBody,
-    ...(prInfo && { pr: prInfo })
+    ...(prInfo && { pr: prInfo }),
+    recentPRs: recentPRs
   };
 
   // Write to src/version.json
