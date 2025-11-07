@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import PatchNotesModal from "./PatchNotesModal";
 import versionInfo from './version.json';
 
+// Import custom notifications
+const customNotifications = import.meta.glob('../notifications/*.json', { eager: true });
+
 const TopRightLogin = ({
   isLoggedIn,
   username,
@@ -27,31 +30,39 @@ const TopRightLogin = ({
   // Check if patch notes should be shown
   useEffect(() => {
     const checkPatchNotesStatus = () => {
-      // Only show patch notes if PR info is available
-      if (!versionInfo.pr) {
-        setHasUnreadPatchNotes(false);
-        setUnreadCount(0);
-        return;
+      // Load all custom notifications
+      const customNotificationsList = Object.values(customNotifications)
+        .map(module => module.default)
+        .filter(notification => notification && notification.type === 'custom');
+      
+      // Build list of all PR notifications
+      const prNotifications = [];
+      
+      if (versionInfo.pr) {
+        prNotifications.push({ id: `pr-${versionInfo.pr.prNumber}` });
       }
       
-      const latestVersion = versionInfo.version;
-      const buildTime = versionInfo.buildTimestamp;
-      const sixDaysAgo = Date.now() - (6 * 24 * 60 * 60 * 1000);
+      if (versionInfo.recentPRs && Array.isArray(versionInfo.recentPRs)) {
+        versionInfo.recentPRs.forEach(pr => {
+          const isDuplicate = versionInfo.pr && pr.prNumber === versionInfo.pr.prNumber;
+          if (!isDuplicate) {
+            prNotifications.push({ id: `pr-${pr.prNumber}` });
+          }
+        });
+      }
       
-      // Check if build is within 6 days
-      const isRecentBuild = buildTime > sixDaysAgo;
+      const allNotifications = [...prNotifications, ...customNotificationsList];
       
       // Get list of dismissed versions
       const dismissedVersionsStr = getCookie('patch-notes-dismissed-versions');
-      const dismissedVersions = dismissedVersionsStr ? dismissedVersionsStr.split(',') : [];
+      const dismissedVersions = dismissedVersionsStr ? dismissedVersionsStr.split(',').filter(v => v) : [];
       
-      // Check if user has dismissed this version
-      const isDismissed = dismissedVersions.includes(latestVersion);
+      // Count unread notifications
+      const unreadNotifications = allNotifications.filter(notification => {
+        return !dismissedVersions.includes(notification.id);
+      });
       
-      // Count unread: if recent and not dismissed, count as 1
-      // In the future, you could track multiple versions here
-      const count = (isRecentBuild && !isDismissed) ? 1 : 0;
-      
+      const count = unreadNotifications.length;
       setHasUnreadPatchNotes(count > 0);
       setUnreadCount(count);
     };
@@ -81,7 +92,7 @@ const TopRightLogin = ({
   const handleDismissVersion = (versionId) => {
     // Get existing dismissed versions
     const dismissedVersionsStr = getCookie('patch-notes-dismissed-versions');
-    const dismissedVersions = dismissedVersionsStr ? dismissedVersionsStr.split(',') : [];
+    const dismissedVersions = dismissedVersionsStr ? dismissedVersionsStr.split(',').filter(v => v) : [];
     
     // Add version if not already dismissed
     if (!dismissedVersions.includes(versionId)) {
@@ -91,14 +102,35 @@ const TopRightLogin = ({
     // Save updated list
     setCookie('patch-notes-dismissed-versions', dismissedVersions.join(','), 365);
     
-    // Recalculate unread count
-    const latestVersion = versionInfo.version;
-    const buildTime = versionInfo.buildTimestamp;
-    const sixDaysAgo = Date.now() - (6 * 24 * 60 * 60 * 1000);
-    const isRecentBuild = buildTime > sixDaysAgo;
-    const isDismissed = dismissedVersions.includes(latestVersion);
-    const count = (isRecentBuild && !isDismissed) ? 1 : 0;
+    // Recalculate unread count for all notifications
+    const customNotificationsList = Object.values(customNotifications)
+      .map(module => module.default)
+      .filter(notification => notification && notification.type === 'custom');
     
+    // Build list of all PR notifications
+    const prNotifications = [];
+    
+    if (versionInfo.pr) {
+      prNotifications.push({ id: `pr-${versionInfo.pr.prNumber}` });
+    }
+    
+    if (versionInfo.recentPRs && Array.isArray(versionInfo.recentPRs)) {
+      versionInfo.recentPRs.forEach(pr => {
+        const isDuplicate = versionInfo.pr && pr.prNumber === versionInfo.pr.prNumber;
+        if (!isDuplicate) {
+          prNotifications.push({ id: `pr-${pr.prNumber}` });
+        }
+      });
+    }
+    
+    const allNotifications = [...prNotifications, ...customNotificationsList];
+    
+    // Count unread notifications
+    const unreadNotifications = allNotifications.filter(notification => {
+      return !dismissedVersions.includes(notification.id);
+    });
+    
+    const count = unreadNotifications.length;
     setHasUnreadPatchNotes(count > 0);
     setUnreadCount(count);
   };
