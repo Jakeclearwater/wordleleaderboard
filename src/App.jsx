@@ -4,7 +4,69 @@ import InputForm from './InputForm';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
 import githubLogo from './assets/github-logo.svg';
+import christmasHat from './assets/christmas-hat.png';
 import versionInfo from './version.json';
+
+// Festive decorations configuration
+const festiveDecorations = [
+  {
+    id: 'christmas-hat',
+    image: christmasHat,
+    alt: 'Christmas Hat',
+    startDate: { month: 12, day: 1 },  // December 1st
+    endDate: { month: 12, day: 29 },   // December 29th
+    style: {
+      position: 'absolute',
+      right: '-40px',
+      top: '-40px',
+      width: '120px',
+      transform: 'rotate(15deg)',
+    },
+    mobileStyle: {
+      width: '80px',
+      right: '-80px',
+      top: '-25px',
+    }
+  },
+  // Future decorations can be added here:
+  // {
+  //   id: 'easter-egg',
+  //   image: easterEgg,
+  //   alt: 'Easter Egg',
+  //   startDate: { month: 3, day: 15 },  // March 15th
+  //   endDate: { month: 4, day: 15 },     // April 15th
+  //   style: { ... },
+  //   mobileStyle: { ... }
+  // },
+];
+
+// Check if current date is within decoration's date range
+const isDecorationActive = (decoration) => {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+  const currentDay = now.getDate();
+  
+  const { startDate, endDate } = decoration;
+  
+  // Handle same-month range
+  if (startDate.month === endDate.month) {
+    return currentMonth === startDate.month && 
+           currentDay >= startDate.day && 
+           currentDay <= endDate.day;
+  }
+  
+  // Handle cross-month range (e.g., Dec 20 - Jan 5)
+  if (startDate.month > endDate.month) {
+    return (currentMonth === startDate.month && currentDay >= startDate.day) ||
+           (currentMonth === endDate.month && currentDay <= endDate.day) ||
+           (currentMonth > startDate.month || currentMonth < endDate.month);
+  }
+  
+  // Handle normal cross-month range (e.g., March 15 - April 15)
+  return (currentMonth === startDate.month && currentDay >= startDate.day) ||
+         (currentMonth === endDate.month && currentDay <= endDate.day) ||
+         (currentMonth > startDate.month && currentMonth < endDate.month);
+};
 
 // Get static version info from build time
 const getAppVersion = () => {
@@ -203,11 +265,11 @@ const App = () => {
 
     const generateNebulae = () => {
       const nebulaColors = [
-        'radial-gradient(ellipse 60% 40% at 30% 30%, rgba(138,43,226,0.4) 0%, rgba(75,0,130,0.3) 40%, rgba(25,25,112,0.2) 70%, transparent 100%)', // Purple
-        'radial-gradient(ellipse 50% 35% at 40% 20%, rgba(255,69,0,0.4) 0%, rgba(255,140,0,0.3) 40%, rgba(220,20,60,0.2) 70%, transparent 100%)', // Orange-Red
-        'radial-gradient(ellipse 55% 45% at 25% 35%, rgba(0,191,255,0.4) 0%, rgba(30,144,255,0.3) 40%, rgba(0,0,139,0.2) 70%, transparent 100%)', // Blue
-        'radial-gradient(ellipse 65% 30% at 35% 40%, rgba(50,205,50,0.4) 0%, rgba(34,139,34,0.3) 40%, rgba(0,100,0,0.2) 70%, transparent 100%)', // Green
-        'radial-gradient(ellipse 45% 50% at 45% 25%, rgba(255,20,147,0.4) 0%, rgba(199,21,133,0.3) 40%, rgba(139,0,139,0.2) 70%, transparent 100%)', // Pink-Magenta
+        'radial-gradient(ellipse 60% 40% at 30% 30%, rgba(138,43,226,0.4) 0%, rgba(75,0,130,0.3) 40%, rgba(25,25,112,0.2) 70%, transparent 90%)', // Purple
+        'radial-gradient(ellipse 50% 35% at 40% 20%, rgba(255,69,0,0.4) 0%, rgba(255,140,0,0.3) 40%, rgba(220,20,60,0.2) 70%, transparent 90%)', // Orange-Red
+        'radial-gradient(ellipse 55% 45% at 25% 35%, rgba(0,191,255,0.4) 0%, rgba(30,144,255,0.3) 40%, rgba(0,0,139,0.2) 70%, transparent 90%)', // Blue
+        'radial-gradient(ellipse 65% 30% at 35% 40%, rgba(50,205,50,0.4) 0%, rgba(34,139,34,0.3) 40%, rgba(0,100,0,0.2) 70%, transparent 90%)', // Green
+        'radial-gradient(ellipse 45% 50% at 45% 25%, rgba(255,20,147,0.4) 0%, rgba(199,21,133,0.3) 40%, rgba(139,0,139,0.2) 70%, transparent 90%)', // Pink-Magenta
       ];
       
       return Array.from({ length: 4 }, (_, i) => ({
@@ -404,7 +466,21 @@ const App = () => {
             <img src={githubLogo} alt="GitHub" className={classes.githubLogo} />
           </a>
         </div>
-        <h1 className={classes.title}>{wordleSpans}</h1>
+        <div className={classes.titleContainer}>
+          <h1 className={classes.title}>{wordleSpans}</h1>
+          {festiveDecorations
+            .filter(decoration => isDecorationActive(decoration))
+            .map(decoration => (
+              <img 
+                key={decoration.id}
+                src={decoration.image} 
+                alt={decoration.alt} 
+                className={classes.festiveDecoration}
+                style={decoration.style}
+              />
+            ))
+          }
+        </div>
         <InputForm 
           backgroundThemes={backgroundThemes}
           selectedTheme={selectedTheme}
@@ -600,12 +676,22 @@ const useStyles = createUseStyles({
     display: 'flex',
     alignItems: 'center',
   },
+  titleContainer: {
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: '4rem 0 -1rem 0',
+    '@media (max-width: 768px)': {
+      margin: '3.2rem 0 -1rem 0',
+    },
+  },
   title: {
     color: 'white',
     fontSize: '3.8rem',
     fontWeight: '900',
     letterSpacing: '-0.02em',
-    margin: '4rem 0 -1rem 0',
+    margin: 0,
     padding: '0.5rem',
     display: 'flex',
     justifyContent: 'center',
@@ -616,7 +702,14 @@ const useStyles = createUseStyles({
     zIndex: 10,
     '@media (max-width: 768px)': {
       fontSize: '2.4rem',
-      margin: '3.2rem 0 -1rem 0',
+    },
+  },
+  festiveDecoration: {
+    height: 'auto',
+    zIndex: 11,
+    pointerEvents: 'none',
+    '@media (max-width: 768px)': {
+      // Mobile-specific styles are applied inline from config
     },
   },
   footer: {
