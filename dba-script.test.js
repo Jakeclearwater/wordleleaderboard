@@ -94,29 +94,7 @@ class MockDocumentSnapshot {
   }
 }
 
-// Mock query snapshot
-class MockQuerySnapshot {
-  constructor(docs) {
-    this._docs = docs.map(d => new MockDocumentSnapshot(d.id, d.data));
-  }
-  
-  get empty() {
-    return this._docs.length === 0;
-  }
-  
-  get size() {
-    return this._docs.length;
-  }
-  
-  forEach(callback) {
-    this._docs.forEach((doc, index) => callback(doc, index));
-  }
-  
-  get docs() {
-    return this._docs;
-  }
-}
-
+// Mock query snapshot (removed: was unused)
 // ============================================================================
 // Test Version of WordleLeaderboardDBA
 // ============================================================================
