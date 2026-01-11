@@ -11,7 +11,7 @@
  * Or add to package.json: "test:dba": "node --test dba-script.test.js"
  */
 
-import { describe, it, beforeEach, mock } from 'node:test';
+import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
 
 // ============================================================================
