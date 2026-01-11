@@ -14,13 +14,11 @@ import {
   addDoc, 
   updateDoc, 
   deleteDoc,
-  deleteField,
   query, 
   where, 
   orderBy, 
   limit,
-  writeBatch,
-  runTransaction
+  writeBatch
 } from 'firebase/firestore';
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -199,54 +197,17 @@ class WordleLeaderboardDBA {
     }
   }
 
-  // Show most recent documents by date field
-  async showRecent(collectionName, limitCount = 10, dateField = 'date') {
-    // Prefer isoDate for modern records with timestamps, fall back to specified dateField for legacy
-    const preferredField = dateField === 'date' ? 'isoDate' : dateField;
-    console.log(`\n=== Most Recent ${collectionName} (by ${preferredField}, limited to ${limitCount}) ===`);
+  // Show most recent documents by isoDate
+  async showRecent(collectionName, limitCount = 10) {
+    console.log(`\n=== Most Recent ${collectionName} (by isoDate, limited to ${limitCount}) ===`);
     
     try {
-      let q, snapshot;
-      
-      // Try to query by isoDate first (for modern records with actual timestamps)
-      if (dateField === 'date') {
-        try {
-          q = query(
-            collection(this.db, collectionName), 
-            orderBy('isoDate', 'desc'),
-            limit(limitCount)
-          );
-          snapshot = await getDocs(q);
-          
-          if (snapshot.empty) {
-            console.log('No documents with isoDate found, trying legacy date field...');
-            // Fall back to legacy date field
-            q = query(
-              collection(this.db, collectionName), 
-              orderBy('date', 'desc'),
-              limit(limitCount)
-            );
-            snapshot = await getDocs(q);
-          }
-        } catch (error) {
-          console.log(`Could not query by isoDate (${error.message}), using ${dateField}...`);
-          // Fall back to specified field
-          q = query(
-            collection(this.db, collectionName), 
-            orderBy(dateField, 'desc'),
-            limit(limitCount)
-          );
-          snapshot = await getDocs(q);
-        }
-      } else {
-        // Use the specified field directly
-        q = query(
-          collection(this.db, collectionName), 
-          orderBy(dateField, 'desc'),
-          limit(limitCount)
-        );
-        snapshot = await getDocs(q);
-      }
+      const q = query(
+        collection(this.db, collectionName), 
+        orderBy('isoDate', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
         console.log('No documents found in this collection.');
@@ -256,19 +217,15 @@ class WordleLeaderboardDBA {
       console.log(`Found ${snapshot.size} most recent documents:`);
       snapshot.forEach((doc, index) => {
         const data = doc.data();
-        const actualField = data.isoDate ? 'isoDate' : dateField;
-        const displayDate = data.isoDate ? 
-          `${data.isoDate} (${new Date(data.isoDate).toLocaleString('en-NZ', { timeZone: 'Pacific/Auckland' })})` :
-          data[dateField];
+        const displayDate = `${data.isoDate} (${new Date(data.isoDate).toLocaleString('en-NZ', { timeZone: 'Pacific/Auckland' })})`;
           
         console.log(`${index + 1}. Document ID: ${doc.id}`);
-        console.log(`   ${actualField}: ${displayDate}`);
+        console.log(`   isoDate: ${displayDate}`);
         console.log(`   Data:`, JSON.stringify(data, null, 2));
         console.log('---');
       });
     } catch (error) {
       console.error(`Error reading recent documents from ${collectionName}:`, error.message);
-      console.log(`Tip: Make sure the '${dateField}' field exists and is indexed for ordering.`);
     }
   }
 
@@ -281,91 +238,6 @@ class WordleLeaderboardDBA {
       return snapshot.size;
     } catch (error) {
       console.error('Error counting documents:', error.message);
-    }
-  }
-  
-  // Convert existing date strings to ISO datetime strings
-  async convertDatesToISO(collectionName = 'scores', dryRun = true) {
-    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Converting legacy dates to ISO format in ${collectionName} ===`);
-    
-    try {
-      const snapshot = await getDocs(collection(this.db, collectionName));
-      
-      if (snapshot.empty) {
-        console.log('No documents found in this collection.');
-        return;
-      }
-
-      const documentsToUpdate = [];
-      
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        // Only process documents that have a date field but no isoDate field
-        if (data.date && !data.isoDate) {
-          // Parse the existing date (YYYY-MM-DD format)
-          const dateStr = data.date;
-          const dateParts = dateStr.split('-');
-          
-          if (dateParts.length === 3) {
-            // Create ISO datetime that will convert to the original NZ date
-            // For legacy data conversion: use midnight UTC on the original date 
-            // (which will be 12pm or 1pm NZ time depending on DST)
-            // New submissions save actual current time, but legacy data gets consistent midnight UTC
-            const year = parseInt(dateParts[0]);
-            const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
-            const day = parseInt(dateParts[2]);
-            
-            // Create date in UTC at midnight on the original date
-            const originalDate = new Date(Date.UTC(year, month, day));
-            originalDate.setUTCHours(0, 0, 0, 0); // Set to midnight UTC
-            
-            const isoDate = originalDate.toISOString();
-            
-            documentsToUpdate.push({
-              id: doc.id,
-              originalDate: dateStr,
-              isoDate: isoDate,
-              data: data
-            });
-          }
-        }
-      });
-
-      if (documentsToUpdate.length === 0) {
-        console.log('No documents need date conversion. All documents either have isoDate or no date field.');
-        return;
-      }
-
-      console.log(`Found ${documentsToUpdate.length} documents to convert:`);
-      
-      documentsToUpdate.forEach((docInfo, index) => {
-        console.log(`${index + 1}. Document ID: ${docInfo.id}`);
-        console.log(`   Original date: ${docInfo.originalDate}`);
-        console.log(`   New ISO date: ${docInfo.isoDate}`);
-        console.log(`   Name: ${docInfo.data.name}, Guesses: ${docInfo.data.guesses}`);
-      });
-
-      if (!dryRun) {
-        console.log('\nUpdating documents...');
-        const batch = writeBatch(this.db);
-        
-        documentsToUpdate.forEach(docInfo => {
-          const docRef = doc(this.db, collectionName, docInfo.id);
-          batch.update(docRef, {
-            isoDate: docInfo.isoDate
-          });
-        });
-
-        await batch.commit();
-        console.log(`✓ Successfully added ISO dates to ${documentsToUpdate.length} documents`);
-      } else {
-        console.log('\nThis was a dry run. To actually convert dates, use:');
-        console.log(`node dba-script.js convert-dates ${collectionName} --execute`);
-      }
-
-      return documentsToUpdate.length;
-    } catch (error) {
-      console.error('Error converting dates to ISO:', error.message);
     }
   }
 
@@ -383,19 +255,15 @@ class WordleLeaderboardDBA {
 
       // Helper function to get effective date from a score record
       const getEffectiveDate = (score) => {
-        if (score.isoDate) {
-          // Convert ISO datetime to NZ date
-          const isoDate = new Date(score.isoDate);
-          return new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Pacific/Auckland',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          }).format(isoDate);
-        } else if (score.date) {
-          return score.date; // Legacy date format
-        }
-        return null;
+        if (!score.isoDate) return null;
+        // Convert ISO datetime to NZ date
+        const isoDate = new Date(score.isoDate);
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Pacific/Auckland',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(isoDate);
       };
 
       // Helper function to add/subtract days from a date string
@@ -625,37 +493,22 @@ class WordleLeaderboardDBA {
     }
   }
 
-  async showToday(collectionName, dateField = 'date') {
-    // For modern records with isoDate, search using UTC time ranges for today
-    // For legacy records, fall back to date field
+  async showToday(collectionName) {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    const todayStart = `${today}T00:00:00.000Z`; // Start of today UTC
-    const todayEnd = `${today}T23:59:59.999Z`; // End of today UTC
+    const todayStart = `${today}T00:00:00.000Z`;
+    const todayEnd = `${today}T23:59:59.999Z`;
     
     console.log(`\n=== Today's ${collectionName} (${today}) ===`);
     console.log(`Searching for records between ${todayStart} and ${todayEnd} (UTC)`);
     
     try {
-      // First try to get records using isoDate field (modern records)
-      let snapshot;
-      try {
-        const qISO = query(
-          collection(this.db, collectionName),
-          where('isoDate', '>=', todayStart),
-          where('isoDate', '<=', todayEnd),
-          orderBy('isoDate', 'asc') // Order by submission time
-        );
-        snapshot = await getDocs(qISO);
-      } catch (error) {
-        console.log(`Note: Could not query by isoDate (${error.message}), falling back to date field`);
-        // Fall back to legacy date field search
-        const qLegacy = query(
-          collection(this.db, collectionName),
-          where(dateField, '==', today),
-          orderBy('__name__') // Secondary sort by document ID for consistent ordering
-        );
-        snapshot = await getDocs(qLegacy);
-      }
+      const q = query(
+        collection(this.db, collectionName),
+        where('isoDate', '>=', todayStart),
+        where('isoDate', '<=', todayEnd),
+        orderBy('isoDate', 'asc')
+      );
+      const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
         console.log(`No documents found for today (${today}).`);
@@ -665,7 +518,7 @@ class WordleLeaderboardDBA {
       console.log(`Found ${snapshot.size} documents for today:`);
       snapshot.forEach((doc, index) => {
         const data = doc.data();
-        const submissionTime = data.isoDate ? new Date(data.isoDate).toLocaleString('en-NZ', {
+        const submissionTime = new Date(data.isoDate).toLocaleString('en-NZ', {
           timeZone: 'Pacific/Auckland',
           year: 'numeric',
           month: '2-digit',
@@ -673,7 +526,7 @@ class WordleLeaderboardDBA {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit'
-        }) : 'Legacy record (no timestamp)';
+        });
         
         console.log(`${index + 1}. Document ID: ${doc.id}`);
         console.log(`   Submission time (NZ): ${submissionTime}`);
@@ -682,6 +535,118 @@ class WordleLeaderboardDBA {
       });
     } catch (error) {
       console.error(`Error reading today's documents from ${collectionName}:`, error.message);
+    }
+  }
+
+  // Delete scores before a certain date (for yearly reset)
+  async deleteScoresBeforeDate(collectionName = 'scores', beforeDate, dryRun = true) {
+    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Deleting scores before ${beforeDate} in ${collectionName} ===`);
+    
+    // Validate date format (YYYY-MM-DD)
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (!datePattern.test(beforeDate)) {
+      console.error('Error: Date must be in YYYY-MM-DD format (e.g., 2025-01-01)');
+      return;
+    }
+
+    try {
+      const snapshot = await getDocs(collection(this.db, collectionName));
+      
+      if (snapshot.empty) {
+        console.log('No documents found in this collection.');
+        return;
+      }
+
+      // Convert beforeDate to ISO format for comparison
+      const beforeDateISO = `${beforeDate}T00:00:00.000Z`;
+
+      const documentsToDelete = [];
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (data.isoDate && data.isoDate < beforeDateISO) {
+          documentsToDelete.push({
+            id: docSnap.id,
+            date: data.isoDate,
+            name: data.name,
+            guesses: data.guesses,
+            dnf: data.dnf,
+            data: data
+          });
+        }
+      });
+
+      if (documentsToDelete.length === 0) {
+        console.log(`No documents found before ${beforeDate}.`);
+        return;
+      }
+
+      // Sort by date for display
+      documentsToDelete.sort((a, b) => a.date.localeCompare(b.date));
+
+      console.log(`Found ${documentsToDelete.length} documents to delete:`);
+      
+      // Show summary by month/year
+      const monthCounts = {};
+      documentsToDelete.forEach((docInfo) => {
+        const monthKey = docInfo.date.substring(0, 7); // YYYY-MM
+        monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+      });
+
+      console.log('\nDocuments by month:');
+      Object.keys(monthCounts).sort().forEach(month => {
+        console.log(`  ${month}: ${monthCounts[month]} documents`);
+      });
+
+      // Show first and last few documents
+      console.log('\nFirst 5 documents to delete:');
+      documentsToDelete.slice(0, 5).forEach((docInfo, index) => {
+        console.log(`  ${index + 1}. ID: ${docInfo.id}, Date: ${docInfo.date}, Name: ${docInfo.name}, Guesses: ${docInfo.guesses}${docInfo.dnf ? ' (DNF)' : ''}`);
+      });
+
+      if (documentsToDelete.length > 10) {
+        console.log(`  ... (${documentsToDelete.length - 10} more documents) ...`);
+      }
+
+      if (documentsToDelete.length > 5) {
+        console.log('\nLast 5 documents to delete:');
+        documentsToDelete.slice(-5).forEach((docInfo, index) => {
+          console.log(`  ${documentsToDelete.length - 4 + index}. ID: ${docInfo.id}, Date: ${docInfo.date}, Name: ${docInfo.name}, Guesses: ${docInfo.guesses}${docInfo.dnf ? ' (DNF)' : ''}`);
+        });
+      }
+
+      if (!dryRun) {
+        console.log(`\n⚠️  DELETING ${documentsToDelete.length} documents...`);
+        
+        // Delete in batches of 500 (Firestore batch limit)
+        const batchSize = 500;
+        let deletedCount = 0;
+
+        for (let i = 0; i < documentsToDelete.length; i += batchSize) {
+          const batch = writeBatch(this.db);
+          const batchDocs = documentsToDelete.slice(i, i + batchSize);
+          
+          batchDocs.forEach(docInfo => {
+            const docRef = doc(this.db, collectionName, docInfo.id);
+            batch.delete(docRef);
+          });
+
+          await batch.commit();
+          deletedCount += batchDocs.length;
+          console.log(`  Deleted batch ${Math.floor(i / batchSize) + 1}: ${deletedCount}/${documentsToDelete.length} documents`);
+        }
+
+        console.log(`\n✓ Successfully deleted ${deletedCount} documents from ${collectionName}`);
+      } else {
+        console.log(`\n⚠️  This was a dry run. No documents were deleted.`);
+        console.log(`To actually delete these ${documentsToDelete.length} documents, use:`);
+        console.log(`  node dba-script.js delete-before ${collectionName} ${beforeDate} --execute`);
+      }
+
+      return documentsToDelete.length;
+    } catch (error) {
+      console.error('Error deleting scores before date:', error.message);
     }
   }
 
@@ -775,152 +740,6 @@ class WordleLeaderboardDBA {
     }
   }
 
-  // Remove legacy 'date' field from all documents
-  async removeLegacyDateField(collectionName = 'scores', dryRun = true) {
-    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Remove Legacy Date Field from ${collectionName} ===`);
-    
-    try {
-      const allDocsQuery = collection(this.db, collectionName);
-      const snapshot = await getDocs(allDocsQuery);
-      
-      if (snapshot.empty) {
-        console.log('No documents found in collection.');
-        return 0;
-      }
-
-      console.log(`Total documents in collection: ${snapshot.size}`);
-      
-      const documentsWithLegacyDate = [];
-      const documentsWithIsoDate = [];
-      const documentsWithoutDates = [];
-      
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const hasDate = data.hasOwnProperty('date');
-        const hasIsoDate = data.hasOwnProperty('isoDate');
-        
-        if (hasDate && hasIsoDate) {
-          documentsWithLegacyDate.push({
-            id: docSnap.id,
-            name: data.name,
-            date: data.date,
-            isoDate: data.isoDate,
-            guesses: data.guesses
-          });
-        } else if (hasDate && !hasIsoDate) {
-          console.warn(`⚠️  Document ${docSnap.id} has 'date' but NO 'isoDate' - needs migration first!`);
-          documentsWithoutDates.push({
-            id: docSnap.id,
-            name: data.name,
-            date: data.date
-          });
-        } else if (!hasDate && hasIsoDate) {
-          documentsWithIsoDate.push(docSnap.id);
-        }
-      });
-
-      console.log('\n=== Summary ===');
-      console.log(`✓ Documents with isoDate only (clean): ${documentsWithIsoDate.length}`);
-      console.log(`⚠️  Documents with BOTH date & isoDate (needs cleanup): ${documentsWithLegacyDate.length}`);
-      console.log(`❌ Documents with date but NO isoDate (needs migration): ${documentsWithoutDates.length}`);
-
-      if (documentsWithoutDates.length > 0) {
-        console.log('\n⚠️  WARNING: Some documents need date migration first!');
-        console.log('Run this command first:');
-        console.log(`  node dba-script.js convert-dates ${collectionName} --execute`);
-        console.log('\nDocuments needing migration:');
-        documentsWithoutDates.forEach(doc => {
-          console.log(`  - ${doc.id}: ${doc.name} (date: ${doc.date})`);
-        });
-        return 0;
-      }
-
-      if (documentsWithLegacyDate.length === 0) {
-        console.log('\n✅ No documents need cleanup. All documents either:');
-        console.log('   - Have isoDate only (modern format)');
-        console.log('   - Have no date fields at all');
-        return 0;
-      }
-
-      console.log(`\n=== Documents to Clean (${documentsWithLegacyDate.length}) ===`);
-      documentsWithLegacyDate.forEach((doc, index) => {
-        if (index < 10 || !dryRun) {
-          // Show first 10 in dry run, all in execute mode
-          console.log(`${index + 1}. Document ID: ${doc.id}`);
-          console.log(`   Name: ${doc.name}, Guesses: ${doc.guesses}`);
-          console.log(`   Legacy date: ${doc.date}`);
-          console.log(`   ISO date: ${doc.isoDate}`);
-          
-          // Verify they match
-          const derivedDate = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Pacific/Auckland',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          }).format(new Date(doc.isoDate));
-          
-          if (derivedDate === doc.date) {
-            console.log(`   ✓ Dates match - safe to remove legacy field`);
-          } else {
-            console.log(`   ⚠️  WARNING: Dates don't match! Derived: ${derivedDate}`);
-          }
-          console.log('---');
-        }
-      });
-
-      if (documentsWithLegacyDate.length > 10 && dryRun) {
-        console.log(`... and ${documentsWithLegacyDate.length - 10} more documents`);
-      }
-
-      if (!dryRun) {
-        console.log('\n=== Removing Legacy Date Fields ===');
-        let batch = writeBatch(this.db);
-        let batchCount = 0;
-        let totalBatches = 0;
-
-        for (const docInfo of documentsWithLegacyDate) {
-          const docRef = doc(this.db, collectionName, docInfo.id);
-          
-          // Use deleteField() to remove the 'date' field
-          batch.update(docRef, {
-            date: deleteField()
-          });
-          
-          batchCount++;
-
-          // Firestore batch limit is 500 operations
-          if (batchCount === 500) {
-            await batch.commit();
-            totalBatches++;
-            console.log(`  Committed batch ${totalBatches} (${batchCount} documents)`);
-            // Create a new batch for the next set of documents
-            batch = writeBatch(this.db);
-            batchCount = 0;
-          }
-        }
-
-        // Commit remaining documents
-        if (batchCount > 0) {
-          await batch.commit();
-          totalBatches++;
-          console.log(`  Committed final batch (${batchCount} documents)`);
-        }
-
-        console.log(`\n✓ Successfully removed legacy 'date' field from ${documentsWithLegacyDate.length} documents`);
-        console.log(`  Total batches: ${totalBatches}`);
-      } else {
-        console.log('\n=== This was a DRY RUN ===');
-        console.log('No changes were made. To actually remove the legacy date field, use:');
-        console.log(`  node dba-script.js remove-legacy-date ${collectionName} --execute`);
-      }
-
-      return documentsWithLegacyDate.length;
-    } catch (error) {
-      console.error('Error removing legacy date field:', error.message);
-      throw error;
-    }
-  }
-
   // Conditional bulk update - update multiple documents that match a condition
   async conditionalUpdate(collectionName, field, operator, value, updateData, dryRun = true) {
     console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Conditional Update: ${collectionName} where ${field} ${operator} ${value} ===`);
@@ -985,8 +804,8 @@ Usage: node dba-script.js <command> [arguments]
 Commands:
   collections                           - List all collections
   show <collection> [limit]            - Show documents in a collection (default limit: 10)
-  recent <collection> [limit] [dateField] - Show most recent documents ordered by date
-  today <collection> [dateField]       - Show today's documents only
+  recent <collection> [limit]          - Show most recent documents ordered by isoDate
+  today <collection>                   - Show today's documents only
   get <collection> <documentId>        - Get a specific document
   search <collection> <field> <op> <value> [limit] - Search documents
   add <collection> <jsonData>          - Add a new document
@@ -994,32 +813,29 @@ Commands:
   conditional-update <collection> <field> <op> <value> <jsonData> [--execute] - Update all docs matching condition
   delete <collection> <docId>          - Delete a document
   count <collection>                   - Count documents in a collection
-  convert-dates [collection] [--execute] - Convert legacy date strings to ISO format (midnight UTC for legacy records)
-  remove-legacy-date [collection] [--execute] - Remove redundant 'date' field from all documents (keeps isoDate)
   find-date-errors [collection] [--export] - Find potential date errors and optionally export to files
   fix-names [collection] [--execute]   - Fix problematic names (dry run by default)
+  delete-before <collection> <date> [--execute] - Delete all scores before a date (for yearly reset)
   help                                 - Show this help
 
 Examples:
   node dba-script.js collections
   node dba-script.js show scores 5
   node dba-script.js recent scores 10
-  node dba-script.js recent scores 5 date
   node dba-script.js today scores
   node dba-script.js search scores name == "John Doe"
   node dba-script.js search scores dnf == true
-  node dba-script.js add scores '{"name":"John","score":5,"date":"2025-07-11","dnf":false}'
-  node dba-script.js update scores abc123 '{"score":6}'
+  node dba-script.js add scores '{"name":"John","guesses":5,"isoDate":"2026-01-12T03:45:00.000Z","dnf":false}'
+  node dba-script.js update scores abc123 '{"guesses":6}'
   node dba-script.js conditional-update scores name == "John🎉" '{"name":"John"}' --execute
   node dba-script.js delete scores abc123
   node dba-script.js count scores
-  node dba-script.js convert-dates scores --execute
-  node dba-script.js remove-legacy-date scores
-  node dba-script.js remove-legacy-date scores --execute
   node dba-script.js find-date-errors scores
   node dba-script.js find-date-errors scores --export
   node dba-script.js find-emoji-names scores
   node dba-script.js fix-names scores --execute
+  node dba-script.js delete-before scores 2026-01-01
+  node dba-script.js delete-before scores 2026-01-01 --execute
 
 Search operators: ==, !=, <, <=, >, >=, array-contains, in, array-contains-any
     `);
@@ -1055,21 +871,19 @@ async function main() {
 
       case 'recent':
         if (args.length < 2) {
-          console.log('Usage: recent <collection> [limit] [dateField]');
+          console.log('Usage: recent <collection> [limit]');
           return;
         }
         const recentLimit = args[2] ? parseInt(args[2]) : 10;
-        const recentDateField = args[3] || 'date';
-        await dba.showRecent(args[1], recentLimit, recentDateField);
+        await dba.showRecent(args[1], recentLimit);
         break;
 
       case 'today':
         if (args.length < 2) {
-          console.log('Usage: today <collection> [dateField]');
+          console.log('Usage: today <collection>');
           return;
         }
-        const todayDateField = args[2] || 'date';
-        await dba.showToday(args[1], todayDateField);
+        await dba.showToday(args[1]);
         break;
 
       case 'get':
@@ -1151,18 +965,6 @@ async function main() {
         await dba.countDocuments(args[1]);
         break;
 
-      case 'convert-dates':
-        const convertCollection = args[1] || 'scores';
-        const convertExecute = args.includes('--execute');
-        await dba.convertDatesToISO(convertCollection, !convertExecute);
-        break;
-
-      case 'remove-legacy-date':
-        const removeLegacyCollection = args[1] || 'scores';
-        const removeLegacyExecute = args.includes('--execute');
-        await dba.removeLegacyDateField(removeLegacyCollection, !removeLegacyExecute);
-        break;
-
       case 'find-date-errors':
         const duplicateCollection = args[1] || 'scores';
         const shouldExport = args.includes('--export');
@@ -1178,6 +980,20 @@ async function main() {
         const fixCollection = args[1] || 'scores';
         const isExecute = args.includes('--execute');
         await dba.fixProblematicNames(fixCollection, !isExecute);
+        break;
+
+      case 'delete-before':
+        if (args.length < 3) {
+          console.log('Usage: delete-before <collection> <date> [--execute]');
+          console.log('  <date> must be in YYYY-MM-DD format');
+          console.log('  Deletes all scores with dates BEFORE the specified date');
+          console.log('  Example: node dba-script.js delete-before scores 2026-01-01 --execute');
+          return;
+        }
+        const deleteBeforeCollection = args[1];
+        const deleteBeforeDate = args[2];
+        const deleteBeforeExecute = args.includes('--execute');
+        await dba.deleteScoresBeforeDate(deleteBeforeCollection, deleteBeforeDate, !deleteBeforeExecute);
         break;
 
       case 'help':
