@@ -1004,15 +1004,17 @@ const useStyles = createUseStyles({
     background: 'var(--card-bg, rgba(255, 255, 255, 0.95))',
     border: '1px solid var(--border-light, rgba(148, 163, 184, 0.3))',
     boxShadow: 'var(--shadow-large, 0 32px 60px rgba(15, 23, 42, 0.15))',
-    overflow: 'visible',
+    overflow: 'hidden',
     '&::before': {
       content: '""',
       position: 'absolute',
       top: 0,
       left: 0,
       right: 0,
-      height: '4px',
-      background: 'var(--dynamic-gradient, var(--wordle-green, #6aaa64))',
+      height: '6px',
+      background: props => (props && props.accentGradient) || (props && props.gradient) || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      borderRadius: '28px 28px 0 0',
+      opacity: 0.8,
     },
     '@media (max-width: 600px)': {
       padding: '1.5rem 1.1rem',
@@ -1509,10 +1511,12 @@ const useStyles = createUseStyles({
   '@keyframes tilePulse': {
     '0%, 100%': {
       borderColor: 'var(--border-light, rgba(148, 163, 184, 0.35))',
+      boxShadow: 'var(--shadow-small, 0 2px 4px rgba(0, 0, 0, 0.05))',
       transform: 'scale(1)',
     },
     '50%': {
-      borderColor: 'var(--training-accent, #3b82f6)',
+      borderColor: 'var(--border-light, rgba(148, 163, 184, 0.35))',
+      boxShadow: '0 0 0 3px var(--training-accent-color, rgba(59, 130, 246, 0.3))',
       transform: 'scale(1.02)',
     },
   },

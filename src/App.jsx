@@ -325,7 +325,7 @@ const App = () => {
       // Add hover effect with small delay to prevent jitter
       e.target.hoverTimeout = setTimeout(() => {
         e.target.style.transform = 'rotateX(180deg) scale(1.04)';
-        e.target.style.boxShadow = '0 14px 28px rgba(15, 23, 42, 0.32)';
+        e.target.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.25)';
       }, 100); // 100ms delay
     };
 
