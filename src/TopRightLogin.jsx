@@ -247,7 +247,8 @@ const TopRightLogin = ({
                 fontSize: '10px',
                 fontWeight: '700',
                 color: 'white',
-                padding: unreadCount > 9 ? '0 4px' : '0'
+                padding: unreadCount > 9 ? '0 4px' : '0',
+                animation: 'notification-pulse 2s ease-in-out infinite, notification-glow 2s ease-in-out infinite'
               }}>
                 {unreadCount}
               </span>
@@ -666,7 +667,8 @@ const TopRightLogin = ({
                           fontSize: '9px',
                           fontWeight: '700',
                           color: 'white',
-                          padding: unreadCount > 9 ? '0 3px' : '0'
+                          padding: unreadCount > 9 ? '0 3px' : '0',
+                          animation: 'notification-pulse 2s ease-in-out infinite, notification-glow 2s ease-in-out infinite'
                         }}>
                           {unreadCount}
                         </span>

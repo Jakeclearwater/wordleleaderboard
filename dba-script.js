@@ -794,6 +794,59 @@ class WordleLeaderboardDBA {
     }
   }
 
+  // Delete all training scores for a specific user
+  async deleteUserTrainingData(username, dryRun = true) {
+    console.log(`\n=== ${dryRun ? 'DRY RUN - ' : ''}Deleting training data for user: ${username} ===`);
+    
+    try {
+      const q = query(
+        collection(this.db, 'training_scores'),
+        where('name', '==', username)
+      );
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        console.log(`No training data found for user: ${username}`);
+        return 0;
+      }
+
+      console.log(`Found ${snapshot.size} training score(s) for ${username}:`);
+      
+      const documentsToDelete = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        documentsToDelete.push({
+          id: doc.id,
+          data: data
+        });
+        console.log(`  Document ID: ${doc.id}`);
+        console.log(`    Guesses: ${data.guesses}, DNF: ${data.dnf}, Date: ${data.isoDate}`);
+      });
+
+      if (!dryRun) {
+        // Use batch delete for efficiency
+        const batch = writeBatch(this.db);
+        
+        documentsToDelete.forEach(docInfo => {
+          const docRef = doc(this.db, 'training_scores', docInfo.id);
+          batch.delete(docRef);
+        });
+
+        await batch.commit();
+        console.log(`\n✓ Successfully deleted ${documentsToDelete.length} training score(s) for ${username}`);
+      } else {
+        console.log(`\n⚠️  This was a dry run. No documents were deleted.`);
+        console.log(`To actually delete these ${documentsToDelete.length} document(s), use:`);
+        console.log(`  node dba-script.js delete-user-training "${username}" --execute`);
+      }
+
+      return documentsToDelete.length;
+    } catch (error) {
+      console.error('Error deleting user training data:', error.message);
+      return 0;
+    }
+  }
+
   // Show help
   showHelp() {
     console.log(`
@@ -816,6 +869,7 @@ Commands:
   find-date-errors [collection] [--export] - Find potential date errors and optionally export to files
   fix-names [collection] [--execute]   - Fix problematic names (dry run by default)
   delete-before <collection> <date> [--execute] - Delete all scores before a date (for yearly reset)
+  delete-user-training <username> [--execute] - Delete all training scores for a specific user
   help                                 - Show this help
 
 Examples:
@@ -836,6 +890,7 @@ Examples:
   node dba-script.js fix-names scores --execute
   node dba-script.js delete-before scores 2026-01-01
   node dba-script.js delete-before scores 2026-01-01 --execute
+  node dba-script.js delete-user-training "Damien" --execute
 
 Search operators: ==, !=, <, <=, >, >=, array-contains, in, array-contains-any
     `);
@@ -994,6 +1049,18 @@ async function main() {
         const deleteBeforeDate = args[2];
         const deleteBeforeExecute = args.includes('--execute');
         await dba.deleteScoresBeforeDate(deleteBeforeCollection, deleteBeforeDate, !deleteBeforeExecute);
+        break;
+
+      case 'delete-user-training':
+        if (args.length < 2) {
+          console.log('Usage: delete-user-training <username> [--execute]');
+          console.log('  Deletes all training scores for the specified user');
+          console.log('  Example: node dba-script.js delete-user-training "Damien" --execute');
+          return;
+        }
+        const deleteUsername = args[1];
+        const deleteUserExecute = args.includes('--execute');
+        await dba.deleteUserTrainingData(deleteUsername, !deleteUserExecute);
         break;
 
       case 'help':

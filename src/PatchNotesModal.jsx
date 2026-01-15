@@ -424,10 +424,6 @@ const PatchNotesModal = ({ onClose, getAccentGradient, getCurrentGradient, dismi
         newSet.delete(notificationId);
       } else {
         newSet.add(notificationId);
-        // Auto-dismiss (mark as read) when expanding
-        if (!isNotificationDismissed(notificationId)) {
-          handleDismissNotification(notificationId);
-        }
       }
       return newSet;
     });
@@ -588,6 +584,43 @@ const PatchNotesModal = ({ onClose, getAccentGradient, getCurrentGradient, dismi
                       >
                         {notification.link?.text || 'View details on GitHub'} →
                       </a>
+                    )}
+                    
+                    {!isDismissed && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDismissNotification(notification.id);
+                        }}
+                        style={{
+                          marginTop: '0.75rem',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(0, 0, 0, 0.15)',
+                          background: 'var(--card-bg, white)',
+                          color: 'var(--text-secondary, #6b7280)',
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.375rem'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                          e.currentTarget.style.color = 'white';
+                          e.currentTarget.style.borderColor = 'transparent';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.background = 'var(--card-bg, white)';
+                          e.currentTarget.style.color = 'var(--text-secondary, #6b7280)';
+                          e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+                        }}
+                      >
+                        <span>✓</span>
+                        <span>Mark as Read</span>
+                      </button>
                     )}
                   </div>
                 )}

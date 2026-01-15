@@ -27,12 +27,16 @@ const TrainingWordle = ({ getCurrentGradient, username, isLoggedIn }) => {
   const [guesses, setGuesses] = useState([]);
 
   useEffect(() => {
-    console.log('Training Wordle Solution:', solution);
+    if (import.meta.env.DEV) {
+      console.log('Training Wordle Solution:', solution);
+    }
   }, [solution]);
 
   useEffect(() => {
     if (isLoggedIn && username) {
-      console.log('Training Wordle User:', username);
+      if (import.meta.env.DEV) {
+        console.log('Training Wordle User:', username);
+      }
       fetchTrainingStats(username);
     }
   }, [isLoggedIn, username]);
