@@ -725,6 +725,65 @@ const useStyles = createUseStyles({
     fontSize: '1.2rem',
   },
   
+  // Annual Winners Table Styles
+  winnersTable: {
+    marginTop: '1rem',
+    background: 'var(--card-bg, #ffffff)',
+    borderRadius: '12px',
+    border: '1px solid var(--border-light, rgba(148, 163, 184, 0.2))',
+    overflow: 'hidden',
+  },
+  
+  winnersTableHeader: {
+    display: 'grid',
+    gridTemplateColumns: '80px 1fr 100px 100px',
+    gap: '1rem',
+    padding: '1rem',
+    background: 'var(--secondary-bg, #f9fafb)',
+    borderBottom: '1px solid var(--border-light, rgba(148, 163, 184, 0.2))',
+    fontWeight: 600,
+    fontSize: '0.875rem',
+    color: 'var(--text-secondary, #6b7280)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  
+  winnersTableRow: {
+    display: 'grid',
+    gridTemplateColumns: '80px 1fr 100px 100px',
+    gap: '1rem',
+    padding: '1rem',
+    borderBottom: '1px solid var(--border-light, rgba(148, 163, 184, 0.1))',
+    transition: 'background 0.2s ease',
+    '&:last-child': {
+      borderBottom: 'none',
+    },
+    '&:hover': {
+      background: 'var(--secondary-bg, #f9fafb)',
+    },
+  },
+  
+  winnersYearCol: {
+    fontWeight: 600,
+    color: 'var(--text-primary, #1f2937)',
+  },
+  
+  winnersNameCol: {
+    color: 'var(--text-primary, #1f2937)',
+  },
+  
+  winnersAvgCol: {
+    textAlign: 'right',
+    fontWeight: 600,
+    color: 'var(--text-primary, #1f2937)',
+  },
+  
+  winnersBAvgCol: {
+    textAlign: 'right',
+    fontWeight: 600,
+    color: 'var(--text-secondary, #6b7280)',
+  },
+  
   loading: {
     display: 'flex',
     flexDirection: 'column',
@@ -945,7 +1004,7 @@ const useStyles = createUseStyles({
     background: 'var(--card-bg, rgba(255, 255, 255, 0.95))',
     border: '1px solid var(--border-light, rgba(148, 163, 184, 0.3))',
     boxShadow: 'var(--shadow-large, 0 32px 60px rgba(15, 23, 42, 0.15))',
-    overflow: 'hidden',
+    overflow: 'visible',
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -1060,6 +1119,8 @@ const useStyles = createUseStyles({
     display: 'grid',
     gap: '0.5rem',
     width: '100%',
+    maxWidth: '350px',
+    margin: '0 auto',
     padding: '1.1rem',
     borderRadius: '18px',
     boxShadow: 'var(--shadow-small, 0 4px 6px rgba(0, 0, 0, 0.05))',
@@ -1068,8 +1129,12 @@ const useStyles = createUseStyles({
   },
   trainingRow: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, minmax(52px, 1fr))',
+    gridTemplateColumns: 'repeat(5, minmax(48px, 1fr))',
     gap: '0.5rem',
+    '@media (max-width: 400px)': {
+      gridTemplateColumns: 'repeat(5, minmax(44px, 1fr))',
+      gap: '0.4rem',
+    },
   },
   trainingRowWin: {
     animation: '$rowFlash 1s ease-in-out 0.75s',
@@ -1146,17 +1211,25 @@ const useStyles = createUseStyles({
   },
   trainingKeyboard: {
     width: '100%',
+    maxWidth: 'min(500px, calc(100vw - 4rem))',
+    margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
     gap: '0.45rem',
     marginTop: '0.5rem',
     paddingTop: '0.35rem',
     overflow: 'visible',
+    '@media (max-width: 600px)': {
+      maxWidth: 'calc(100vw - 3rem)',
+      gap: '0.4rem',
+    },
     '@media (max-width: 480px)': {
+      maxWidth: 'calc(100vw - 2.5rem)',
       gap: '0.35rem',
       paddingTop: '0.25rem',
     },
     '@media (max-width: 400px)': {
+      maxWidth: 'calc(100vw - 2rem)',
       gap: '0.26rem',
       paddingTop: '0.2rem',
     },
@@ -1165,6 +1238,9 @@ const useStyles = createUseStyles({
     display: 'flex',
     gap: '0.45rem',
     justifyContent: 'center',
+    '@media (max-width: 600px)': {
+      gap: '0.4rem',
+    },
     '@media (max-width: 480px)': {
       gap: '0.35rem',
     },
@@ -1173,13 +1249,14 @@ const useStyles = createUseStyles({
     },
   },
   trainingKeyboardKey: {
-    minWidth: '42px',
-    padding: '0.8rem 0.55rem',
+    minWidth: '38px',
+    padding: '0.75rem 0.5rem',
     borderRadius: '8px',
     border: '1px solid var(--border-light, #e5e7eb)',
     background: 'var(--card-bg, #ffffff)',
     color: 'var(--text-primary, #1f2937)',
     fontWeight: 600,
+    fontSize: '0.9rem',
     cursor: 'pointer',
     transition: 'all 0.18s ease',
     boxShadow: 'var(--shadow-small, 0 2px 4px rgba(0, 0, 0, 0.05))',
@@ -1190,30 +1267,39 @@ const useStyles = createUseStyles({
       background: 'var(--secondary-bg, #f9fafb)',
       boxShadow: 'var(--shadow-medium, 0 4px 6px rgba(0, 0, 0, 0.1))',
     },
-    '@media (max-width: 480px)': {
+    '@media (max-width: 600px)': {
       minWidth: '34px',
+      padding: '0.7rem 0.45rem',
+      fontSize: '0.85rem',
+    },
+    '@media (max-width: 480px)': {
+      minWidth: '30px',
       padding: '0.65rem 0.4rem',
-      fontSize: '0.82rem',
+      fontSize: '0.8rem',
     },
     '@media (max-width: 400px)': {
-      minWidth: '28px',
+      minWidth: '26px',
       padding: '0.55rem 0.32rem',
-      fontSize: '0.76rem',
+      fontSize: '0.74rem',
       letterSpacing: '0.32px',
     },
   },
   trainingKeyAction: {
-    minWidth: '64px',
+    minWidth: '58px',
     fontSize: '0.85rem',
+    '@media (max-width: 600px)': {
+      minWidth: '52px',
+      fontSize: '0.82rem',
+    },
     '@media (max-width: 480px)': {
-      minWidth: '56px',
-      padding: '0.65rem 0.45rem',
-      fontSize: '0.8rem',
+      minWidth: '48px',
+      padding: '0.65rem 0.4rem',
+      fontSize: '0.78rem',
     },
     '@media (max-width: 400px)': {
-      minWidth: '42px',
-      padding: '0.55rem 0.35rem',
-      fontSize: '0.72rem',
+      minWidth: '40px',
+      padding: '0.55rem 0.32rem',
+      fontSize: '0.7rem',
     },
   },
   trainingKeyCorrect: {
@@ -1261,6 +1347,87 @@ const useStyles = createUseStyles({
     fontWeight: 800,
     letterSpacing: '0.2em',
     color: 'var(--text-primary, #e2e8f0)',
+  },
+  trainingStatsCard: {
+    marginTop: '1rem',
+    padding: '1.25rem',
+    background: 'var(--card-bg, #1f2937)',
+    borderRadius: '16px',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
+    border: '1px solid var(--border-light, rgba(148, 163, 184, 0.3))',
+  },
+  trainingStatsCardLarge: {
+    padding: '2rem',
+    background: 'var(--card-bg, #1f2937)',
+    borderRadius: '18px',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
+    border: '1px solid var(--border-light, rgba(148, 163, 184, 0.3))',
+    minHeight: '400px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  trainingFlipContainer: {
+    perspective: '1000px',
+    width: '100%',
+    position: 'relative',
+  },
+  trainingFlipCard: {
+    position: 'relative',
+    width: '100%',
+    transformStyle: 'preserve-3d',
+    transition: 'transform 0.6s',
+  },
+  trainingFlipCardFlipped: {
+    transform: 'rotateY(180deg)',
+  },
+  trainingFlipFront: {
+    backfaceVisibility: 'hidden',
+    width: '100%',
+    WebkitBackfaceVisibility: 'hidden',
+  },
+  trainingFlipBack: {
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    minHeight: '100%',
+    transform: 'rotateY(180deg)',
+    background: 'var(--card-bg, #1f2937)',
+  },
+  trainingFlipped: {},
+  trainingStatsTitle: {
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    color: 'var(--text-muted, #94a3b8)',
+    textAlign: 'center',
+    marginBottom: '0.75rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  trainingStatsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '1rem',
+  },
+  trainingStat: {
+    textAlign: 'center',
+  },
+  trainingStatValue: {
+    fontSize: '1.75rem',
+    fontWeight: 700,
+    color: 'var(--text-primary, #f8fafc)',
+    lineHeight: 1,
+  },
+  trainingStatLabel: {
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    color: 'var(--text-muted, #94a3b8)',
+    marginTop: '0.25rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
   },
   trainingOverlay: {
     position: 'fixed',

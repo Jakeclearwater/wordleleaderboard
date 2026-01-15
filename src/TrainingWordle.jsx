@@ -6,15 +6,17 @@ import {
   useRef,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { SOLUTION_WORDS, WORD_SET } from './wordlists/wordleWords';
 import useStyles from './useStyles';
 import { Confetti } from './Confetti';
+import { firestore } from './firebase';
 
 const MAX_GUESSES = 6;
 
 const getRandomWord = () => SOLUTION_WORDS[Math.floor(Math.random() * SOLUTION_WORDS.length)];
 
-const TrainingWordle = ({ getCurrentGradient }) => {
+const TrainingWordle = ({ getCurrentGradient, username, isLoggedIn }) => {
   const classes = useStyles();
   const accentGradient = useMemo(
     () => (typeof getCurrentGradient === 'function' ? getCurrentGradient() : null),
@@ -27,6 +29,34 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   useEffect(() => {
     console.log('Training Wordle Solution:', solution);
   }, [solution]);
+
+  useEffect(() => {
+    if (isLoggedIn && username) {
+      console.log('Training Wordle User:', username);
+      fetchTrainingStats(username);
+    }
+  }, [isLoggedIn, username]);
+
+  const fetchTrainingStats = async (username) => {
+    try {
+      const q = query(
+        collection(firestore, 'training_scores'),
+        where('name', '==', username)
+      );
+      const snapshot = await getDocs(q);
+      const scores = snapshot.docs.map(doc => doc.data());
+      
+      const wins = scores.filter(s => !s.dnf).length;
+      const totalGames = scores.length;
+      const avgGuesses = wins > 0 
+        ? (scores.filter(s => !s.dnf).reduce((sum, s) => sum + s.guesses, 0) / wins).toFixed(2)
+        : 0;
+      
+      setTrainingStats({ wins, totalGames, avgGuesses });
+    } catch (error) {
+      console.error('Error fetching training stats:', error);
+    }
+  };
   const [currentGuess, setCurrentGuess] = useState('');
   const [status, setStatus] = useState('playing');
   const [showHelp, setShowHelp] = useState(false);
@@ -35,6 +65,8 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   const [feedback, setFeedback] = useState(null);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [trainingStats, setTrainingStats] = useState({ wins: 0, totalGames: 0, avgGuesses: 0 });
+  const [showStats, setShowStats] = useState(false);
   const feedbackTimers = useRef({ hide: null, remove: null });
 
   const clearFeedback = useCallback(() => {
@@ -119,7 +151,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
     return result;
   }, []);
 
-  const handleSubmitGuess = useCallback(() => {
+  const handleSubmitGuess = useCallback(async () => {
     if (status !== 'playing') return;
     const guess = currentGuess.toUpperCase();
     const error = validateGuess(guess);
@@ -152,12 +184,51 @@ const TrainingWordle = ({ getCurrentGradient }) => {
 
     if (evaluation.every(state => state === 'correct')) {
       setStatus('won');
+      
+      // Save training score to Firestore
+      if (isLoggedIn && username) {
+        try {
+          await addDoc(collection(firestore, 'training_scores'), {
+            name: username,
+            guesses: guesses.length + 1,
+            isoDate: new Date().toISOString(),
+            dnf: false,
+            wordleNumber: null,
+            hardMode: false,
+            trainingMode: true
+          });
+          // Refresh stats
+          fetchTrainingStats(username);
+        } catch (error) {
+          console.error('Error saving training score:', error);
+        }
+      }
+      
       setTimeout(() => {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4000);
       }, 1300);
     } else if (guesses.length + 1 >= MAX_GUESSES) {
       setStatus('lost');
+      
+      // Save training score as DNF
+      if (isLoggedIn && username) {
+        try {
+          await addDoc(collection(firestore, 'training_scores'), {
+            name: username,
+            guesses: 7,
+            isoDate: new Date().toISOString(),
+            dnf: true,
+            wordleNumber: null,
+            hardMode: false,
+            trainingMode: true
+          });
+          // Refresh stats
+          fetchTrainingStats(username);
+        } catch (error) {
+          console.error('Error saving training score:', error);
+        }
+      }
     } else {
       setStatus('playing');
     }
@@ -317,6 +388,14 @@ const TrainingWordle = ({ getCurrentGradient }) => {
           >
             🔁 New Word
           </button>
+          {isLoggedIn && (
+            <button
+              className={classes.trainingSecondaryButton}
+              onClick={() => setShowStats(!showStats)}
+            >
+              {showStats ? '🎮 Game' : '📊 Stats'}
+            </button>
+          )}
           <button
             className={classes.trainingSecondaryButton}
             onClick={() => setShowHelp(true)}
@@ -335,8 +414,11 @@ const TrainingWordle = ({ getCurrentGradient }) => {
           </div>
         )}
 
-        <div className={classes.trainingBoard}>
-          {rows.map((row, rowIndex) => {
+        <div className={classes.trainingFlipContainer}>
+          <div className={`${classes.trainingFlipCard} ${showStats ? classes.trainingFlipCardFlipped : ''}`}>
+            <div className={classes.trainingFlipFront}>
+              <div className={classes.trainingBoard}>
+                {rows.map((row, rowIndex) => {
             const lastRowIndex = guesses.length - 1;
             const isWinningRow = status === 'won' && rowIndex === lastRowIndex;
             const rowClass = isWinningRow ? `${classes.trainingRow} ${classes.trainingRowWin}` : classes.trainingRow;
@@ -357,7 +439,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
                     className={`${getTileClass(row.evaluation[tileIndex], rowIndex, tileIndex)} ${shouldPulse ? classes.trainingTilePulse : ''}`}
                     style={animationDelay ? { animationDelay } : undefined}
                   >
-                    <span>{displayChar}</span>
+                    <span style={animationDelay ? { animationDelay } : undefined}>{displayChar}</span>
                   </div>
                 );
               })}
@@ -396,6 +478,31 @@ const TrainingWordle = ({ getCurrentGradient }) => {
               )}
             </div>
           ))}
+        </div>
+            </div>
+
+            <div className={classes.trainingFlipBack}>
+              {trainingStats && (
+                <div className={classes.trainingStatsCardLarge}>
+                  <div className={classes.trainingStatsTitle}>Your Training Stats</div>
+                  <div className={classes.trainingStatsGrid}>
+                    <div className={classes.trainingStat}>
+                      <div className={classes.trainingStatValue}>{trainingStats.wins}</div>
+                      <div className={classes.trainingStatLabel}>Wins</div>
+                    </div>
+                    <div className={classes.trainingStat}>
+                      <div className={classes.trainingStatValue}>{trainingStats.totalGames}</div>
+                      <div className={classes.trainingStatLabel}>Games</div>
+                    </div>
+                    <div className={classes.trainingStat}>
+                      <div className={classes.trainingStatValue}>{trainingStats.avgGuesses}</div>
+                      <div className={classes.trainingStatLabel}>Avg Guesses</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {status !== 'playing' && (
