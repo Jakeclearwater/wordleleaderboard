@@ -517,6 +517,15 @@ const useStyles = createUseStyles({
       transform: 'scale(1.15, 0.85)' 
     },
   },
+
+  '@keyframes spin': {
+    '0%': {
+      transform: 'rotate(0deg)'
+    },
+    '100%': {
+      transform: 'rotate(360deg)'
+    },
+  },
   
   statCard: {
     background: 'var(--card-bg, #ffffff)',
@@ -918,7 +927,6 @@ const useStyles = createUseStyles({
     justifyContent: 'center',
     padding: '2.5rem 1.25rem',
     boxSizing: 'border-box',
-    background: 'var(--secondary-bg, #ffffff)',
     '@media (max-width: 600px)': {
       padding: '1.75rem 0.75rem',
     },
@@ -934,11 +942,19 @@ const useStyles = createUseStyles({
     margin: '0 auto',
     padding: '2rem 1.75rem',
     borderRadius: '28px',
-  backgroundImage: `linear-gradient(165deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.88) 60%, rgba(15, 23, 42, 0.92) 100%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
-  backgroundBlendMode: 'overlay',
-    border: '1px solid rgba(148, 163, 184, 0.3)',
-    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.55)',
-    backdropFilter: 'blur(25px)',
+    background: 'var(--card-bg, rgba(255, 255, 255, 0.95))',
+    border: '1px solid var(--border-light, rgba(148, 163, 184, 0.3))',
+    boxShadow: 'var(--shadow-large, 0 32px 60px rgba(15, 23, 42, 0.15))',
+    overflow: 'hidden',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '4px',
+      background: 'var(--dynamic-gradient, var(--wordle-green, #6aaa64))',
+    },
     '@media (max-width: 600px)': {
       padding: '1.5rem 1.1rem',
       borderRadius: '22px',
@@ -1001,7 +1017,7 @@ const useStyles = createUseStyles({
     fontWeight: 600,
     color: '#fff',
     background: `var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
-    boxShadow: '0 14px 32px rgba(15, 23, 42, 0.45)',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
     transition: 'all 0.2s ease',
     display: 'flex',
     alignItems: 'center',
@@ -1009,35 +1025,35 @@ const useStyles = createUseStyles({
     '&:hover': {
       transform: 'translateY(-1px)',
       filter: 'brightness(1.05)',
-      boxShadow: '0 18px 38px rgba(15, 23, 42, 0.5)',
+      boxShadow: '0 6px 16px rgba(15, 23, 42, 0.3)',
     },
     '&:active': {
       transform: 'translateY(0)',
-      boxShadow: '0 6px 18px rgba(15, 23, 42, 0.4)',
+      boxShadow: '0 2px 8px rgba(15, 23, 42, 0.2)',
     },
   },
   trainingSecondaryButton: {
     padding: '0.65rem 1.5rem',
     borderRadius: '999px',
-    border: '1px solid rgba(148, 163, 184, 0.45)',
+    border: '1px solid var(--border-light, rgba(148, 163, 184, 0.35))',
     cursor: 'pointer',
     fontWeight: 600,
-    color: '#e2e8f0',
-    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.9) 100%)',
-    boxShadow: '0 8px 22px rgba(15, 23, 42, 0.4)',
+    color: 'var(--text-primary, #e2e8f0)',
+    background: 'var(--card-bg, #1f2937)',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
     transition: 'all 0.2s ease',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
     '&:hover': {
-      background: `var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
+      background: 'var(--secondary-bg, #111827)',
       transform: 'translateY(-1px)',
-      color: '#f1f5f9',
-      boxShadow: '0 14px 28px rgba(15, 23, 42, 0.45)',
+      borderColor: 'var(--border-light, rgba(148, 163, 184, 0.5))',
+      boxShadow: '0 6px 16px rgba(15, 23, 42, 0.3)',
     },
     '&:active': {
       transform: 'translateY(0)',
-      boxShadow: '0 6px 18px rgba(15, 23, 42, 0.35)',
+      boxShadow: '0 2px 8px rgba(15, 23, 42, 0.2)',
     },
   },
   trainingBoard: {
@@ -1046,15 +1062,17 @@ const useStyles = createUseStyles({
     width: '100%',
     padding: '1.1rem',
     borderRadius: '18px',
-    boxShadow: '0 24px 50px rgba(15, 23, 42, 0.5)',
-    backgroundImage: `linear-gradient(160deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.88) 55%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
-    backgroundBlendMode: 'overlay',
-    border: '1px solid rgba(148, 163, 184, 0.28)',
+    boxShadow: 'var(--shadow-small, 0 4px 6px rgba(0, 0, 0, 0.05))',
+    background: 'var(--secondary-bg, #f9fafb)',
+    border: '1px solid var(--border-light, rgba(148, 163, 184, 0.2))',
   },
   trainingRow: {
     display: 'grid',
     gridTemplateColumns: 'repeat(5, minmax(52px, 1fr))',
     gap: '0.5rem',
+  },
+  trainingRowWin: {
+    animation: '$rowFlash 1s ease-in-out 0.75s',
   },
   trainingTile: {
     width: '100%',
@@ -1065,46 +1083,66 @@ const useStyles = createUseStyles({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#fff',
+    color: 'var(--text-primary, #1f2937)',
     textTransform: 'uppercase',
     transition: 'all 0.25s ease',
-    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.35)',
+    boxShadow: 'var(--shadow-small, 0 2px 4px rgba(0, 0, 0, 0.05))',
     position: 'relative',
-    background: 'rgba(15, 23, 42, 0.85)',
-    border: '2px solid rgba(65, 73, 91, 0.55)',
+    background: 'var(--card-bg, #ffffff)',
+    border: '2px solid var(--border-light, #e5e7eb)',
     '& span': {
       position: 'relative',
       zIndex: 1,
     },
   },
+  trainingTileFlip: {
+    animationName: '$tileFlip',
+    animationDuration: '0.5s',
+    animationFillMode: 'both',
+    animationTimingFunction: 'ease-in-out',
+    '& span': {
+      animationName: '$tileTextReveal',
+      animationDuration: '0.5s',
+      animationFillMode: 'both',
+      animationTimingFunction: 'ease-in-out',
+      opacity: 0,
+    },
+  },
+  trainingRowWin: {
+    animation: '$rowFlash 1s ease-in-out 1.3s',
+  },
   trainingTileEmpty: {
-    background: 'rgba(30, 41, 59, 0.9)',
-    border: '2px dashed rgba(148, 163, 184, 0.35)',
-    color: 'rgba(203, 213, 225, 0.45)',
+    background: 'var(--card-bg, #ffffff)',
+    border: '2px dashed var(--border-light, rgba(148, 163, 184, 0.35))',
+    color: 'var(--text-muted, rgba(107, 114, 128, 0.45))',
   },
   trainingTilePending: {
-    background: 'rgba(37, 99, 235, 0.15)',
-    border: '2px solid rgba(59, 130, 246, 0.35)',
-    color: '#e0f2fe',
+    background: 'var(--card-bg, #ffffff)',
+    border: '2px solid var(--border-light, rgba(59, 130, 246, 0.35))',
+    color: 'var(--text-primary, #1f2937)',
   },
   trainingTileHidden: {
-    background: 'rgba(15, 23, 42, 0.7)',
-    border: '2px solid rgba(51, 65, 85, 0.45)',
+    background: 'var(--card-bg, #ffffff)',
+    border: '2px solid var(--border-light, rgba(51, 65, 85, 0.45))',
     color: 'transparent',
   },
   trainingTileCorrect: {
-    background: '#538d4e',
+    background: '#6aaa64',
     border: '2px solid #6aaa64',
+    color: '#fff !important',
   },
   trainingTilePresent: {
-    background: '#b59f3b',
+    background: '#c9b458',
     border: '2px solid #c9b458',
-    color: '#fff',
+    color: '#fff !important',
   },
   trainingTileAbsent: {
-    background: '#3a3a3c',
-    border: '2px solid #52525b',
-    color: '#d7dadc',
+    background: '#787c7e',
+    border: '2px solid #787c7e',
+    color: '#fff !important',
+  },
+  trainingTilePulse: {
+    animation: '$tilePulse 1.5s ease-in-out infinite',
   },
   trainingKeyboard: {
     width: '100%',
@@ -1138,19 +1176,19 @@ const useStyles = createUseStyles({
     minWidth: '42px',
     padding: '0.8rem 0.55rem',
     borderRadius: '8px',
-    border: '1px solid rgba(148, 163, 184, 0.25)',
-    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.92) 0%, rgba(17, 24, 39, 0.9) 100%)',
-    color: '#f8fafc',
+    border: '1px solid var(--border-light, #e5e7eb)',
+    background: 'var(--card-bg, #ffffff)',
+    color: 'var(--text-primary, #1f2937)',
     fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.18s ease',
-    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.38)',
+    boxShadow: 'var(--shadow-small, 0 2px 4px rgba(0, 0, 0, 0.05))',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     '&:hover': {
       transform: 'translateY(-1px)',
-      background: `linear-gradient(135deg, rgba(51, 65, 85, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
-      backgroundBlendMode: 'overlay',
+      background: 'var(--secondary-bg, #f9fafb)',
+      boxShadow: 'var(--shadow-medium, 0 4px 6px rgba(0, 0, 0, 0.1))',
     },
     '@media (max-width: 480px)': {
       minWidth: '34px',
@@ -1180,15 +1218,18 @@ const useStyles = createUseStyles({
   },
   trainingKeyCorrect: {
     background: '#6aaa64 !important',
+    color: '#fff !important',
+    border: '1px solid #6aaa64 !important',
   },
   trainingKeyPresent: {
     background: '#c9b458 !important',
     color: '#fff !important',
+    border: '1px solid #c9b458 !important',
   },
   trainingKeyAbsent: {
-    background: 'linear-gradient(140deg, rgba(148, 163, 184, 0.3) 0%, rgba(71, 85, 105, 0.22) 100%) !important',
-    color: '#94a3b8 !important',
-    border: '1px solid rgba(148, 163, 184, 0.55) !important',
+    background: '#787c7e !important',
+    color: '#fff !important',
+    border: '1px solid #787c7e !important',
     boxShadow: 'none !important',
     filter: 'saturate(0.35) brightness(0.92)',
     '&:hover': {
@@ -1199,13 +1240,12 @@ const useStyles = createUseStyles({
   trainingResultCard: {
     marginTop: '1rem',
     padding: '1.75rem',
-    backgroundImage: `linear-gradient(165deg, rgba(15, 23, 42, 0.95) 0%, rgba(17, 24, 39, 0.86) 70%), var(--training-accent, ${TRAINING_ACCENT_FALLBACK})`,
-    backgroundBlendMode: 'overlay',
+    background: 'var(--secondary-bg, #111827)',
     borderRadius: '20px',
-    boxShadow: '0 28px 55px rgba(15, 23, 42, 0.5)',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
     textAlign: 'center',
-    border: '1px solid rgba(148, 163, 184, 0.3)',
-    color: '#e2e8f0',
+    border: '1px solid var(--border-light, rgba(148, 163, 184, 0.3))',
+    color: 'var(--text-primary, #e2e8f0)',
     display: 'flex',
     flexDirection: 'column',
     gap: '0.75rem',
@@ -1214,13 +1254,13 @@ const useStyles = createUseStyles({
   trainingResultTitle: {
     fontSize: '1.25rem',
     fontWeight: 700,
-    color: '#f8fafc',
+    color: 'var(--text-primary, #f8fafc)',
   },
   trainingResultWord: {
     fontSize: '2.2rem',
     fontWeight: 800,
     letterSpacing: '0.2em',
-    color: '#fef08a',
+    color: 'var(--text-primary, #e2e8f0)',
   },
   trainingOverlay: {
     position: 'fixed',
@@ -1258,6 +1298,55 @@ const useStyles = createUseStyles({
     },
     '@media (max-width: 600px)': {
       margin: '0 auto',
+    },
+  },
+
+  '@keyframes tileFlip': {
+    '0%': {
+      transform: 'rotateX(0deg)',
+    },
+    '50%': {
+      transform: 'rotateX(90deg)',
+    },
+    '100%': {
+      transform: 'rotateX(0deg)',
+    },
+  },
+
+  '@keyframes tileTextReveal': {
+    '0%': {
+      opacity: 0,
+    },
+    '50%': {
+      opacity: 0,
+    },
+    '51%': {
+      opacity: 1,
+    },
+    '100%': {
+      opacity: 1,
+    },
+  },
+
+  '@keyframes rowFlash': {
+    '0%, 100%': {
+      transform: 'scale(1)',
+      opacity: 1,
+    },
+    '50%': {
+      transform: 'scale(1.05)',
+      opacity: 0.8,
+    },
+  },
+
+  '@keyframes tilePulse': {
+    '0%, 100%': {
+      borderColor: 'var(--border-light, rgba(148, 163, 184, 0.35))',
+      transform: 'scale(1)',
+    },
+    '50%': {
+      borderColor: 'var(--training-accent, #3b82f6)',
+      transform: 'scale(1.02)',
     },
   },
 

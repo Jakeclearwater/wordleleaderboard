@@ -8,6 +8,7 @@ import {
 import { createPortal } from 'react-dom';
 import { SOLUTION_WORDS, WORD_SET } from './wordlists/wordleWords';
 import useStyles from './useStyles';
+import { Confetti } from './Confetti';
 
 const MAX_GUESSES = 6;
 
@@ -22,6 +23,10 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   const helpPortalTarget = typeof document !== 'undefined' ? document.body : null;
   const [solution, setSolution] = useState(() => getRandomWord());
   const [guesses, setGuesses] = useState([]);
+
+  useEffect(() => {
+    console.log('Training Wordle Solution:', solution);
+  }, [solution]);
   const [currentGuess, setCurrentGuess] = useState('');
   const [status, setStatus] = useState('playing');
   const [showHelp, setShowHelp] = useState(false);
@@ -29,6 +34,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   const [revealIndex, setRevealIndex] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const feedbackTimers = useRef({ hide: null, remove: null });
 
   const clearFeedback = useCallback(() => {
@@ -63,6 +69,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
     setStatus('playing');
     setKeyboardHints({});
     setRevealIndex(null);
+    setShowConfetti(false);
     clearFeedback();
   }, [clearFeedback]);
 
@@ -145,6 +152,10 @@ const TrainingWordle = ({ getCurrentGradient }) => {
 
     if (evaluation.every(state => state === 'correct')) {
       setStatus('won');
+      setTimeout(() => {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000);
+      }, 1300);
     } else if (guesses.length + 1 >= MAX_GUESSES) {
       setStatus('lost');
     } else {
@@ -264,20 +275,27 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   }, [guesses, currentGuess, status]);
 
   const getTileClass = (evaluation, rowIndex, tileIndex) => {
-    if (evaluation === 'pending') {
-      return `${classes.trainingTile} ${classes.trainingTilePending}`;
-    }
-    if (!evaluation) {
-      return `${classes.trainingTile} ${classes.trainingTileEmpty}`;
-    }
     const lastRowIndex = guesses.length - 1;
-    if (rowIndex === lastRowIndex && revealIndex !== null) {
+    const isRevealing = rowIndex === lastRowIndex && revealIndex !== null && tileIndex <= revealIndex;
+    
+    let classNames = [classes.trainingTile];
+    
+    if (evaluation === 'pending') {
+      classNames.push(classes.trainingTilePending);
+    } else if (!evaluation) {
+      classNames.push(classes.trainingTileEmpty);
+    } else if (rowIndex === lastRowIndex && revealIndex !== null) {
       if (tileIndex <= revealIndex) {
-        return `${classes.trainingTile} ${classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]}`;
+        classNames.push(classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]);
+        classNames.push(classes.trainingTileFlip);
+      } else {
+        classNames.push(classes.trainingTileHidden);
       }
-      return `${classes.trainingTile} ${classes.trainingTileHidden}`;
+    } else {
+      classNames.push(classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]);
     }
-    return `${classes.trainingTile} ${classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]}`;
+    
+    return classNames.join(' ');
   };
 
   const getKeyboardKeyClass = (state) => {
@@ -290,6 +308,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
       className={classes.trainingSurface}
       style={accentGradient ? { '--training-accent': accentGradient } : undefined}
     >
+      <Confetti show={showConfetti} />
       <div className={classes.trainingContainer}>
         <div className={classes.trainingControls}>
           <button
@@ -317,21 +336,34 @@ const TrainingWordle = ({ getCurrentGradient }) => {
         )}
 
         <div className={classes.trainingBoard}>
-          {rows.map((row, rowIndex) => (
-            <div key={`row-${rowIndex}`} className={classes.trainingRow}>
-              {row.guess.padEnd(5).split('').map((letter, tileIndex) => {
+          {rows.map((row, rowIndex) => {
+            const lastRowIndex = guesses.length - 1;
+            const isWinningRow = status === 'won' && rowIndex === lastRowIndex;
+            const rowClass = isWinningRow ? `${classes.trainingRow} ${classes.trainingRowWin}` : classes.trainingRow;
+            
+            return (
+              <div key={`row-${rowIndex}`} className={rowClass}>
+                {row.guess.padEnd(5).split('').map((letter, tileIndex) => {
                 const displayChar = letter === ' ' ? '' : letter;
+                const lastRowIndex = guesses.length - 1;
+                const isRevealing = rowIndex === lastRowIndex && revealIndex !== null && tileIndex <= revealIndex;
+                const animationDelay = isRevealing ? `${tileIndex * 0.15}s` : undefined;
+                const isCurrentRow = rowIndex === guesses.length && status === 'playing';
+                const shouldPulse = isCurrentRow && tileIndex === currentGuess.length;
+                
                 return (
                   <div
                     key={`tile-${rowIndex}-${tileIndex}`}
-                    className={getTileClass(row.evaluation[tileIndex], rowIndex, tileIndex)}
+                    className={`${getTileClass(row.evaluation[tileIndex], rowIndex, tileIndex)} ${shouldPulse ? classes.trainingTilePulse : ''}`}
+                    style={animationDelay ? { animationDelay } : undefined}
                   >
                     <span>{displayChar}</span>
                   </div>
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className={classes.trainingKeyboard}>

@@ -217,7 +217,7 @@ const App = () => {
   // Shooting stars now run in production mode (no debug artifacts)
   const [playIntro, setPlayIntro] = useState(true);
   const appVersion = getAppVersion();
-  const classNames = ["green", "yellow"];
+  const classNames = ["green", "yellow", "gray"];
 
   // Generate random space elements on component mount
   const [spaceElements] = useState(() => {
@@ -521,7 +521,6 @@ const useStyles = createUseStyles({
     maxWidth: '100%',
     padding: '0 1rem',
     boxSizing: 'border-box',
-    
   },
   overlay: {
     position: 'fixed',
@@ -555,7 +554,7 @@ const useStyles = createUseStyles({
     top: '15%',
     left: '-10%',
     fontSize: '24px',
-    animation: 'shootingStar1 8s linear infinite',
+    animation: '$shootingStar 8s linear infinite',
     zIndex: 2,
     pointerEvents: 'none',
     filter: 'drop-shadow(-15px 0 8px rgba(255,255,255,0.6)) drop-shadow(-30px 0 15px rgba(255,255,255,0.3))',
@@ -566,7 +565,7 @@ const useStyles = createUseStyles({
     top: '35%',
     left: '-10%',
     fontSize: '20px',
-    animation: 'shootingStar2 12s linear infinite 3s',
+    animation: '$shootingStar 12s linear infinite 3s',
     zIndex: 2,
     pointerEvents: 'none',
     filter: 'drop-shadow(-12px 0 6px rgba(255,255,255,0.5)) drop-shadow(-24px 0 12px rgba(255,255,255,0.2))',
@@ -577,7 +576,7 @@ const useStyles = createUseStyles({
     top: '65%',
     left: '-10%',
     fontSize: '22px',
-    animation: 'shootingStar3 10s linear infinite 6s',
+    animation: '$shootingStar 10s linear infinite 6s',
     zIndex: 2,
     pointerEvents: 'none',
     filter: 'drop-shadow(-18px 0 10px rgba(255,255,255,0.7)) drop-shadow(-36px 0 18px rgba(255,255,255,0.4))',
@@ -589,7 +588,7 @@ const useStyles = createUseStyles({
     height: '4px',
     background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.3) 80%, transparent 100%)',
     borderRadius: '50%',
-    animation: 'twinkle 3s ease-in-out infinite',
+    animation: '$pulse 3s ease-in-out infinite',
     pointerEvents: 'none',
     boxShadow: '0 0 8px rgba(255,255,255,1), 0 0 16px rgba(255,255,255,0.8), 0 0 32px rgba(255,255,255,0.6), 0 0 48px rgba(255,255,255,0.3)',
     filter: 'blur(0.5px) brightness(1.2)',
@@ -602,7 +601,7 @@ const useStyles = createUseStyles({
     borderRadius: '50%',
     pointerEvents: 'none',
     boxShadow: '0 0 12px rgba(255,255,153,1), 0 0 24px rgba(255,255,153,0.9), 0 0 48px rgba(255,255,153,0.7), 0 0 72px rgba(255,255,153,0.4)',
-    animation: 'pulse 4s ease-in-out infinite',
+    animation: '$pulse 4s ease-in-out infinite',
     filter: 'blur(0.3px) brightness(1.3)',
   },
   smallStar: {
@@ -611,7 +610,7 @@ const useStyles = createUseStyles({
     height: '2px',
     background: 'radial-gradient(circle, #f0f0f0 0%, rgba(240,240,240,0.8) 60%, rgba(224,224,224,0.4) 85%, transparent 100%)',
     borderRadius: '50%',
-    animation: 'twinkle 2s ease-in-out infinite',
+    animation: '$pulse 2s ease-in-out infinite',
     pointerEvents: 'none',
     boxShadow: '0 0 6px rgba(240,240,240,0.9), 0 0 12px rgba(240,240,240,0.6), 0 0 24px rgba(240,240,240,0.3)',
     filter: 'blur(0.2px) brightness(1.1)',
@@ -620,7 +619,6 @@ const useStyles = createUseStyles({
     position: 'absolute',
     borderRadius: '60%',
     pointerEvents: 'none',
-    animation: 'float 12s ease-in-out infinite',
     filter: 'blur(8px) drop-shadow(0 0 60px rgba(120, 150, 255, 0.28)) drop-shadow(0 0 120px rgba(90, 110, 200, 0.18))',
     zIndex: 0,
     opacity: 0.8,
@@ -772,6 +770,14 @@ const useStyles = createUseStyles({
     animationDuration: '0.4s',
     animationFillMode: 'both',
     animationTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
+    '& $charFaceFront': {
+      animationName: '$revealFront',
+      animationDuration: '0.4s',
+      animationDelay: 'inherit',
+      animationFillMode: 'both',
+      animationTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
+      opacity: 0,
+    },
   },
   charFaceFront: {
     position: 'absolute',
@@ -818,17 +824,33 @@ const useStyles = createUseStyles({
     '0%': {
       transform: 'rotateX(0deg)',
       backgroundColor: '#787c7e',
-      color: '#d7dadc',
     },
-    '45%': {
+    '50%': {
       transform: 'rotateX(90deg)',
       backgroundColor: '#787c7e',
-      color: '#d7dadc',
+    },
+    '51%': {
+      transform: 'rotateX(90deg)',
+      backgroundColor: 'var(--tile-bg, #6aaa64)',
     },
     '100%': {
       transform: 'rotateX(0deg)',
       backgroundColor: 'var(--tile-bg, #6aaa64)',
-      color: 'white',
+    },
+  },
+
+  '@keyframes revealFront': {
+    '0%': {
+      opacity: 0,
+    },
+    '50%': {
+      opacity: 0,
+    },
+    '51%': {
+      opacity: 1,
+    },
+    '100%': {
+      opacity: 1,
     },
   },
 

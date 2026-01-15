@@ -4,6 +4,20 @@ An open source Wordle leaderboard application built with React and Firebase Fire
 
 **Important: don't break it**
 
+## Local Development
+
+To test the application locally:
+
+```bash
+npm run dev
+```
+
+This will:
+1. Generate the version info
+2. Start the Vite dev server
+
+The app will be available at `http://localhost:5173` (or another port if 5173 is busy - check the terminal output).
+
 ## dba-script.js
 
 This Node.js script allows administrators to perform basic database administration tasks on the Firestore database via command line interface.

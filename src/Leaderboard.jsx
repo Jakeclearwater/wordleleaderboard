@@ -504,7 +504,23 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
                     <div className={classes.playerInfo}>
                       <div className={classes.playerName}>{entry.name}</div>
                       <div className={classes.playerStats}>
-                        {entry.attempts} game{entry.attempts !== 1 ? 's' : ''}
+                        {(() => {
+                          try {
+                            if (entry.earliest) {
+                              const date = new Date(entry.earliest);
+                              if (!isNaN(date.getTime()) && isFinite(date.getTime())) {
+                                return new Intl.DateTimeFormat('en-US', {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                }).format(date);
+                              }
+                            }
+                          } catch (e) {
+                            console.error('Date formatting error:', e);
+                          }
+                          return `${entry.attempts} game${entry.attempts !== 1 ? 's' : ''}`;
+                        })()}
                       </div>
                     </div>
                     <div className={classes.scoreDisplay}>
