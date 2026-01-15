@@ -701,7 +701,7 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
           {annualWinners.length > 0 && (
             <div className={classes.leaderboardSection}>
               <div className={classes.sectionTitle}>
-                <span className={classes.sectionIcon}>🏆</span>
+                <span className={classes.sectionIcon}>🏆 </span>
                 Annual Champions
               </div>
               <div className={classes.winnersTable}>
