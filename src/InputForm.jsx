@@ -633,7 +633,11 @@ Wordle 1,234 4/6
                   Practice Wordle locally with instant feedback before submitting your real score
                 </p>
               </div>
-              <TrainingWordle getCurrentGradient={getCurrentGradient} />
+              <TrainingWordle 
+                getCurrentGradient={getCurrentGradient}
+                username={username}
+                isLoggedIn={isLoggedIn}
+              />
             </div>
           )}
           {activeTab === "Wordle Game" && (

@@ -4,6 +4,20 @@ An open source Wordle leaderboard application built with React and Firebase Fire
 
 **Important: don't break it**
 
+## Local Development
+
+To test the application locally:
+
+```bash
+npm run dev
+```
+
+This will:
+1. Generate the version info
+2. Start the Vite dev server
+
+The app will be available at `http://localhost:5173` (or another port if 5173 is busy - check the terminal output).
+
 ## dba-script.js
 
 This Node.js script allows administrators to perform basic database administration tasks on the Firestore database via command line interface.
@@ -173,6 +187,7 @@ node dba-script.js search scores guesses > 5
 
 ### Database Schema
 
+#### `scores` Collection
 The `scores` collection contains documents with the following structure:
 ```json
 {
@@ -189,6 +204,60 @@ The `scores` collection contains documents with the following structure:
 - `date` (string): Date in YYYY-MM-DD format (New Zealand timezone)
 - `dnf` (boolean): True if player did not finish (DNF)
 - `wordleNumber` (string|null): Wordle puzzle number (extracted from pasted results or estimated for manual entries)
+
+#### `annual_winners` Collection
+The `annual_winners` collection stores yearly champions and is displayed in the Annual Champions table on the Leaderboard tab.
+
+```json
+{
+  "year": 2025,
+  "name": "Champion Name",
+  "average": 3.69,
+  "b_average": 2.81
+}
+```
+
+- `year` (number): The calendar year
+- `name` (string): Winner's full name
+- `average` (number): Average guesses for the year (calculated from all scores)
+- `b_average` (number|null): B-average for the year (optional, can be null if not applicable)
+
+**To add a new annual winner:**
+```bash
+node dba-script.js add annual_winners '{"year":2026,"name":"Jane Smith","average":3.45,"b_average":2.67}'
+```
+
+**To update an existing winner:**
+```bash
+# First, find the document ID
+node dba-script.js show annual_winners
+
+# Then update using the document ID
+node dba-script.js update annual_winners <documentId> '{"average":3.50}'
+```
+
+#### `training_scores` Collection
+The `training_scores` collection stores unlimited practice game results.
+
+```json
+{
+  "name": "Player Name",
+  "guesses": 4,
+  "isoDate": "2026-01-16T12:34:56.789Z",
+  "dnf": false,
+  "wordleNumber": null,
+  "hardMode": false,
+  "trainingMode": true
+}
+```
+
+- `name` (string): Player's name
+- `guesses` (number): Number of guesses taken
+- `isoDate` (string): ISO 8601 timestamp
+- `dnf` (boolean): True if player did not finish
+- `wordleNumber` (number|null): Always null for training mode
+- `hardMode` (boolean): Hard mode setting
+- `trainingMode` (boolean): Always true for training scores
 
 ### Teams Integration
 

@@ -24,6 +24,7 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
   const [rawAverageLeaderboard, setRawAverageLeaderboard] = useState([]);
   const [allAttemptsLeaderboard, setAllAttemptsLeaderboard] = useState([]);
   const [woodspoonLeaderboard, setWoodspoonLeaderboard] = useState([]);
+  const [annualWinners, setAnnualWinners] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +48,7 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
           setRawAverageLeaderboard(cached.rawAverage || []);
           setAllAttemptsLeaderboard(cached.allAttempts || []);
           setWoodspoonLeaderboard(cached.woodspoon || []);
+          setAnnualWinners(cached.annualWinners || []);
           setLoading(false);
           return;
         } catch (e) {
@@ -385,6 +387,14 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
         setAllAttemptsLeaderboard(allAttemptsLeaderboardArray);
         setWoodspoonLeaderboard(woodspoonLeaderboardArray);
         
+        // Fetch annual winners
+        console.log('📊 Fetching annual winners...');
+        const winnersQuery = collection(firestore, 'annual_winners');
+        const winnersSnapshot = await getDocs(winnersQuery);
+        const winners = winnersSnapshot.docs.map(doc => doc.data()).sort((a, b) => b.year - a.year);
+        console.log('🏆 Annual winners loaded:', winners);
+        setAnnualWinners(winners);
+        
         // Save to localStorage cache
         const cacheData = {
           daily: dailyLeaderboardArray,
@@ -392,7 +402,8 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
           allTime: allTimeLeaderboardArray,
           rawAverage: rawAverageLeaderboard,
           allAttempts: allAttemptsLeaderboardArray,
-          woodspoon: woodspoonLeaderboardArray
+          woodspoon: woodspoonLeaderboardArray,
+          annualWinners: winners
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
         localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
@@ -504,7 +515,23 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
                     <div className={classes.playerInfo}>
                       <div className={classes.playerName}>{entry.name}</div>
                       <div className={classes.playerStats}>
-                        {entry.attempts} game{entry.attempts !== 1 ? 's' : ''}
+                        {(() => {
+                          try {
+                            if (entry.earliest) {
+                              const date = new Date(entry.earliest);
+                              if (!isNaN(date.getTime()) && isFinite(date.getTime())) {
+                                return new Intl.DateTimeFormat('en-US', {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                }).format(date);
+                              }
+                            }
+                          } catch (e) {
+                            console.error('Date formatting error:', e);
+                          }
+                          return `${entry.attempts} game${entry.attempts !== 1 ? 's' : ''}`;
+                        })()}
                       </div>
                     </div>
                     <div className={classes.scoreDisplay}>
@@ -670,6 +697,33 @@ const Leaderboard = ({ getCurrentGradient, getAccentGradient }) => {
               </div>
             )}
           </div>
+          
+          {annualWinners.length > 0 && (
+            <div className={classes.leaderboardSection}>
+              <div className={classes.sectionTitle}>
+                <span className={classes.sectionIcon}>🏆</span>
+                Annual Champions
+              </div>
+              <div className={classes.winnersTable}>
+                <div className={classes.winnersTableHeader}>
+                  <div className={classes.winnersYearCol}>Year</div>
+                  <div className={classes.winnersNameCol}>Champion</div>
+                  <div className={classes.winnersAvgCol}>Average</div>
+                  <div className={classes.winnersBAvgCol}>B-Average</div>
+                </div>
+                {annualWinners.map((winner, index) => (
+                  <div key={winner.year} className={classes.winnersTableRow}>
+                    <div className={classes.winnersYearCol}>{winner.year}</div>
+                    <div className={classes.winnersNameCol}>{winner.name}</div>
+                    <div className={classes.winnersAvgCol}>{winner.average.toFixed(2)}</div>
+                    <div className={classes.winnersBAvgCol}>
+                      {winner.b_average ? winner.b_average.toFixed(2) : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

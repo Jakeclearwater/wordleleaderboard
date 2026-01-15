@@ -6,14 +6,17 @@ import {
   useRef,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { SOLUTION_WORDS, WORD_SET } from './wordlists/wordleWords';
 import useStyles from './useStyles';
+import { Confetti } from './Confetti';
+import { firestore } from './firebase';
 
 const MAX_GUESSES = 6;
 
 const getRandomWord = () => SOLUTION_WORDS[Math.floor(Math.random() * SOLUTION_WORDS.length)];
 
-const TrainingWordle = ({ getCurrentGradient }) => {
+const TrainingWordle = ({ getCurrentGradient, username, isLoggedIn }) => {
   const classes = useStyles();
   const accentGradient = useMemo(
     () => (typeof getCurrentGradient === 'function' ? getCurrentGradient() : null),
@@ -22,6 +25,38 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   const helpPortalTarget = typeof document !== 'undefined' ? document.body : null;
   const [solution, setSolution] = useState(() => getRandomWord());
   const [guesses, setGuesses] = useState([]);
+
+  useEffect(() => {
+    console.log('Training Wordle Solution:', solution);
+  }, [solution]);
+
+  useEffect(() => {
+    if (isLoggedIn && username) {
+      console.log('Training Wordle User:', username);
+      fetchTrainingStats(username);
+    }
+  }, [isLoggedIn, username]);
+
+  const fetchTrainingStats = async (username) => {
+    try {
+      const q = query(
+        collection(firestore, 'training_scores'),
+        where('name', '==', username)
+      );
+      const snapshot = await getDocs(q);
+      const scores = snapshot.docs.map(doc => doc.data());
+      
+      const wins = scores.filter(s => !s.dnf).length;
+      const totalGames = scores.length;
+      const avgGuesses = wins > 0 
+        ? (scores.filter(s => !s.dnf).reduce((sum, s) => sum + s.guesses, 0) / wins).toFixed(2)
+        : 0;
+      
+      setTrainingStats({ wins, totalGames, avgGuesses });
+    } catch (error) {
+      console.error('Error fetching training stats:', error);
+    }
+  };
   const [currentGuess, setCurrentGuess] = useState('');
   const [status, setStatus] = useState('playing');
   const [showHelp, setShowHelp] = useState(false);
@@ -29,6 +64,9 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   const [revealIndex, setRevealIndex] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [trainingStats, setTrainingStats] = useState({ wins: 0, totalGames: 0, avgGuesses: 0 });
+  const [showStats, setShowStats] = useState(false);
   const feedbackTimers = useRef({ hide: null, remove: null });
 
   const clearFeedback = useCallback(() => {
@@ -63,6 +101,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
     setStatus('playing');
     setKeyboardHints({});
     setRevealIndex(null);
+    setShowConfetti(false);
     clearFeedback();
   }, [clearFeedback]);
 
@@ -112,7 +151,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
     return result;
   }, []);
 
-  const handleSubmitGuess = useCallback(() => {
+  const handleSubmitGuess = useCallback(async () => {
     if (status !== 'playing') return;
     const guess = currentGuess.toUpperCase();
     const error = validateGuess(guess);
@@ -145,8 +184,51 @@ const TrainingWordle = ({ getCurrentGradient }) => {
 
     if (evaluation.every(state => state === 'correct')) {
       setStatus('won');
+      
+      // Save training score to Firestore
+      if (isLoggedIn && username) {
+        try {
+          await addDoc(collection(firestore, 'training_scores'), {
+            name: username,
+            guesses: guesses.length + 1,
+            isoDate: new Date().toISOString(),
+            dnf: false,
+            wordleNumber: null,
+            hardMode: false,
+            trainingMode: true
+          });
+          // Refresh stats
+          fetchTrainingStats(username);
+        } catch (error) {
+          console.error('Error saving training score:', error);
+        }
+      }
+      
+      setTimeout(() => {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4000);
+      }, 1300);
     } else if (guesses.length + 1 >= MAX_GUESSES) {
       setStatus('lost');
+      
+      // Save training score as DNF
+      if (isLoggedIn && username) {
+        try {
+          await addDoc(collection(firestore, 'training_scores'), {
+            name: username,
+            guesses: 7,
+            isoDate: new Date().toISOString(),
+            dnf: true,
+            wordleNumber: null,
+            hardMode: false,
+            trainingMode: true
+          });
+          // Refresh stats
+          fetchTrainingStats(username);
+        } catch (error) {
+          console.error('Error saving training score:', error);
+        }
+      }
     } else {
       setStatus('playing');
     }
@@ -264,20 +346,27 @@ const TrainingWordle = ({ getCurrentGradient }) => {
   }, [guesses, currentGuess, status]);
 
   const getTileClass = (evaluation, rowIndex, tileIndex) => {
-    if (evaluation === 'pending') {
-      return `${classes.trainingTile} ${classes.trainingTilePending}`;
-    }
-    if (!evaluation) {
-      return `${classes.trainingTile} ${classes.trainingTileEmpty}`;
-    }
     const lastRowIndex = guesses.length - 1;
-    if (rowIndex === lastRowIndex && revealIndex !== null) {
+    const isRevealing = rowIndex === lastRowIndex && revealIndex !== null && tileIndex <= revealIndex;
+    
+    let classNames = [classes.trainingTile];
+    
+    if (evaluation === 'pending') {
+      classNames.push(classes.trainingTilePending);
+    } else if (!evaluation) {
+      classNames.push(classes.trainingTileEmpty);
+    } else if (rowIndex === lastRowIndex && revealIndex !== null) {
       if (tileIndex <= revealIndex) {
-        return `${classes.trainingTile} ${classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]}`;
+        classNames.push(classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]);
+        classNames.push(classes.trainingTileFlip);
+      } else {
+        classNames.push(classes.trainingTileHidden);
       }
-      return `${classes.trainingTile} ${classes.trainingTileHidden}`;
+    } else {
+      classNames.push(classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]);
     }
-    return `${classes.trainingTile} ${classes[`trainingTile${evaluation.charAt(0).toUpperCase() + evaluation.slice(1)}`]}`;
+    
+    return classNames.join(' ');
   };
 
   const getKeyboardKeyClass = (state) => {
@@ -290,6 +379,7 @@ const TrainingWordle = ({ getCurrentGradient }) => {
       className={classes.trainingSurface}
       style={accentGradient ? { '--training-accent': accentGradient } : undefined}
     >
+      <Confetti show={showConfetti} />
       <div className={classes.trainingContainer}>
         <div className={classes.trainingControls}>
           <button
@@ -298,6 +388,14 @@ const TrainingWordle = ({ getCurrentGradient }) => {
           >
             🔁 New Word
           </button>
+          {isLoggedIn && (
+            <button
+              className={classes.trainingSecondaryButton}
+              onClick={() => setShowStats(!showStats)}
+            >
+              {showStats ? '🎮 Game' : '📊 Stats'}
+            </button>
+          )}
           <button
             className={classes.trainingSecondaryButton}
             onClick={() => setShowHelp(true)}
@@ -316,22 +414,38 @@ const TrainingWordle = ({ getCurrentGradient }) => {
           </div>
         )}
 
-        <div className={classes.trainingBoard}>
-          {rows.map((row, rowIndex) => (
-            <div key={`row-${rowIndex}`} className={classes.trainingRow}>
-              {row.guess.padEnd(5).split('').map((letter, tileIndex) => {
+        <div className={classes.trainingFlipContainer}>
+          <div className={`${classes.trainingFlipCard} ${showStats ? classes.trainingFlipCardFlipped : ''}`}>
+            <div className={classes.trainingFlipFront}>
+              <div className={classes.trainingBoard}>
+                {rows.map((row, rowIndex) => {
+            const lastRowIndex = guesses.length - 1;
+            const isWinningRow = status === 'won' && rowIndex === lastRowIndex;
+            const rowClass = isWinningRow ? `${classes.trainingRow} ${classes.trainingRowWin}` : classes.trainingRow;
+            
+            return (
+              <div key={`row-${rowIndex}`} className={rowClass}>
+                {row.guess.padEnd(5).split('').map((letter, tileIndex) => {
                 const displayChar = letter === ' ' ? '' : letter;
+                const lastRowIndex = guesses.length - 1;
+                const isRevealing = rowIndex === lastRowIndex && revealIndex !== null && tileIndex <= revealIndex;
+                const animationDelay = isRevealing ? `${tileIndex * 0.15}s` : undefined;
+                const isCurrentRow = rowIndex === guesses.length && status === 'playing';
+                const shouldPulse = isCurrentRow && tileIndex === currentGuess.length;
+                
                 return (
                   <div
                     key={`tile-${rowIndex}-${tileIndex}`}
-                    className={getTileClass(row.evaluation[tileIndex], rowIndex, tileIndex)}
+                    className={`${getTileClass(row.evaluation[tileIndex], rowIndex, tileIndex)} ${shouldPulse ? classes.trainingTilePulse : ''}`}
+                    style={animationDelay ? { animationDelay } : undefined}
                   >
-                    <span>{displayChar}</span>
+                    <span style={animationDelay ? { animationDelay } : undefined}>{displayChar}</span>
                   </div>
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className={classes.trainingKeyboard}>
@@ -364,6 +478,31 @@ const TrainingWordle = ({ getCurrentGradient }) => {
               )}
             </div>
           ))}
+        </div>
+            </div>
+
+            <div className={classes.trainingFlipBack}>
+              {trainingStats && (
+                <div className={classes.trainingStatsCardLarge}>
+                  <div className={classes.trainingStatsTitle}>Your Training Stats</div>
+                  <div className={classes.trainingStatsGrid}>
+                    <div className={classes.trainingStat}>
+                      <div className={classes.trainingStatValue}>{trainingStats.wins}</div>
+                      <div className={classes.trainingStatLabel}>Wins</div>
+                    </div>
+                    <div className={classes.trainingStat}>
+                      <div className={classes.trainingStatValue}>{trainingStats.totalGames}</div>
+                      <div className={classes.trainingStatLabel}>Games</div>
+                    </div>
+                    <div className={classes.trainingStat}>
+                      <div className={classes.trainingStatValue}>{trainingStats.avgGuesses}</div>
+                      <div className={classes.trainingStatLabel}>Avg Guesses</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {status !== 'playing' && (

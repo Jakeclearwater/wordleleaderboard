@@ -310,7 +310,7 @@ const useStyles = createUseStyles({
       paddingLeft: '1.5rem',
     },
     '&:before': {
-      content: '"•"',
+      content: '"\\2022"',
       position: 'absolute',
       left: '0.5rem',
       color: ({ gradient }) => gradient ? 'transparent' : '#667eea',
