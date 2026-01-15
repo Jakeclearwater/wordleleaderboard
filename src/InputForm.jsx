@@ -635,6 +635,7 @@ Wordle 1,234 4/6
               </div>
               <TrainingWordle 
                 getCurrentGradient={getCurrentGradient}
+                getAccentGradient={getAccentGradient}
                 username={username}
                 isLoggedIn={isLoggedIn}
               />

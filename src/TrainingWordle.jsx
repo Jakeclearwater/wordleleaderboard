@@ -16,12 +16,26 @@ const MAX_GUESSES = 6;
 
 const getRandomWord = () => SOLUTION_WORDS[Math.floor(Math.random() * SOLUTION_WORDS.length)];
 
-const TrainingWordle = ({ getCurrentGradient, username, isLoggedIn }) => {
-  const classes = useStyles();
+const TrainingWordle = ({ getCurrentGradient, getAccentGradient, username, isLoggedIn }) => {
+  const classes = useStyles({ 
+    gradient: getCurrentGradient(),
+    accentGradient: getAccentGradient ? getAccentGradient() : getCurrentGradient()
+  });
   const accentGradient = useMemo(
     () => (typeof getCurrentGradient === 'function' ? getCurrentGradient() : null),
     [getCurrentGradient],
   );
+  
+  // Extract solid color from gradient for CSS effects that don't support gradients
+  const accentColor = useMemo(() => {
+    const gradient = getAccentGradient ? getAccentGradient() : getCurrentGradient();
+    if (!gradient) return '#3b82f6';
+    
+    // Extract first color from gradient string (e.g., "linear-gradient(135deg, #667eea 0%, #764ba2 100%)")
+    const colorMatch = gradient.match(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}|rgba?\([^)]+\)/);
+    return colorMatch ? colorMatch[0] : '#3b82f6';
+  }, [getAccentGradient, getCurrentGradient]);
+  
   const helpPortalTarget = typeof document !== 'undefined' ? document.body : null;
   const [solution, setSolution] = useState(() => getRandomWord());
   const [guesses, setGuesses] = useState([]);
@@ -381,7 +395,7 @@ const TrainingWordle = ({ getCurrentGradient, username, isLoggedIn }) => {
   return (
     <div
       className={classes.trainingSurface}
-      style={accentGradient ? { '--training-accent': accentGradient } : undefined}
+      style={accentGradient ? { '--training-accent': accentGradient, '--training-accent-color': accentColor } : undefined}
     >
       <Confetti show={showConfetti} />
       <div className={classes.trainingContainer}>
