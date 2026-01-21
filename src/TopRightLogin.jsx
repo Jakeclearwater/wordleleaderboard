@@ -19,7 +19,9 @@ const TopRightLogin = ({
   setCustomColors,
   handleLogout,
   darkMode,
-  setDarkMode
+  setDarkMode,
+  gooseCursorEnabled,
+  setGooseCursorEnabled
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [showPatchNotes, setShowPatchNotes] = useState(false);
@@ -552,6 +554,60 @@ const TopRightLogin = ({
                     alignItems: 'center',
                     gap: '10px'
                   }}>
+                    <button
+                      type="button"
+                      title={gooseCursorEnabled ? "Disable goose cursor" : "Enable goose cursor"}
+                      aria-label="Toggle goose cursor"
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        border: '1px solid var(--border-light, rgba(0,0,0,0.15))',
+                        background: gooseCursorEnabled ? 'var(--secondary-bg, #f3f4f6)' : 'var(--card-bg, white)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                        position: 'relative',
+                        boxShadow: 'none'
+                      }}
+                      onMouseOver={e => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 0, 0, 0.15)';
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                      onClick={() => setGooseCursorEnabled(!gooseCursorEnabled)}
+                    >
+                      🪿
+                      {gooseCursorEnabled && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '-3px',
+                            right: '-3px',
+                            width: '14px',
+                            height: '14px',
+                            borderRadius: '50%',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            lineHeight: '14px',
+                            textAlign: 'center',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
+                          }}
+                          
+                          aria-hidden="true"
+                        >
+                          x
+                        </span>
+                      )}
+                    </button>
                     <button
                       type="button"
                       title="Clear cache & reload"

@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ShootingStars from './ShootingStars.jsx';
 import InputForm from './InputForm';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
 import githubLogo from './assets/github-logo.svg';
 import christmasHat from './assets/christmas-hat.png';
+import gooseGif from './assets/goose-walk-goose.gif';
 import versionInfo from './version.json';
 
 // Festive decorations configuration
@@ -148,6 +149,7 @@ const App = () => {
   
   // Dark mode state with cookie persistence
   const [darkMode, setDarkMode] = useState(() => getCookie('dark-mode') === 'true');
+  const [gooseCursorEnabled, setGooseCursorEnabled] = useState(() => getCookie('goose-cursor-enabled') === 'true');
 
   // Save theme preference to cookies
   useEffect(() => {
@@ -169,6 +171,10 @@ const App = () => {
       document.documentElement.classList.remove('dark-mode');
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    setCookie('goose-cursor-enabled', gooseCursorEnabled.toString());
+  }, [gooseCursorEnabled]);
 
   // List of dark themes that need light button gradients
   const darkThemes = ['monochrome', 'midnight'];
@@ -292,6 +298,60 @@ const App = () => {
       nebulae: generateNebulae(),
     };
   });
+  const gooseRef = useRef(null);
+
+  useEffect(() => {
+    if (!gooseCursorEnabled) return undefined;
+    const goose = gooseRef.current;
+    if (!goose) return;
+
+    const target = {
+      x: window.innerWidth * 0.5,
+      y: window.innerHeight * 0.5,
+    };
+    const position = { ...target };
+    let frameId = 0;
+    let facing = 1;
+
+    const updateTarget = (event) => {
+      if (event.touches && event.touches[0]) {
+        target.x = event.touches[0].clientX;
+        target.y = event.touches[0].clientY;
+        return;
+      }
+      target.x = event.clientX;
+      target.y = event.clientY;
+    };
+
+    const animate = () => {
+      const dx = target.x - position.x;
+      const dy = target.y - position.y;
+      position.x += dx * 0.03;
+      position.y += dy * 0.03;
+
+      if (Math.abs(dx) > 2) {
+        facing = dx < 0 ? -1 : 1;
+      }
+
+      const speed = Math.min(Math.hypot(dx, dy), 24);
+      const stretch = 1 + Math.min(speed / 80, 0.18);
+      const squash = 1 - Math.min(speed / 100, 0.1);
+      const scaleX = stretch * facing;
+
+      goose.style.transform = `translate(${position.x}px, ${position.y}px) translate(-50%, -50%) scale(${scaleX}, ${squash})`;
+      frameId = requestAnimationFrame(animate);
+    };
+
+    window.addEventListener('mousemove', updateTarget);
+    window.addEventListener('touchmove', updateTarget, { passive: true });
+    frameId = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener('mousemove', updateTarget);
+      window.removeEventListener('touchmove', updateTarget);
+      cancelAnimationFrame(frameId);
+    };
+  }, [gooseCursorEnabled]);
 
   // Stable color assignment - only calculated once
   const [stableColors] = useState(() => 
@@ -370,6 +430,15 @@ const App = () => {
   return (
     <div className={classes.App} style={gradientStyle}>
       <div id="backgroundOverlay" className={classes.overlay}></div>
+      {gooseCursorEnabled && (
+        <img
+          ref={gooseRef}
+          className={classes.goose}
+          src={gooseGif}
+          alt=""
+          aria-hidden="true"
+        />
+      )}
       {(() => {
         const isSpaceTheme = selectedTheme === 'monochrome' && backgroundThemes[selectedTheme]?.special === 'space';
         // Space theme active
@@ -491,6 +560,8 @@ const App = () => {
           getAccentGradient={getAccentGradient}
           darkMode={darkMode}
           setDarkMode={setDarkMode}
+          gooseCursorEnabled={gooseCursorEnabled}
+          setGooseCursorEnabled={setGooseCursorEnabled}
         />
         <footer className={classes.footer}>
           <p>Made with 💚 for Wordle enthusiasts · <span className={classes.spanicon} onClick={hack}>Don&apos;t break this!</span></p>
@@ -530,6 +601,18 @@ const useStyles = createUseStyles({
     height: '100vh',
     zIndex: 0, // Behind everything - just for special background images
     pointerEvents: 'none',
+  },
+  goose: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '35px',
+    height: '50px',
+    zIndex: 1000,
+    pointerEvents: 'none',
+    userSelect: 'none',
+    willChange: 'transform',
+    filter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.45)) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.90))',
   },
   starsOverlay: {
     position: 'fixed',
