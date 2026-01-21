@@ -37,7 +37,9 @@ const InputForm = ({
   getCurrentGradient,
   getAccentGradient,
   darkMode,
-  setDarkMode
+  setDarkMode,
+  gooseCursorEnabled,
+  setGooseCursorEnabled
 }) => {
   const classes = useStyles({ 
     gradient: getCurrentGradient(),
@@ -466,6 +468,8 @@ const InputForm = ({
         handleLogout={handleLogout}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
+        gooseCursorEnabled={gooseCursorEnabled}
+        setGooseCursorEnabled={setGooseCursorEnabled}
       />
       <div className={classes.mainResponsiveMargin}>
         <div style={{
