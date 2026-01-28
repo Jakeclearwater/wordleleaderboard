@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import ShootingStars from './ShootingStars.jsx';
+import FireEffect from './FireEffect.jsx';
 import InputForm from './InputForm';
 import { createUseStyles } from 'react-jss';
 import bsod from './assets/bsod.png';
@@ -133,6 +134,11 @@ const backgroundThemes = {
     gradient: 'radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%), linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     special: 'space'
   },
+  fire: {
+    name: '🔥 Fire',
+    gradient: 'linear-gradient(180deg, #1a0000 0%, #330000 40%, #4d0000 100%)',
+    special: 'fire'
+  },
   custom: {
     name: '🎨 Custom',
     gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -177,7 +183,7 @@ const App = () => {
   }, [gooseCursorEnabled]);
 
   // List of dark themes that need light button gradients
-  const darkThemes = ['monochrome', 'midnight'];
+  const darkThemes = ['monochrome', 'midnight', 'fire'];
   
   // Get current gradient based on selected theme
   const getCurrentGradient = () => {
@@ -201,6 +207,16 @@ const App = () => {
     if (selectedTheme === 'monochrome' && currentTheme?.special === 'space') {
       return {
         background: 'radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%)',
+        minHeight: '100vh',
+        width: '100%',
+        margin: 0,
+        padding: 0,
+        position: 'relative'
+      };
+    }
+    if (selectedTheme === 'fire' && currentTheme?.special === 'fire') {
+      return {
+        background: 'linear-gradient(180deg, #1a0000 0%, #330000 40%, #4d0000 100%)',
         minHeight: '100vh',
         width: '100%',
         margin: 0,
@@ -528,6 +544,11 @@ const App = () => {
         </div>
       )}
 
+      {/* Fire Effect */}
+      {selectedTheme === 'fire' && backgroundThemes[selectedTheme]?.special === 'fire' && (
+        <FireEffect />
+      )}
+
       <div className={classes.container}>
         <div className={classes.header}>
           <span className={classes.versionInfo}>Build: {appVersion}</span>
@@ -756,6 +777,7 @@ const useStyles = createUseStyles({
     left: '10px',
     display: 'flex',
     alignItems: 'center',
+    zIndex: 10,
   },
   titleContainer: {
     position: 'relative',
