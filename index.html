@@ -1,13 +1,45 @@
 <!doctype html>
 <html lang="en">
   <head>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/src/assets/wordle.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ITWordle</title>
   </head>
+
   <body>
+    <!--
+      ███    ██ ██  ██████ ██   ██     ██████   ██████  ██    ██ ███████ ██████
+      ████   ██ ██ ██      ██  ██      ██   ██ ██    ██ ██    ██ ██      ██   ██
+      ██ ██  ██ ██ ██      █████       ██   ██ ██    ██ ██    ██ █████   ██████
+      ██  ██ ██ ██ ██      ██  ██      ██   ██ ██    ██  ██  ██  ██      ██   ██
+      ██   ████ ██  ██████ ██   ██     ██████   ██████    ████   ███████ ██   ██
+
+      NICK DOVER
+    -->
+
+    <div
+      id="nick-dover"
+      aria-hidden="true"
+      style="
+        position: fixed;
+        left: -999999px;
+        top: -999999px;
+        font: 900 120px/1 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        white-space: pre;
+        user-select: none;
+        pointer-events: none;
+      "
+    >
+      NICK DOVER
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
