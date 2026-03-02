@@ -847,6 +847,73 @@ class WordleLeaderboardDBA {
     }
   }
 
+  // Export all scores since a specific date
+  async exportSinceDate(collectionName = 'scores', sinceDate) {
+    console.log(`\n=== Exporting ${collectionName} since ${sinceDate} ===`);
+    
+    // Validate date format (YYYY-MM-DD)
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (!datePattern.test(sinceDate)) {
+      console.error('Error: Date must be in YYYY-MM-DD format (e.g., 2026-01-01)');
+      return;
+    }
+
+    try {
+      const sinceDateISO = `${sinceDate}T00:00:00.000Z`;
+      
+      // Get all documents since the specified date
+      const q = query(
+        collection(this.db, collectionName),
+        where('isoDate', '>=', sinceDateISO),
+        orderBy('isoDate', 'asc')
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        console.log(`No documents found since ${sinceDate}.`);
+        return;
+      }
+
+      console.log(`Found ${snapshot.size} documents since ${sinceDate}`);
+      
+      // Collect all documents
+      const documents = [];
+      snapshot.forEach((doc) => {
+        documents.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+
+      // Create filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const filename = `export_${collectionName}_since_${sinceDate}_${timestamp}.json`;
+      
+      // Write to file
+      writeFileSync(filename, JSON.stringify(documents, null, 2));
+      
+      console.log(`\n✓ Successfully exported ${documents.length} documents to ${filename}`);
+      console.log(`\nFile size: ${(JSON.stringify(documents).length / 1024).toFixed(2)} KB`);
+      
+      // Show some statistics
+      const uniqueNames = new Set(documents.map(d => d.name)).size;
+      const dnfCount = documents.filter(d => d.dnf).length;
+      const avgGuesses = documents.filter(d => !d.dnf).reduce((sum, d) => sum + d.guesses, 0) / documents.filter(d => !d.dnf).length;
+      
+      console.log(`\nStatistics:`);
+      console.log(`  Total entries: ${documents.length}`);
+      console.log(`  Unique players: ${uniqueNames}`);
+      console.log(`  DNF count: ${dnfCount}`);
+      console.log(`  Average guesses (excluding DNF): ${avgGuesses.toFixed(2)}`);
+      console.log(`  Date range: ${documents[0].isoDate} to ${documents[documents.length - 1].isoDate}`);
+      
+      return documents;
+    } catch (error) {
+      console.error('Error exporting data:', error.message);
+    }
+  }
+
   // Show help
   showHelp() {
     console.log(`
@@ -866,6 +933,7 @@ Commands:
   conditional-update <collection> <field> <op> <value> <jsonData> [--execute] - Update all docs matching condition
   delete <collection> <docId>          - Delete a document
   count <collection>                   - Count documents in a collection
+  export-since <collection> <date>     - Export all documents since a date to JSON file
   find-date-errors [collection] [--export] - Find potential date errors and optionally export to files
   fix-names [collection] [--execute]   - Fix problematic names (dry run by default)
   delete-before <collection> <date> [--execute] - Delete all scores before a date (for yearly reset)
@@ -884,6 +952,7 @@ Examples:
   node dba-script.js conditional-update scores name == "John🎉" '{"name":"John"}' --execute
   node dba-script.js delete scores abc123
   node dba-script.js count scores
+  node dba-script.js export-since scores 2026-01-01
   node dba-script.js find-date-errors scores
   node dba-script.js find-date-errors scores --export
   node dba-script.js find-emoji-names scores
@@ -1018,6 +1087,19 @@ async function main() {
           return;
         }
         await dba.countDocuments(args[1]);
+        break;
+
+      case 'export-since':
+        if (args.length < 3) {
+          console.log('Usage: export-since <collection> <date>');
+          console.log('  <date> must be in YYYY-MM-DD format');
+          console.log('  Exports all documents with dates on or after the specified date to a JSON file');
+          console.log('  Example: node dba-script.js export-since scores 2026-01-01');
+          return;
+        }
+        const exportCollection = args[1];
+        const exportSinceDate = args[2];
+        await dba.exportSinceDate(exportCollection, exportSinceDate);
         break;
 
       case 'find-date-errors':
