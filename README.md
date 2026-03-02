@@ -20,7 +20,7 @@ The app will be available at `http://localhost:5173` (or another port if 5173 is
 
 ## dba-script.js
 
-This Node.js script allows administrators to perform basic database administration tasks on the Firestore database via command line interface.
+This Node.js script allows administrators to perform basic database administration tasks on the Firestore database via command line interface. 
 
 ### Requirements
 
