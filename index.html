@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
     <meta charset="UTF-8" />
     <meta http-equiv="refresh" content="3;url=https://wordle.test.aws.forbar.co.nz" />
     <link rel="icon" type="image/png" href="/src/assets/wordle.png" />
@@ -83,36 +87,9 @@
       }
     </style>
   </head>
+
   <body>
-    <div class="container">
-      <h1>🎮 ITWordle Has Moved!</h1>
-      <p>We've upgraded to a new platform. You'll be automatically redirected in <span id="countdown">3</span> seconds...</p>
-      <div class="spinner"></div>
-      <a href="https://wordle.test.aws.forbar.co.nz" class="redirect-link">
-        Click here if not redirected automatically
-      </a>
-      <p class="countdown">Redirecting to our new home...</p>
-    </div>
-    
-    <script>
-      // Countdown timer
-      let seconds = 3;
-      const countdownElement = document.getElementById('countdown');
-      
-      const countdown = setInterval(() => {
-        seconds--;
-        if (seconds > 0) {
-          countdownElement.textContent = seconds;
-        } else {
-          clearInterval(countdown);
-          window.location.href = 'https://wordle.test.aws.forbar.co.nz';
-        }
-      }, 1000);
-      
-      // Immediately redirect if JavaScript fails
-      setTimeout(() => {
-        window.location.href = 'https://wordle.test.aws.forbar.co.nz';
-      }, 3000);
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
